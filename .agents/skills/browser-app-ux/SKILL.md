@@ -7,7 +7,7 @@ description: UX design method for apps in this repository, distilled from VibeBB
 
 The method follows [VibeBB UX-creator-agent](https://github.com/VibeBB/UX-creator-agent)
 (`plugins/ux/skills/`: `ux-workflow`, `ux-jtbd`, `ux-theory-lenses`, `ux-interaction-content`,
-`ux-cmf`). That agent writes a UX contract and gates it deterministically; here the same rules
+`ux-cmf`; BSD 3-Clause, copyright (c) 2026 VibeBB). That agent writes a UX contract and gates it deterministically; here the same rules
 become code structure and tests.
 
 ## 1. Reframe the request

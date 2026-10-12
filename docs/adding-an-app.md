@@ -13,7 +13,7 @@ Before building a real app, follow the [building-browser-apps skill](../.agents/
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Example · Web Playground</title>
     <link rel="stylesheet" href="/library/css/base.css" />
     <script type="module" src="/example/app.js"></script>

@@ -6,6 +6,7 @@
 - Every app must call `checkRequirements` before using its required capabilities. Never trigger permission prompts while a page loads.
 - Never weaken or bypass the static resource gate, runtime resource E2E gate, CSP lock test, or CodeQL. The only runtime CSP exception is the exact WebKit user-agent sample in `tests/e2e/csp-violations.js`; never broaden it to cover app-originated violations. Fix the source instead. Never add `'unsafe-inline'` or `'unsafe-eval'`.
 - Never add secrets or private credentials. Write repository documentation and comments in English.
+- Before every commit, recheck copyright, licenses, and attribution of everything staged: only original or compatibly licensed material, upstream notices kept, `THIRD_PARTY_NOTICES.md` updated, and no imitation of existing works, brands, or characters.
 
 ## Tie-break examples
 
@@ -21,7 +22,7 @@
 | `public_html/`                  | Cloudflare Pages static site and apps                         | Hand-written HTML/CSS/JS except generated datasets and WASM     |
 | `public_html/library/`          | Shared capability, requirements, WebMCP, CSS and WASM runtime | Hand-written runtime; `data/` and `wasm/` outputs are generated |
 | `scripts/`                      | Generators, local server, resource/doc gates, WASM builds     | Hand-written tooling                                            |
-| `wasm/`                         | WAT and native toolchain source profiles                      | Hand-written source                                             |
+| `wasm/`                         | WAT probes, native toolchain profiles, Rust app crates        | Hand-written source                                             |
 | `tests/`                        | Unit tests and four-engine browser tests                      | Hand-written                                                    |
 | `docs/web-platform-features.md` | Generated browser-compatibility dataset                       | Generated; edit source/generator, never this output             |
 | `docs/capability-reference.md`  | Generated capability API index                                | Generated from the shared runtime                               |
