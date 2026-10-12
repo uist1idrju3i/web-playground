@@ -2,6 +2,7 @@ public_html/library/data/web-features.json
 public_html/library/wasm/toolchains/**
 docs/web-platform-features.md
 docs/capability-reference.md
+public_html/ruby-wasm/vendor/**
 
 public_html/tsumiki/vendor/**
 public_html/tsumiki/data/prefectures.json

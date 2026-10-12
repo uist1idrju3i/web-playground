@@ -15,6 +15,7 @@ export default [
       'tests/servo/bin/**',
       'public_html/library/wasm/toolchains/**',
       'public_html/tsumiki/vendor/**',
+      'public_html/ruby-wasm/vendor/**',
     ],
   },
   js.configs.recommended,
