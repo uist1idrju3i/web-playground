@@ -26,7 +26,6 @@ fn blackbody(h: f32) -> vec3f {
 }
 @fragment fn fsBg(@builtin(position) pos: vec4f) -> @location(0) vec4f {
   let vUv = pos.xy / u.res;
-  let w = vec2f((vUv.x*2.-1.)/u.scale.x + u.cam.x, (1.-vUv.y)*2.-1.);
   let wpos = vec2f((vUv.x*2.-1.)/u.scale.x, ((1.-vUv.y)*2.-1.)/u.scale.y) + u.cam;
   let v = clamp(-wpos.y/420.+0.35, 0., 1.);
   var col = mix(vec3f(0.012,0.010,0.030), vec3f(0.028,0.022,0.070), pow(1.-v,1.5));
@@ -34,7 +33,6 @@ fn blackbody(h: f32) -> vec3f {
   col += (hash(vUv*u.res+u.time)-0.5)*0.012;
   let d = distance(wpos, u.ball.xy);
   col += vec3f(1.0,0.45,0.12) * u.glow * 900.0 / (900.0 + d*d);
-  let _ = w;
   return vec4f(col, 1.);
 }
 
@@ -120,8 +118,27 @@ export async function createWebGPU(canvas) {
 
   const module = device.createShaderModule({ code: WGSL });
   const glowModule = device.createShaderModule({ code: WGSL_GLOW });
+  // Shader-module and pipeline errors are reported asynchronously, never as
+  // exceptions — check them explicitly so a broken WGSL compile on a strict
+  // implementation (Safari/WSL) falls back to WebGL2 instead of a black canvas.
+  const [mainInfo, glowInfo] = await Promise.all([
+    module.getCompilationInfo(),
+    glowModule.getCompilationInfo(),
+  ]);
+  const shaderErrors = [...mainInfo.messages, ...glowInfo.messages].filter(
+    (m) => m.type === 'error',
+  );
+  if (shaderErrors.length) {
+    throw new Error(
+      `WGSL compile failed: ${shaderErrors.map((m) => `${m.lineNum}:${m.linePos} ${m.message}`).join('; ')}`,
+    );
+  }
+  // Uniform buffer: four 256-byte-aligned slots (dynamic-offset minimum), one
+  // per draw call that needs its own misc/line values — queue.writeBuffer
+  // lands before a submit, so uniforms can never be patched mid-encoder.
+  const UNIFORM_SLOT = 256;
   const uniform = device.createBuffer({
-    size: 80,
+    size: UNIFORM_SLOT * 4,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
   const instBuf = device.createBuffer({
@@ -134,7 +151,7 @@ export async function createWebGPU(canvas) {
       {
         binding: 0,
         visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-        buffer: { type: 'uniform' },
+        buffer: { type: 'uniform', hasDynamicOffset: true, minBindingSize: 80 },
       },
       { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
     ],
@@ -142,7 +159,7 @@ export async function createWebGPU(canvas) {
   const bind = device.createBindGroup({
     layout,
     entries: [
-      { binding: 0, resource: { buffer: uniform } },
+      { binding: 0, resource: { buffer: uniform, offset: 0, size: 80 } },
       { binding: 1, resource: { buffer: instBuf } },
     ],
   });
@@ -169,13 +186,41 @@ export async function createWebGPU(canvas) {
       },
       primitive: { topology: 'triangle-strip' },
     });
+  device.pushErrorScope('validation');
   const bgPipe = mk('vsBg', 'fsBg', module, 'replace');
   const quadPipe = mk('vsQuad', 'fsQuad', module, 'replace');
   const streakPipe = mk('vsStreak', 'fsStreak');
   const glowPipe = mk('vs', 'fs', glowModule);
+  const pipelineError = await device.popErrorScope();
+  if (pipelineError) throw new Error(`WebGPU pipeline failed: ${pipelineError.message}`);
 
   const uData = new Float32Array(20);
+  const uFrame = new Float32Array((UNIFORM_SLOT * 4) / 4);
   let time = 0;
+  // GPU-side validation problems (bad writes, lost device, limit misses) only
+  // surface through uncapturederror — never as exceptions. Flag them so the
+  // next draw() throws and the app swaps in the WebGL2 renderer.
+  let dead = false;
+  let lastGpuError = '';
+  device.addEventListener?.('uncapturederror', (event) => {
+    dead = true;
+    lastGpuError = event.error?.message ?? 'unknown';
+  });
+
+  // Writes one 20-float uniform slot inside uFrame. Slots: 0=bg/streak,
+  // 1=cord, 2=ball glow.
+  function writeSlot(slot, misc, line) {
+    const o = slot * (UNIFORM_SLOT / 4);
+    uFrame.set(uData, o);
+    uFrame[o + 12] = misc[0];
+    uFrame[o + 13] = misc[1];
+    uFrame[o + 14] = misc[2];
+    uFrame[o + 15] = misc[3];
+    uFrame[o + 16] = line[0];
+    uFrame[o + 17] = line[1];
+    uFrame[o + 18] = line[2];
+    uFrame[o + 19] = line[3];
+  }
 
   function writeUniforms(scene, width, height) {
     const vt = viewTransform(width, height);
@@ -193,9 +238,18 @@ export async function createWebGPU(canvas) {
       Math.max(2.6, scene.ball.r * 8),
       scene.ball.heat,
     ]);
+    writeSlot(0, [0, 0, 0, 0], [0, 0, 0, 0]);
+    writeSlot(
+      1,
+      [1, 0, Math.min(1, scene.ball.heat), 0.7],
+      [0, WORLD.stickTopY, scene.ball.x, scene.ball.y],
+    );
+    writeSlot(2, [0, scene.ball.swell + time, 0, 0], [0, 0, 0, 0]);
+    device.queue.writeBuffer(uniform, 0, uFrame);
   }
 
   function draw(scene, dt) {
+    if (dead) throw new Error(`WebGPU device error: ${lastGpuError}`);
     time += dt;
     const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
     const w = Math.max(2, Math.round(canvas.clientWidth * dpr));
@@ -217,37 +271,23 @@ export async function createWebGPU(canvas) {
         },
       ],
     });
-    pass.setBindGroup(0, bind);
-
-    uData[12] = 0; // kind=bg (unused)
-    device.queue.writeBuffer(uniform, 0, uData.subarray(0, 16));
+    // Background + streak share uniform slot 0; cord uses slot 1; the ball
+    // glow uses slot 2. Each slot is a full 20-float block in one buffer.
+    pass.setBindGroup(0, bind, [0]);
     pass.setPipeline(bgPipe);
     pass.draw(3);
 
-    // Cord: kind=1
-    uData[12] = 1;
-    uData[13] = 0;
-    uData[14] = Math.min(1, scene.ball.heat);
-    uData[15] = 0.7;
-    uData[16] = 0;
-    uData[17] = WORLD.stickTopY;
-    uData[18] = scene.ball.x;
-    uData[19] = scene.ball.y;
-    device.queue.writeBuffer(uniform, 0, uData);
+    pass.setBindGroup(0, bind, [UNIFORM_SLOT]);
     pass.setPipeline(quadPipe);
     pass.draw(4);
 
-    // Ball glow
-    uData[12] = 0;
-    uData[13] = scene.ball.swell + time;
-    uData[14] = 0;
-    uData[15] = 0;
-    device.queue.writeBuffer(uniform, 0, uData);
+    pass.setBindGroup(0, bind, [UNIFORM_SLOT * 2]);
     pass.setPipeline(glowPipe);
     pass.draw(4);
 
     if (scene.instCount > 0) {
       device.queue.writeBuffer(instBuf, 0, scene.inst.subarray(0, scene.instCount * INST_F32));
+      pass.setBindGroup(0, bind, [0]);
       pass.setPipeline(streakPipe);
       pass.draw(4, scene.instCount);
     }

@@ -316,9 +316,11 @@ async function boot() {
       renderer.draw(scene, dt);
     } catch (error) {
       if (renderer.kind !== 'webgpu') throw error;
-      // Device lost or pipeline error mid-run: drop to WebGL2 and keep going.
+      // Device lost, validation fault, or pipeline error mid-run: drop to
+      // WebGL2 and keep going.
       console.warn('WebGPU draw failed; falling back to WebGL2', error);
       renderer = createWebGL2(canvas);
+      $('engine-tag').textContent = t('engine', { gpu: 'WebGL2', simd: sim.simd ? t('simd') : '' });
     }
     requestAnimationFrame(frame);
   }
