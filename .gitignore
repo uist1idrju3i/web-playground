@@ -3,3 +3,11 @@ playwright-report/
 test-results/
 coverage/
 .DS_Store
+
+# Native desktop shells
+native/**/node_modules/
+native/tauri/src-tauri/target/
+native/tauri/src-tauri/gen/
+native/wails/browser-features
+native/wails/build/
+native/electron/dist/
