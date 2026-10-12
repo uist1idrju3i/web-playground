@@ -60,7 +60,16 @@ Unless the requester says otherwise, every app: is researched and planned before
 
 ## Definition of done
 
-- `npm test` passes on all four browser engines (Chromium, WebKit, Firefox, servoshell).
+- CI (`ci-ok`) passes; it runs `npm test` on all four browser engines (Chromium, WebKit, Firefox, servoshell).
+- Locally, run only the tier that matches the change:
+
+  | Change                                                      | Local checks                                                                                                                                      |
+  | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | Docs and skills only                                        | `npm run lint`, `npm run format:check`                                                                                                            |
+  | One app                                                     | Above + `npm run test:unit` + `npx playwright test tests/e2e/<app>.spec.js tests/e2e/resource-policy.spec.js --project=chromium --project=webkit` |
+  | Shared library, generators, or data                         | Above for every affected app + `npm run check:generated`                                                                                          |
+  | Headers, CSP, resource gates, capabilities, or test tooling | Full `npm test`                                                                                                                                   |
+
 - Generated files are current; portal registration and relevant documentation are updated.
 - Rendered pages are visually checked at desktop and iPhone widths (portrait and landscape) in Chromium and WebKit.
 - Licenses and attribution of every added file are rechecked before each commit.
@@ -73,5 +82,6 @@ Unless the requester says otherwise, every app: is researched and planned before
 - Never hand-edit generated files; fix their source and regenerate.
 - `untestable` is not the same as `unsupported`.
 - The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
-- Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader or automatic Web Analytics injection.
+- Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader, Speed Brain (`Speculation-Rules: "/cdn-cgi/speculation"`), or automatic Web Analytics injection.
+- Keep every E2E test under 30 seconds. Do not add tests that play an app through in real time; cover long flows with unit tests on the simulation, rules, and statechart.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.

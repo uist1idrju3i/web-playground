@@ -69,12 +69,13 @@ Keep each pushed commit self-consistent and passing. Follow the recipes in `AGEN
 
 ### 4. Verify (app definition of done)
 
-- `npm test` passes (lint, resource gates, format, generated checks, unit, Chromium/WebKit/
-  Firefox E2E, servoshell).
+- CI passes; locally run the tier from the `AGENTS.md` definition of done (for one app: lint,
+  format, unit, and that app's E2E plus the resource-policy spec in Chromium and WebKit).
 - Unit tests cover: statechart transitions, scoring/game rules, WCAG contrast of the palette,
   save envelope tamper/rollback handling, music theory invariants (notes in mode), and any
   pure simulation helpers.
-- E2E covers: boot to the first interactive phase, the core loop at least once, renderer
+- E2E covers: boot to the first interactive phase, each control of the core loop (via the `?debug=1` hooks, not by
+  playing in real time; every test stays under 30 s), renderer
   selection (`data-renderer`), iPhone viewports in portrait and landscape keeping every
   control in bounds, reduced motion, and no CSP violations.
 - Audio is rendered with `OfflineAudioContext` in a test and checked for non-silence and no
