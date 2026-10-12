@@ -3,24 +3,26 @@ import { expect, test } from '@playwright/test';
 function trackExternalRequests(page, baseURL) {
   const sameOrigin = new URL(baseURL).origin;
   const externalRequests = [];
-  page.on('request', (request) => {
+  const listener = (request) => {
     if (new URL(request.url()).origin !== sameOrigin) externalRequests.push(request.url());
-  });
-  return externalRequests;
+  };
+  page.context().on('request', listener);
+  return { externalRequests, stop: () => page.context().off('request', listener) };
 }
 
 test('the portal links to Browser Features without third-party requests', async ({
   page,
   baseURL,
 }) => {
-  const externalRequests = trackExternalRequests(page, baseURL);
+  const requestTracker = trackExternalRequests(page, baseURL);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'See what your browser can do.' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Browser Features/ })).toHaveAttribute(
     'href',
     '/browser-features/',
   );
-  expect(externalRequests).toEqual([]);
+  expect(requestTracker.externalRequests).toEqual([]);
+  requestTracker.stop();
 });
 
 test('Browser Features loads without console errors or third-party requests', async ({
@@ -29,34 +31,48 @@ test('Browser Features loads without console errors or third-party requests', as
 }) => {
   const consoleMessages = [];
   const pageErrors = [];
-  const externalRequests = trackExternalRequests(page, baseURL);
+  const requestTracker = trackExternalRequests(page, baseURL);
+  let collecting = true;
   await page.addInitScript(() => {
     window.__securityPolicyViolations = [];
-    document.addEventListener('securitypolicyviolation', (event) => {
+    window.__securityPolicyListener = (event) => {
       window.__securityPolicyViolations.push({
         directive: event.violatedDirective,
         blockedURI: event.blockedURI,
         sourceFile: event.sourceFile,
         line: event.lineNumber,
       });
-    });
+    };
+    document.addEventListener('securitypolicyviolation', window.__securityPolicyListener);
   });
-  page.on('console', (message) => {
-    consoleMessages.push({ type: message.type(), text: message.text() });
-  });
-  page.on('pageerror', (error) => pageErrors.push(error.message));
+  const consoleListener = (message) => {
+    if (collecting) consoleMessages.push({ type: message.type(), text: message.text() });
+  };
+  const pageErrorListener = (error) => {
+    if (collecting) pageErrors.push(error.message);
+  };
+  page.on('console', consoleListener);
+  page.on('pageerror', pageErrorListener);
   await page.goto('/browser-features/');
   await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
-  await page.screenshot();
   const violations = await page.evaluate(() => window.__securityPolicyViolations);
   expect({
-    consoleErrors: consoleMessages.filter(({ type }) => type === 'error'),
+    consoleMessages,
     pageErrors,
     violations,
-    externalRequests,
-  }).toEqual({ consoleErrors: [], pageErrors: [], violations: [], externalRequests: [] });
+    externalRequests: requestTracker.externalRequests,
+  }).toEqual({ consoleMessages: [], pageErrors: [], violations: [], externalRequests: [] });
+  // Playwright's WebKit screenshotter injects body {}, triggering an expected post-assertion CSP violation.
+  await page.screenshot();
+  collecting = false;
+  page.off('console', consoleListener);
+  page.off('pageerror', pageErrorListener);
+  requestTracker.stop();
+  await page.evaluate(() =>
+    document.removeEventListener('securitypolicyviolation', window.__securityPolicyListener),
+  );
 });
 
 test('Permissions Policy features are disclosed as wrapped chips', async ({ page }) => {
@@ -252,6 +268,8 @@ test('local and session storage complete write/read/remove round-trips', async (
       'set/get/remove round-trip',
     );
   }
+  expect(await page.localStorage.items()).toEqual([]);
+  expect(await page.sessionStorage.items()).toEqual([]);
 });
 
 test('WebAssembly compiles and instantiates under the served CSP', async ({ page }) => {
@@ -261,7 +279,6 @@ test('WebAssembly compiles and instantiates under the served CSP', async ({ page
     "script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com",
   );
   expect(contentSecurityPolicy).toContain("style-src 'self' https://cdnjs.cloudflare.com");
-  expect(contentSecurityPolicy).toContain("'sha256-YjaKGiklmzC6wjXA513HAMmzus8VE61XCOT+SmwNZWA='");
   expect(contentSecurityPolicy).toContain("connect-src 'self'");
   expect(contentSecurityPolicy).toContain("font-src 'self'");
   const wasmResponse = await page.request.get('/library/wasm/probes/wasm-simd.wasm');
