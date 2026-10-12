@@ -22,6 +22,10 @@ test('the portal links to Browser Features without third-party requests', async 
     'href',
     '/browser-features/',
   );
+  await expect(page.getByRole('link', { name: 'Ask DeepWiki' })).toHaveAttribute(
+    'href',
+    'https://deepwiki.com/uist1idrju3i/web-playground',
+  );
   expect(requestTracker.externalRequests).toEqual([]);
   requestTracker.stop();
 });
