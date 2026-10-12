@@ -2,7 +2,11 @@
 // quads with per-instance center/size/color/kind, drawn with additive-ish
 // glow blending. Falls back gracefully on context loss.
 export function createWebGL2Renderer(canvas) {
-  const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+  const gl = canvas.getContext('webgl2', {
+    antialias: true,
+    alpha: false,
+    preserveDrawingBuffer: true,
+  });
   if (!gl) return null;
 
   const VS = `#version 300 es
