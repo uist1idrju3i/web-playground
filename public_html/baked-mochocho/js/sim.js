@@ -62,6 +62,14 @@ function namedValues(view, offset, fields) {
   return Object.fromEntries(fields.map((field, index) => [field, view[offset + index]]));
 }
 
+// Per-frame reads reuse the caller's object to avoid allocating every frame.
+function namedValuesInto(target, view, offset, fields) {
+  for (let index = 0; index < fields.length; index += 1) {
+    target[fields[index]] = view[offset + index];
+  }
+  return target;
+}
+
 function instantiateResponse(response) {
   if (typeof WebAssembly.instantiateStreaming === 'function') {
     return WebAssembly.instantiateStreaming(response.clone(), {});
@@ -204,8 +212,17 @@ export async function createSimulation({ seed = 1, simd = undefined, source = un
       }
       return namedValues(cavityView, index * CAVITY_STRIDE, CAVITY_FIELDS);
     },
+    cavityInto(index, target) {
+      if (!Number.isInteger(index) || index < 0 || index >= cavities.length) {
+        throw new RangeError(`Invalid cavity index: ${index}`);
+      }
+      return namedValuesInto(target, cavityView, index * CAVITY_STRIDE, CAVITY_FIELDS);
+    },
     audio() {
       return namedValues(audioView, 0, AUDIO_FIELDS);
+    },
+    audioInto(target) {
+      return namedValuesInto(target, audioView, 0, AUDIO_FIELDS);
     },
   };
 }

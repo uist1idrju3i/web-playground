@@ -103,11 +103,14 @@ export function invert(m) {
   return inv;
 }
 
+// Returns the divided NDC x/y, the divided NDC z and the clip-space w.
+// Picking needs the real z: without it unprojecting [nx, ny, 0|1] is meaningless.
 function project(m, p) {
   const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
   const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+  const z = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
   const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
-  return [x / w, y / w, w];
+  return [x / w, y / w, z / w, w];
 }
 
 // Portrait screens view the plate from its right side so the long edge runs vertically.

@@ -37,6 +37,12 @@ const state = {
   filling: 1,
   heat: 0.6,
   pointer: null,
+  // Preallocated per-frame read targets (no per-frame object allocation).
+  cavityObjs: [0, 1, 2, 3, 4, 5].map(() => ({})),
+  audioObj: {},
+  flipAngles: [0, 0, 0],
+  fillingKinds: [0, 0, 0, 0, 0, 0],
+  frameSkip: false,
   cursor: { x: 0, y: 0, radius: 0, active: false },
   running: false,
   paused: false,
@@ -109,12 +115,21 @@ function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2) * state.scale;
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
   const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
-  if (canvas.width !== w || canvas.height !== h || !state.camera) {
+  if (
+    canvas.width !== w ||
+    canvas.height !== h ||
+    !state.camera ||
+    state.cameraCssW !== canvas.clientWidth ||
+    state.cameraCssH !== canvas.clientHeight
+  ) {
     canvas.width = w;
     canvas.height = h;
-    state.camera = makeCamera(canvas.clientWidth, canvas.clientHeight, {
+    state.cameraCssW = canvas.clientWidth;
+    state.cameraCssH = canvas.clientHeight;
+    state.camera = makeCamera(state.cameraCssW, state.cameraCssH, {
       zeroToOne: state.renderer?.zeroToOne,
-      ...hudInsets(canvas.clientHeight),
+      // Layout reads happen only when the CSS size actually changed.
+      ...hudInsets(state.cameraCssH),
     });
   }
 }
@@ -398,8 +413,14 @@ function frame(now) {
   const dt = Math.min(1 / 20, frameIntervalMs / 1000);
   state.lastTime = now;
   state.frameMs = state.frameMs * 0.95 + frameIntervalMs * 0.05;
+  // Sustained heavy frames: halve the work by running sim+render every other rAF.
+  if (state.frameMs > 34 && $('quality-toggle').checked) {
+    state.frameSkip = !state.frameSkip;
+    if (state.frameSkip) return;
+  } else state.frameSkip = false;
   if ($('quality-toggle').checked) {
-    const target = state.frameMs > 24 ? 0.6 : state.frameMs < 17.5 ? 1 : state.scale;
+    const target =
+      state.frameMs > 45 ? 0.45 : state.frameMs > 24 ? 0.6 : state.frameMs < 17.5 ? 1 : state.scale;
     if (target < state.scale) {
       state.scale = target;
     } else if (target - state.scale > 0.05) {
@@ -409,10 +430,12 @@ function frame(now) {
   resize();
   if (state.running && !state.paused) state.sim.step(dt * TIME_SCALE);
   const canvas = stage();
-  const cavities = state.sim.cavities.map((_, i) => state.sim.cavity(i));
+  const cavities = state.cavityObjs;
+  for (let i = 0; i < 6; i += 1) state.sim.cavityInto(i, cavities[i]);
   const particles = state.sim.particles();
-  const flips = [0, 1, 2].map((p) => cavities[p].flipAngle);
-  const audio = state.sim.audio();
+  const flips = state.flipAngles;
+  for (let p = 0; p < 3; p += 1) flips[p] = cavities[p].flipAngle;
+  const audio = state.sim.audioInto(state.audioObj);
   if (state.running && !state.paused) {
     state.audio.update(audio);
     if (audio.flipLandedEvents > 0) {
@@ -437,7 +460,9 @@ function frame(now) {
     particles,
     particleCount: particles.length / 8,
     flips,
-    fillingKinds: cavities.map((c) => (c.state === 2 || c.state === 3 ? c.fillingKind : 0)),
+    fillingKinds: state.fillingKinds.map((_, i) =>
+      cavities[i].state === 2 || cavities[i].state === 3 ? cavities[i].fillingKind : 0,
+    ),
     cursor: state.cursor,
     time: now / 1000,
     plateTemp,
