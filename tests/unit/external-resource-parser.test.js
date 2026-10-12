@@ -50,17 +50,14 @@ test('rejects non-image data URLs even on image elements', async () => {
   }
 });
 
-test('rejects external origins, unpinned cdnjs, missing SRI, and unprotected module imports', async () => {
+test('rejects external origins, unpinned cdnjs, and missing SRI', async () => {
   const violations = await checkExternalResources(badFixture);
   const messages = violations.map(({ message }) => message);
 
   assert.ok(messages.includes('Resource origin is not allowed: https://example.com.'));
-  assert.ok(
-    messages.includes('cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version.'),
-  );
+  assert.ok(messages.includes('cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version.'));
   assert.ok(messages.includes('cdnjs link must include sha384 or sha512 integrity.'));
   assert.ok(messages.includes('cdnjs link must set crossorigin="anonymous".'));
-  assert.ok(messages.includes('cdnjs ES module imports need an import-map integrity entry.'));
   assert.ok(messages.includes('Resource origin is not allowed: https://example.org.'));
   assert.ok(messages.includes('Resource origin is not allowed: https://fonts.googleapis.com.'));
   assert.ok(!messages.includes('Resource origin is not allowed: https://developer.mozilla.org.'));
@@ -76,13 +73,13 @@ test('flags every supported HTML loading attribute and parses tricky script endi
     ['icon link', '<link rel="icon" href="https://evil.example/a.svg">'],
     ['manifest link', '<link rel="manifest" href="https://evil.example/a.webmanifest">'],
     ['img src', '<img src="https://evil.example/a.png">'],
-    [
-      'img srcset',
-      '<img srcset="https://evil.example/a.png 1x, //evil.example/b.png 2x">',
-    ],
+    ['img srcset', '<img srcset="https://evil.example/a.png 1x, //evil.example/b.png 2x">'],
     ['source src', '<picture><source src="https://evil.example/a.webp"></picture>'],
     ['source srcset', '<picture><source srcset="HTTP://evil.example/a.webp 1x"></picture>'],
-    ['video src and poster', '<video src="https://evil.example/a.mp4" poster="https://evil.example/p.png"></video>'],
+    [
+      'video src and poster',
+      '<video src="https://evil.example/a.mp4" poster="https://evil.example/p.png"></video>',
+    ],
     [
       'audio src and poster',
       '<audio src="https://evil.example/a.mp3" poster="https://evil.example/p.png"></audio>',
@@ -114,12 +111,14 @@ test('flags every supported HTML loading attribute and parses tricky script endi
         ? 2
         : 1;
       assert.equal(violations.length, expectedCount, name);
+      const expectedOrigin =
+        name === 'source srcset' ? 'http://evil.example' : 'https://evil.example';
       assert.ok(
         violations.every(
           ({ file, line, message }) =>
             file === 'case.html' &&
             line === 2 &&
-            message === 'Resource origin is not allowed: https://evil.example.',
+            message === `Resource origin is not allowed: ${expectedOrigin}.`,
         ),
         name,
       );
@@ -167,7 +166,10 @@ test('flags JavaScript URL sinks and parses HTML inserted as a static string', a
     ['action assignment', `element.action = 'https://evil.example/a';`],
     ['src setAttribute', `element.setAttribute('src', 'https://evil.example/a');`],
     ['href setAttribute', `element.setAttribute('href', 'https://evil.example/a');`],
-    ['srcset setAttribute', `element.setAttribute('srcset', 'https://evil.example/a 1x');`],
+    [
+      'srcset setAttribute',
+      `element.setAttribute('srcset', 'https://evil.example/a 1x, //evil.example/b 2x');`,
+    ],
     ['data setAttribute', `element.setAttribute('data', 'https://evil.example/a');`],
     ['action setAttribute', `element.setAttribute('action', 'https://evil.example/a');`],
     ['poster setAttribute', `element.setAttribute('poster', 'https://evil.example/a');`],
@@ -200,7 +202,7 @@ test('flags JavaScript URL sinks and parses HTML inserted as a static string', a
   }
 });
 
-test('rejects external CSS URLs, weak cdnjs markup, and JavaScript parse failures', async () => {
+test('rejects external CSS URLs, unsafe module imports, weak cdnjs markup, and parse failures', async () => {
   const root = await mkdtemp(join(tmpdir(), 'web-playground-resource-errors-'));
   try {
     await writeFile(
@@ -223,6 +225,7 @@ test('rejects external CSS URLs, weak cdnjs markup, and JavaScript parse failure
         },
       ],
     );
+    await rm(join(root, 'case.css'));
 
     await writeFile(
       join(root, 'case.html'),
@@ -236,6 +239,23 @@ test('rejects external CSS URLs, weak cdnjs markup, and JavaScript parse failure
         'cdnjs script must set crossorigin="anonymous".',
       ],
     );
+
+    const moduleUrl = 'https://cdnjs.cloudflare.com/ajax/libs/example/1.2.3/example.js';
+    await writeFile(
+      join(root, 'case.html'),
+      `<script type="module">import '${moduleUrl}';</script>`,
+    );
+    const moduleViolations = await checkExternalResources(root);
+    assert.deepEqual(
+      moduleViolations.map(({ message }) => message),
+      ['cdnjs resources are not allowed for module import.'],
+    );
+
+    await writeFile(
+      join(root, 'case.html'),
+      `<script type="importmap">{"imports":{"example":"${moduleUrl}"},"integrity":{"${moduleUrl}":"sha384-${'a'.repeat(64)}"}}</script>\n<script type="module">import 'example';</script>`,
+    );
+    assert.deepEqual(await checkExternalResources(root), []);
 
     await writeFile(join(root, 'case.js'), 'const = ;');
     const parseViolations = await checkExternalResources(root);

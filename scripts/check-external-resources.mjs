@@ -10,7 +10,6 @@ const siteOrigin = 'https://web-playground.xn--uist1idrju3i.jp';
 const cdnjsOrigin = 'https://cdnjs.cloudflare.com';
 const pinnedCdnjsPath = /^\/ajax\/libs\/[^/]+\/\d+\.\d+\.\d+\//;
 const sourceExtensions = new Set(['.html', '.htm', '.js', '.mjs', '.css', '.svg', '.webmanifest']);
-const cdnjsKinds = new Set(['script', 'stylesheet', 'modulepreload', 'preload']);
 const dataKinds = new Set(['img', 'source', 'icon']);
 const urlAttributes = {
   img: ['src', 'srcset'],
@@ -51,8 +50,7 @@ function hasStrongIntegrity(value) {
       .split(/\s+/)
       .some(
         (token) =>
-          /^sha384-[A-Za-z0-9+/]{64}$/.test(token) ||
-          /^sha512-[A-Za-z0-9+/]{86}==$/.test(token),
+          /^sha384-[A-Za-z0-9+/]{64}$/.test(token) || /^sha512-[A-Za-z0-9+/]{86}==$/.test(token),
       )
   );
 }
@@ -87,9 +85,7 @@ function getAttribute(node, name) {
 
 function getAttributeLine(node, name) {
   return (
-    node.sourceCodeLocation?.attrs?.[name]?.startLine ??
-    node.sourceCodeLocation?.startLine ??
-    1
+    node.sourceCodeLocation?.attrs?.[name]?.startLine ?? node.sourceCodeLocation?.startLine ?? 1
   );
 }
 
@@ -308,8 +304,8 @@ function checkCss(source, file, violations, lineOffset = 0) {
 function checkHtml(source, file, violations, validModuleUrls, lineOffset = 0) {
   const document = parseHtml(source, { sourceCodeLocationInfo: true });
   walkHtml(document, (node) => {
-    const tag = node.tagName;
-    if (!tag) return;
+    if (!node.tagName) return;
+    const tag = node.tagName.toLowerCase();
     const attributes = Object.fromEntries(node.attrs.map(({ name, value }) => [name, value]));
     const line = (name) => lineOffset + getAttributeLine(node, name);
     const check = (name, kind = tag, options = {}) => {
@@ -383,8 +379,7 @@ function checkHtml(source, file, violations, validModuleUrls, lineOffset = 0) {
       ];
       if (resourceRelations.some((relation) => rel.has(relation))) {
         check('href', rel.has('icon') || rel.has('apple-touch-icon') ? 'icon' : 'link', {
-          allowCdnjs:
-            rel.has('stylesheet') || rel.has('modulepreload') || rel.has('preload'),
+          allowCdnjs: rel.has('stylesheet') || rel.has('modulepreload') || rel.has('preload'),
           allowData: rel.has('icon') || rel.has('apple-touch-icon'),
           moduleImport: rel.has('modulepreload'),
         });

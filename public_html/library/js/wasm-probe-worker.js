@@ -1,21 +1,23 @@
-const probeModules = new Map([
-  'wasm-simd',
-  'wasm-relaxed-simd',
-  'wasm-threads',
-  'wasm-bigint',
-  'wasm-exceptions-legacy',
-  'wasm-exnref',
-  'wasm-tail-call',
-  'wasm-gc',
-  'wasm-memory64',
-  'wasm-multi-memory',
-  'wasm-extended-const',
-  'wasm-bulk-memory',
-  'wasm-reference-types',
-  'wasm-jspi',
-  'wasm-js-string-builtins',
-  'wasm-streaming',
-].map((probeId) => [probeId, `/library/wasm/probes/${probeId}.wasm`]));
+const probeModules = new Map(
+  [
+    'wasm-simd',
+    'wasm-relaxed-simd',
+    'wasm-threads',
+    'wasm-bigint',
+    'wasm-exceptions-legacy',
+    'wasm-exnref',
+    'wasm-tail-call',
+    'wasm-gc',
+    'wasm-memory64',
+    'wasm-multi-memory',
+    'wasm-extended-const',
+    'wasm-bulk-memory',
+    'wasm-reference-types',
+    'wasm-jspi',
+    'wasm-js-string-builtins',
+    'wasm-streaming',
+  ].map((probeId) => [probeId, `/library/wasm/probes/${probeId}.wasm`]),
+);
 
 self.addEventListener('message', async (event) => {
   if (event.origin && event.origin !== self.location.origin) return;

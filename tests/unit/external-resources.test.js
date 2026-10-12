@@ -10,19 +10,14 @@ test('allows same-origin resources and compliant version-pinned cdnjs resources'
   assert.deepEqual(await checkExternalResources(goodFixture), []);
 });
 
-test('rejects external origins, unpinned cdnjs, missing SRI, and unprotected module imports', async () => {
+test('rejects external origins, unpinned cdnjs, and missing SRI', async () => {
   const violations = await checkExternalResources(badFixture);
   const messages = violations.map(({ message }) => message);
 
   assert.ok(messages.includes('Resource origin is not allowed: https://example.com.'));
-  assert.ok(
-    messages.includes('cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version.'),
-  );
+  assert.ok(messages.includes('cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version.'));
   assert.ok(messages.includes('cdnjs link must include sha384 or sha512 integrity.'));
   assert.ok(messages.includes('cdnjs link must set crossorigin="anonymous".'));
-  assert.ok(
-    messages.includes('cdnjs ES module imports need an import-map integrity entry.'),
-  );
   assert.ok(messages.includes('Resource origin is not allowed: https://example.org.'));
   assert.ok(messages.includes('Resource origin is not allowed: https://fonts.googleapis.com.'));
   assert.ok(!messages.includes('Resource origin is not allowed: https://developer.mozilla.org.'));
