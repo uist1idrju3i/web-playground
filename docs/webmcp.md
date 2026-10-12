@@ -1,7 +1,18 @@
 # WebMCP
 
-The current experimental WebMCP surface is `document.modelContext`. This app registers read-only tools with `registerTool({ name, title, description, inputSchema, execute, annotations: { readOnlyHint: true } })`. Tool registration is a no-op when the API is absent. The shared helper also detects `navigator.modelContext` and labels it as legacy.
+WebMCP is an experimental browser interface that exposes tools registered by a page to compatible agents. It is optional; the app must continue to work when the API is absent.
 
-WebMCP is experimental and may require an Origin Trial token or an enabled browser flag. To use the trial, register the production origin at <https://developer.chrome.com/origintrials/> and configure the resulting `Origin-Trial` header in Cloudflare Pages `_headers`. Never commit private credentials; trial tokens are public-origin configuration, but should only be added after project-owner approval.
+## Origin Trial
 
-For local experimentation, Chrome may expose the API after enabling `chrome://flags/#enable-webmcp-testing`. A commented header placeholder is present in `public_html/_headers`; no token is included.
+1. Review the current Chrome WebMCP Origin Trial eligibility and terms from the official Chrome developer documentation.
+2. Register the exact production origin in the trial console and obtain its token.
+3. Add the token only through an approved, non-secret deployment configuration mechanism; do not commit a private credential.
+4. Recheck the resource policy, CSP, and application behavior for the enrolled origin.
+
+Do not claim Origin Trial availability until the owner enables it and verifies the deployed origin.
+
+## Testing
+
+Playwright 1.64 exposes `page.webmcp`. The Chromium-only test launches with `--enable-features=WebMCP`, inspects the registered tools, and parses the highlight-capabilities result. A local build without `page.webmcp` is reported as a precise skipped test; no test workaround is added.
+
+See the [capability reference](capability-reference.md) for the WebMCP capability ID.

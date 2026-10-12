@@ -1,62 +1,61 @@
-# web-playground
-
 # Web Playground
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/uist1idrju3i/web-playground)
+A static playground for learning what the browser you are using can actually do.
 
-A static, open learning playground for modern browser and web-platform technologies. The first app, **Browser Features**, reports browser environment details and probes browser capabilities without requesting permissions.
+Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pages settings are owner-managed).
 
-Live site: <https://web-playground.xn--uist1idrju3i.jp>
+[![CI](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml)
+[![Scorecard](https://api.securityscorecards.dev/projects/github.com/uist1idrju3i/web-playground/badge)](https://securityscorecards.dev/viewer/?uri=github.com/uist1idrju3i/web-playground)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Repository structure
+## Choose a path
 
-- `public_html/` — static files served by Cloudflare Pages.
-- `public_html/library/` — shared styles, browser detection, feature data, and requirement checks.
-- `public_html/browser-features/` — the first learning app.
-- `wasm/` — executable WebAssembly probes and compiler-toolchain source examples.
-- `docs/` — architecture, deployment, CI/CD, browser support, WebAssembly, and generated platform feature reference.
-- `scripts/` — deterministic feature/probe generation, toolchain builds, and a local static server.
+| Persona | Start here |
+| --- | --- |
+| Learner | [Learning path](docs/learning-path.md) |
+| Device tester | [Device testing guide](docs/device-testing.md) |
+| App author | [Add an app](docs/adding-an-app.md) |
+| AI agent | [Agent constitution](AGENTS.md) |
+| Maintainer | [Maintenance](docs/maintenance.md) and [CI/CD](docs/ci-cd.md) |
 
-## Local development
+## Apps
 
-Use the Node.js version in `.nvmrc`.
+- **Browser Features** (`/browser-features/`) — measured capability support, permission-policy information, and WebAssembly probes.
+
+## Quick start
+
+Requires Node.js 24.21.0 (see `.nvmrc`).
 
 ```sh
-npm ci
+nvm install
+nvm use
+npm ci --ignore-scripts
+npm audit signatures
 npm run serve
 ```
 
-Open <http://localhost:4173>. Run the complete local quality suite with:
+Open <http://127.0.0.1:4173>. Run `npm test` for lint, security and documentation gates, generated-file checks, unit tests, and Chromium/WebKit/Firefox E2E.
 
-```sh
-npm test
-```
+## Support summary
 
-Playwright browsers may need to be installed once with `npx playwright install --with-deps chromium webkit firefox`.
+Capability results are measured at runtime and may be `supported`, `partial`, `unsupported`, or `untestable`. Layer 1 WebAssembly execution probes currently measure Chromium **17/17**, Firefox **15/17** (relaxed SIMD and JSPI absent), and WebKit **13/17** (relaxed SIMD, memory64, multi-memory, and JSPI absent). See [browser support](docs/browser-support.md) for caveats and device guidance.
 
 ## Security and external resources
 
-Prioritize security and stability first, then runtime performance. Keep the site static and load JavaScript and CSS only from this origin or version-pinned cdnjs resources protected by SRI and anonymous CORS. See [the external-resources policy](docs/external-resources.md).
+Security and stability come before runtime performance. Pages load JavaScript and CSS only from their own origin or version-pinned, SRI-protected cdnjs URLs. Static parser checks, runtime browser tests, a locked CSP test, and CodeQL enforce the policy. Navigation links may point elsewhere; they do not load resources. Fonts use system stacks by default. See [external-resource policy](docs/external-resources.md) and [SECURITY.md](SECURITY.md).
 
-Build and verify the WebAssembly compiler profiles with the pinned toolchains described in
-[docs/webassembly.md](docs/webassembly.md).
+## Documentation
 
-## Feature data
+See [the documentation index](docs/README.md) for persona-based reading order, architecture, WebAssembly, WebMCP, hosting, support, and troubleshooting.
 
-The app data and complete Chrome/Safari feature comparison are generated from pinned `web-features` and MDN browser-compat-data versions:
+## Limitations
 
-```sh
-npm run generate
-```
-
-Review upstream changes before updating either dataset version, and commit both generated outputs.
-
-## Deployment
-
-Cloudflare Pages serves `public_html/` directly with no build step. See [Cloudflare Pages setup](docs/cloudflare-pages.md) for project configuration and custom-domain details.
-
-The workflow map and owner-side repository settings are documented in [docs/ci-cd.md](docs/ci-cd.md).
+- Physical devices are not comprehensively tested; desktop engine results are not a substitute.
+- WebMCP is experimental and may not be available in every Chromium build.
+- Device APIs may require a secure context, a user gesture, or permission; the app does not prompt on page load.
+- The custom domain, DNS, Pages project, and owner-side repository settings must be configured by the repository owner.
 
 ## License
 
-Original project code is licensed under BSD-3-Clause; see [LICENSE](LICENSE). Generated data has the upstream licenses described in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE).

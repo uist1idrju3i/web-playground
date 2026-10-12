@@ -1,14 +1,15 @@
 # Cloudflare Pages
 
-Configure the Pages project with:
+Cloudflare Pages serves the committed `public_html/` directory as static content. There is no production build command; generators run before commit and in CI only.
 
-- Production branch: `main`
-- Framework preset: `None`
-- Build command: leave empty
-- Build output directory: `public_html`
-- Root directory: repository root
-- Build environment variable: `SKIP_DEPENDENCY_INSTALL=1`
-- Custom domain: `web-playground.xn--uist1idrju3i.jp`
-- Preview deployments: enabled
+## Owner-side setup
 
-The site is plain static HTML, CSS, and JavaScript modules. Do not add a build step or external CDN resources. Cloudflare Pages honors `public_html/_headers`; keep its security policy in sync with local `scripts/serve.mjs`. COOP/COEP are scoped to `/browser-features/*` to enable cross-origin isolation there. Do not add a Permissions-Policy that disables browser APIs this project reports.
+1. Create or select the Pages project and connect the repository.
+2. Set the output directory to `public_html/` and leave the build command empty.
+3. Configure the custom domain and DNS for `web-playground.xn--uist1idrju3i.jp`.
+4. Confirm Pages applies `public_html/_headers`.
+5. After the domain is configured, review the `deploy-smoke` workflow on pushes to `main`.
+
+The repository cannot verify account ownership, DNS propagation, or Cloudflare dashboard settings. A local test or successful workflow is not proof that the public custom domain is live.
+
+The site may use version-pinned, SRI-protected cdnjs scripts/styles when necessary. Other third-party resource origins are prohibited; see [external resources](external-resources.md).

@@ -1,30 +1,18 @@
-# External Resources
+# External-resource policy
 
-## Origin policy
+Priorities are security and stability first, then runtime performance. JavaScript and CSS load only from the site origin or `https://cdnjs.cloudflare.com`. cdnjs URLs must use an exact `/ajax/libs/<name>/<x.y.z>/` path, strong sha384/sha512 SRI, and `crossorigin="anonymous"`. External navigation links (for example, MDN or specifications) are allowed because they do not load a page resource.
 
-Prioritize security and stability first, then runtime performance. The site is static and has no build step. JavaScript and CSS must come from this origin or from `https://cdnjs.cloudflare.com`; do not add other third-party origins.
+## Layered enforcement
 
-Pin every cdnjs URL to an exact library version. Obtain the SRI value from the cdnjs API and include `integrity="sha384-..."` or `integrity="sha512-..."` together with `crossorigin="anonymous"` on each external `<script>` or stylesheet `<link>`. The CSP allows cdnjs for scripts and styles, while fonts and connections remain same-origin only. `require-sri-for` is omitted because it is not enforced by supported browsers.
+1. **Static parser gate** (`scripts/check-external-resources.mjs`) examines HTML, inline script/style, JavaScript URL sinks, CSS resources, SVG, and web manifests. It rejects unknown origins, invalid cdnjs use, and parse failures.
+2. **Runtime E2E gate** (`tests/e2e/resource-policy.spec.js`) discovers every HTML page, records and aborts disallowed requests, observes WebSockets and CSP violations, and rejects page errors.
+3. **CSP lock test** (`tests/unit/headers.test.js`) requires the exact global directive map and scoped isolation/security headers.
+4. **Browser CSP** in `public_html/_headers` applies policy at runtime.
 
-Prefer classic scripts with SRI. Do not import ES modules from cdnjs unless an import map provides an integrity value for every cdnjs module URL. The external-resource checker runs as part of `npm run lint`.
-
-The style policy also includes a SHA-256 source for the exact `body {}` stylesheet that Playwright's WebKit screenshotter injects while synchronizing screenshots. WebKit reported a CSP violation once per screenshot without this fixed hash; page-load checks were clean. This does not enable arbitrary inline styles or use `'unsafe-inline'`.
+Fix a source violation; never bypass or weaken a gate. Do not add `'unsafe-inline'` or `'unsafe-eval'`.
 
 ## Fonts
 
-Do not use Cloudflare Fonts or Google Fonts. Cloudflare Fonts injects an inline `<style>` block, which would require weakening `style-src` with `'unsafe-inline'`, and can fall back to `fonts.gstatic.com`. Google Fonts adds a third-party font origin and another runtime dependency.
+Do not use Google Fonts or Cloudflare Fonts. Cloudflare Fonts injects inline styles (which would require weakening `style-src`) and can fall back to `fonts.gstatic.com`, creating an unapproved third-party dependency. Prefer the Japanese-capable system font stack in `public_html/library/css/base.css`.
 
-If custom fonts become necessary, self-host carefully reviewed OFL-licensed WOFF2 subsets under `public_html/library/fonts/`. Keep the font files and their license text in the repository, retain the full SIL Open Font License text required by the font, and define subsets with explicit `unicode-range` descriptors. Use `font-display: swap` so text remains visible while fonts load. For example:
-
-```css
-@font-face {
-  font-family: 'Example Sans';
-  src: url('/library/fonts/example-sans-latin.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: U+0000-00FF;
-}
-```
-
-No font files are currently included; the site uses Japanese-capable system font stacks.
+If a product need requires a bundled font, self-host OFL-licensed WOFF2 subsets under `public_html/library/fonts/`, define precise `unicode-range` blocks, set `font-display: swap`, and include the complete applicable SIL Open Font License text in the repository notices. Do not add font binaries without reviewing size, coverage, and licensing.
