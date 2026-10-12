@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Write and run real Ruby (CRuby on WebAssembly) entirely inside your browser."
+    />
+    <title>Ruby.wasm Playground · Web Playground</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"
+      integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ=="
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="/ruby-wasm/app.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"
+      integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/ruby/ruby.min.js"
+      integrity="sha512-kIWQdD2Oq6DBWghYgnP6MpRMCuPxBvSI8/UBo7yxVm1blEPnNxVkwypVXky2KmIUgN2oNN7yd5TCeXJ48e867A=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/edit/closebrackets.min.js"
+      integrity="sha512-tsjcYO5hFvViRssxiM7Jhd8601epWOx1He3Hl4yuI5dKKPxr43KxkOhc9GZeeqzlYJm9ABb7UPA9697NiqZZ7Q=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/edit/matchbrackets.min.js"
+      integrity="sha512-GSYCbN/le5gNmfAWVEjg1tKnOH7ilK6xCLgA7c48IReoIR2g2vldxTM6kZlN6o3VtWIe6fHu/qhwxIt11J8EBA=="
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="/ruby-wasm/app.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <a class="back-link" href="/">← All apps</a>
+    </header>
+    <main class="app-shell">
+      <section class="app-hero">
+        <p class="eyebrow">LANGUAGES ON WASM</p>
+        <div class="hero-title-row">
+          <div>
+            <h1>Ruby.wasm Playground</h1>
+            <p>
+              A real CRuby 3.4 running on WebAssembly inside a Worker — write Ruby, run it, draw on
+              the page, and poke at the WASI internals. Nothing leaves your browser.
+            </p>
+          </div>
+          <div class="read-only-pill"><span aria-hidden="true">●</span> Runs 100% client-side</div>
+        </div>
+      </section>
+
+      <div id="requirements" aria-live="polite"></div>
+      <p id="load-error" class="load-error" role="alert" hidden></p>
+
+      <section class="panel" aria-labelledby="boot-title" id="boot-panel">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">00 · BOOT</p>
+            <h2 id="boot-title">VM boot</h2>
+          </div>
+          <span id="boot-status" class="status-chip status-info">Waiting</span>
+        </div>
+        <ol id="boot-steps" class="boot-steps">
+          <li data-stage="fetch"><span class="boot-dot"></span>Download runtime (gzip)</li>
+          <li data-stage="compile"><span class="boot-dot"></span>Compile wasm module</li>
+          <li data-stage="instantiate"><span class="boot-dot"></span>Instantiate VM</li>
+          <li data-stage="prelude"><span class="boot-dot"></span>Load playground prelude</li>
+          <li data-stage="ready"><span class="boot-dot"></span>Ready</li>
+        </ol>
+        <dl id="boot-metrics" class="environment-grid" hidden></dl>
+      </section>
+
+      <div class="playground-grid">
+        <section class="panel" aria-labelledby="editor-title">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">01 · WRITE RUBY</p>
+              <h2 id="editor-title">Editor</h2>
+            </div>
+            <div class="editor-actions">
+              <button id="share-button" class="ghost-button" type="button" disabled>
+                Copy share URL
+              </button>
+            </div>
+          </div>
+          <div id="snippet-gallery" class="snippet-gallery" aria-label="Example snippets"></div>
+          <div class="editor-wrap">
+            <textarea
+              id="code-editor"
+              name="code"
+              spellcheck="false"
+              aria-label="Ruby source code"
+            ></textarea>
+          </div>
+          <div class="run-bar">
+            <fieldset class="mode-picker" id="mode-picker">
+              <legend>Run mode</legend>
+              <label
+                ><input type="radio" name="mode" value="eval" checked /> eval
+                <span class="mode-hint">(synchronous)</span></label
+              >
+              <label
+                ><input type="radio" name="mode" value="evalAsync" /> evalAsync
+                <span class="mode-hint">(Promise + JS .await)</span></label
+              >
+            </fieldset>
+            <div class="run-buttons">
+              <button id="run-button" class="primary-button" type="button" disabled>
+                Run ▶ <kbd>Ctrl+Enter</kbd>
+              </button>
+              <button id="kill-button" class="danger-button" type="button" disabled hidden>
+                Kill VM
+              </button>
+              <button id="restart-button" class="ghost-button" type="button" hidden>
+                Restart VM
+              </button>
+            </div>
+            <span id="vm-state" class="status-chip status-info">booting…</span>
+          </div>
+          <details class="stdin-row">
+            <summary>stdin for <code>gets</code> (optional)</summary>
+            <textarea
+              id="stdin-box"
+              rows="2"
+              placeholder="Lines fed to Ruby's STDIN before each run"
+            ></textarea>
+          </details>
+        </section>
+
+        <section class="panel" aria-labelledby="session-title">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">02 · RUN</p>
+              <h2 id="session-title">Session log</h2>
+            </div>
+            <div class="editor-actions">
+              <button id="clear-log" class="ghost-button" type="button">Clear log</button>
+              <button id="reset-stage" class="ghost-button" type="button">Reset stage</button>
+            </div>
+          </div>
+          <div id="irb-log" class="irb-log" aria-live="polite">
+            <p class="loading-state">Boot the VM to start a session.</p>
+          </div>
+          <div class="stage">
+            <p class="stage-label">Ruby stage — DOM toys snippets can touch</p>
+            <canvas id="stage-canvas" width="480" height="200"></canvas>
+            <div class="stage-toys">
+              <button id="stage-btn" class="ghost-button" type="button">stage button</button>
+              <input id="stage-input" type="text" placeholder="type here (keydown events)" />
+            </div>
+            <div id="stage-out" class="stage-out" aria-live="polite"></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="matrix-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">03 · UNDER THE HOOD</p>
+            <h2 id="matrix-title">ruby.wasm feature matrix</h2>
+          </div>
+          <button id="run-all" class="ghost-button" type="button" disabled>Run all checks</button>
+        </div>
+        <p class="section-intro">
+          Each check runs inside the live VM. Limits documented by ruby.wasm (threads, native
+          sockets) are expected to fail — that is the finding, not a bug.
+        </p>
+        <ul id="feature-list" class="capability-list"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="fs-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">04 · WASI FILESYSTEM</p>
+            <h2 id="fs-title">Virtual filesystem</h2>
+          </div>
+          <button id="fs-refresh" class="ghost-button" type="button" disabled>Refresh</button>
+        </div>
+        <p class="section-intro">
+          The WASI preopen mounted at <code>/</code>. Files Ruby writes appear here; write a file
+          and <code>File.read</code> it back from Ruby.
+        </p>
+        <div class="fs-browser">
+          <ul id="fs-tree" class="fs-tree">
+            <li class="loading-state">Boot the VM first.</li>
+          </ul>
+          <pre id="fs-view" class="fs-view" aria-live="polite">Select a file to view it.</pre>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="notes-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">05 · NOTES</p>
+            <h2 id="notes-title">What this proves</h2>
+          </div>
+        </div>
+        <ul class="notes-list">
+          <li>
+            The 30.6 MB stdlib build ships as an 8.9 MB gzip file and is inflated in-page with
+            <code>DecompressionStream</code>, staying under the Cloudflare Pages 25 MiB file limit.
+          </li>
+          <li>
+            Ruby runs in a dedicated Worker, so an infinite loop never freezes this tab — the Kill
+            button terminates and reboots the VM.
+          </li>
+          <li>
+            <code>JS.global</code> inside a Worker cannot see the DOM, so page toys are reached
+            through a postMessage bridge (<code>Dom</code>/<code>Canvas</code> helpers in
+            <a href="/ruby-wasm/prelude.rb">prelude.rb</a>). Event handlers registered by Ruby keep
+            working between runs.
+          </li>
+          <li>
+            <code>evalAsync</code> uses Asyncify, so <code>JS::Object#await</code> works on every
+            engine — no JSPI flag needed.
+          </li>
+        </ul>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span>ruby.wasm by Yuta Saito and the Ruby project · Ruby License / 2-clause BSDL.</span>
+      <span class="footer-links">
+        <a href="https://github.com/uist1idrju3i/web-playground">Source on GitHub</a>
+        <a href="https://deepwiki.com/uist1idrju3i/web-playground">Ask DeepWiki</a>
+      </span>
+    </footer>
+  </body>
+</html>
