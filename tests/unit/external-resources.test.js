@@ -16,16 +16,12 @@ test('rejects external origins, unpinned cdnjs, missing SRI, and unprotected mod
 
   assert.ok(messages.includes('Resource origin is not allowed: https://example.com.'));
   assert.ok(
-    messages.includes(
-      'cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version: https://cdnjs.cloudflare.com/ajax/libs/dayjs/latest/dayjs.min.js',
-    ),
+    messages.includes('cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version.'),
   );
   assert.ok(messages.includes('cdnjs link must include sha384 or sha512 integrity.'));
   assert.ok(messages.includes('cdnjs link must set crossorigin="anonymous".'));
   assert.ok(
-    messages.includes(
-      'cdnjs ES module imports need an import-map integrity entry: https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js',
-    ),
+    messages.includes('cdnjs ES module imports need an import-map integrity entry.'),
   );
   assert.ok(messages.includes('Resource origin is not allowed: https://example.org.'));
   assert.ok(messages.includes('Resource origin is not allowed: https://fonts.googleapis.com.'));

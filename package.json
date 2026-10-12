@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
   "scripts": {
     "generate": "node scripts/generate-feature-data.mjs && node scripts/generate-wasm-probes.mjs",
     "check:generated": "npm run generate && git diff --exit-code HEAD -- public_html/library/data/web-features.json docs/web-platform-features.md public_html/library/wasm/probes",
@@ -17,10 +20,13 @@
   "devDependencies": {
     "@eslint/js": "9.39.1",
     "@mdn/browser-compat-data": "8.1.5",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.64.0",
+    "acorn": "8.19.0",
+    "acorn-walk": "8.3.5",
     "binaryen": "132.0.0",
     "eslint": "9.39.1",
     "globals": "16.5.0",
+    "parse5": "8.0.1",
     "prettier": "3.6.2",
     "web-features": "3.42.0"
   }
