@@ -6,6 +6,12 @@
 /*.wasm
   Content-Type: application/wasm
 
+/library/js/wasm-probe-worker.js
+  Cross-Origin-Embedder-Policy: require-corp
+
+/library/wasm/toolchains/*
+  Cross-Origin-Embedder-Policy: require-corp
+
 /browser-features/*
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
