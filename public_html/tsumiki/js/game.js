@@ -139,6 +139,15 @@ export class Game {
     return Math.max(-lim, Math.min(lim, x));
   }
 
+  // Collection + achievement progress persists the moment it changes, not
+  // only at game over — closing mid-run keeps every prefecture earned.
+  _persistProgress() {
+    const s = this.save.data;
+    s.collected = [...this.collected];
+    s.achievements = [...this.achievements];
+    this.onPersist?.();
+  }
+
   _checkAchievements() {
     for (const groups of Object.values(this.groupDefs)) {
       for (const g of groups) {
@@ -211,6 +220,7 @@ export class Game {
       const firstTime = !this.collected.has(p.code);
       this.collected.add(p.code);
       this._checkAchievements();
+      this._persistProgress();
       const gain = Math.round(90 * this.combo + this.heightM * 6);
       this.score += gain;
       this.combo = Math.min(9, this.combo + 0.5);
