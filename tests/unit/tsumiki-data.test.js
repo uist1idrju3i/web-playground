@@ -68,5 +68,9 @@ test('prefecture data contains 47 well-formed pieces', () => {
 test('prefecture data records license provenance', () => {
   assert.match(data.source.name, /Natural Earth/);
   assert.match(data.source.license, /public domain/i);
-  assert.ok(data.source.url.includes('naturalearthdata.com'));
+  const sourceHost = new URL(data.source.url).hostname;
+  assert.ok(
+    sourceHost === 'naturalearthdata.com' || sourceHost.endsWith('.naturalearthdata.com'),
+    `unexpected source host: ${sourceHost}`,
+  );
 });
