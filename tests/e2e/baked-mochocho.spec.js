@@ -92,6 +92,22 @@ async function clickAtCenter(page, selector) {
   await page.mouse.click(point.x, point.y);
 }
 
+// Engine-limited environments (e.g. headless Firefox without WebGL) stop at
+// the unsupported phase; report and skip rather than fail, matching the
+// tsumiki spec's capability-skip pattern.
+async function requireTitleOrSkip(page, testInfo) {
+  const body = page.locator('body');
+  await page.waitForFunction(
+    () => ['title', 'unsupported'].includes(document.body.dataset.phase),
+    null,
+    { timeout: 15_000 },
+  );
+  testInfo.skip(
+    (await body.getAttribute('data-phase')) === 'unsupported',
+    'required capabilities unavailable in this browser',
+  );
+}
+
 async function startAndAssertGate(
   page,
   baseURL,
@@ -101,6 +117,7 @@ async function startAndAssertGate(
 ) {
   const watcher = await watchPage(page, baseURL);
   await page.goto(path);
+  await requireTitleOrSkip(page, testInfo);
   const body = page.locator('body');
   await expect(body).toHaveAttribute('data-phase', 'title');
   await expect(body).toHaveAttribute('data-renderer', /^(WebGPU|WebGL2)$/);
@@ -137,9 +154,12 @@ for (const { width, height } of [
   { width: 844, height: 390 },
   { width: 375, height: 667 },
 ]) {
-  test(`iPhone viewport ${width}×${height} keeps controls in bounds`, async ({ page }) => {
+  test(`iPhone viewport ${width}×${height} keeps controls in bounds`, async ({
+    page,
+  }, testInfo) => {
     await page.setViewportSize({ width, height });
     await page.goto('/baked-mochocho/?debug=1&speed=40');
+    await requireTitleOrSkip(page, testInfo);
     await expect(page.locator('body')).toHaveAttribute('data-phase', 'title');
     const titleBounds = await page.evaluate(() => {
       const button = document.querySelector('#start-button');
@@ -271,8 +291,9 @@ test('the rendered scene is non-black and non-uniform', async ({
   }
 });
 
-test('the batter tool pours into cavity zero through pointer input', async ({ page }) => {
+test('the batter tool pours into cavity zero through pointer input', async ({ page }, testInfo) => {
   await page.goto('/baked-mochocho/?debug=1&speed=40');
+  await requireTitleOrSkip(page, testInfo);
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'title');
   await clickAtCenter(page, '#start-button');
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'playing');
@@ -307,8 +328,9 @@ test('the batter tool pours into cavity zero through pointer input', async ({ pa
   }
 });
 
-test('tool, language, and menu controls respond through the UI', async ({ page }) => {
+test('tool, language, and menu controls respond through the UI', async ({ page }, testInfo) => {
   await page.goto('/baked-mochocho/?debug=1&speed=40');
+  await requireTitleOrSkip(page, testInfo);
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'title');
   const languageState = await page.evaluate(() => {
     const button = document.querySelector('#lang-button');
@@ -371,9 +393,12 @@ test('tool, language, and menu controls respond through the UI', async ({ page }
   });
 });
 
-test('signed save verifies after reload and detects localStorage tampering', async ({ page }) => {
+test('signed save verifies after reload and detects localStorage tampering', async ({
+  page,
+}, testInfo) => {
   if (test.info().project.name === 'chromium') test.setTimeout(60_000);
   await page.goto('/baked-mochocho/?debug=1&speed=40');
+  await requireTitleOrSkip(page, testInfo);
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'title');
   await clickAtCenter(page, '#start-button');
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'playing');
@@ -434,4 +459,98 @@ test('WebGPU offscreen snapshot renders a non-black, non-uniform scene', async (
   });
   expect(statistics.mean).toBeGreaterThan(20);
   expect(statistics.standardDeviation).toBeGreaterThan(8);
+});
+
+// Screen position of a cavity centre, matching scene.js toScreen().
+async function cavityScreen(page, index) {
+  return page.evaluate((i) => {
+    const cam = globalThis.mochochoDebug.camera;
+    const X = 42 + 90 * (i % 3);
+    const Z = 42 + 84 * Math.floor(i / 3);
+    const m = cam.viewProj;
+    const p = [X, Z, 0];
+    const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+    const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+    const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+    const canvas = document.querySelector('canvas.stage');
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: r.left + ((x / w + 1) / 2) * r.width,
+      y: r.top + ((1 - y / w) / 2) * r.height,
+    };
+  }, index);
+}
+
+async function holdOn(page, index, ms) {
+  const p = await cavityScreen(page, index);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.waitForTimeout(ms);
+  await page.mouse.up();
+}
+
+async function tapAt(page, index) {
+  const p = await cavityScreen(page, index);
+  await page.mouse.click(p.x, p.y);
+}
+
+test('a full batch bakes through the UI: oil, pour, fill, flip, serve, score', async ({
+  page,
+  baseURL,
+  browserName,
+}, testInfo) => {
+  test.slow();
+  await startAndAssertGate(
+    page,
+    baseURL,
+    browserName,
+    testInfo,
+    '/baked-mochocho/?debug=1&speed=60',
+  );
+  await page.evaluate(() => {
+    globalThis.mochochoDebug.paused = false;
+  });
+  const tool = (name) => clickAtCenter(page, `[data-tool="${name}"]`);
+
+  await tool('oil');
+  for (const i of [0, 1, 2, 3, 4, 5]) await holdOn(page, i, 60);
+
+  await tool('batter');
+  for (const i of [0, 1, 2]) await holdOn(page, i, 900);
+  await page.waitForFunction(
+    () =>
+      globalThis.mochochoDebug.sim.cavity(0).state >= 1 &&
+      globalThis.mochochoDebug.sim.cavity(1).state >= 1 &&
+      globalThis.mochochoDebug.sim.cavity(2).state >= 1,
+    { timeout: 30_000 },
+  );
+
+  await tool('filling');
+  for (const i of [0, 1, 2]) await tapAt(page, i);
+  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(0).state === 2, {
+    timeout: 15_000,
+  });
+
+  // Let the tops set before flipping.
+  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(0).topSetMean >= 0.45, {
+    timeout: 60_000,
+  });
+
+  await tool('flip');
+  for (const i of [0, 1, 2]) await tapAt(page, i);
+  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(3).state >= 3, {
+    timeout: 30_000,
+  });
+
+  // Finish the bake on the merged cakes.
+  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(3).bottomBrownMean >= 0.45, {
+    timeout: 90_000,
+  });
+
+  await tool('serve');
+  await tapAt(page, 3);
+  await expect(page.locator('#result-screen')).toBeVisible();
+  await expect(page.locator('#result-stars')).toContainText('★');
+  await clickAtCenter(page, '#next-button');
+  await expect(page.locator('#result-screen')).toBeHidden();
 });

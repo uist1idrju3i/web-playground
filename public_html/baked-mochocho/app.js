@@ -115,7 +115,7 @@ function hudInsets(height) {
 
 function resize() {
   const canvas = stage();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2) * state.scale;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3) * state.scale;
   const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
   const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
   if (
@@ -181,7 +181,7 @@ function onPointerDown(event) {
     state.sim.setNozzle(p.x, p.y, POUR_RATE);
     caption('cap.pour');
   } else if (state.tool === 'oil') {
-    state.sim.grease(p.x, p.y, 9, 0.6);
+    state.sim.grease(p.x, p.y, 20, 0.8);
   } else if (state.tool === 'filling') {
     if (cavity < 0) return;
     const code = state.sim.addFilling(cavity, state.filling, p.x, p.y);
@@ -214,8 +214,8 @@ function onPointerMove(event) {
       state.sim.grease(
         state.pointer.last.x + (p.x - state.pointer.last.x) * k,
         state.pointer.last.y + (p.y - state.pointer.last.y) * k,
-        9,
-        0.35,
+        20,
+        0.5,
       );
     }
   }
@@ -243,7 +243,7 @@ function onPointerUp(event) {
 }
 
 function updateCursor(p, active) {
-  const radius = { batter: 6, oil: 9, filling: 10, flip: 34, serve: 36 }[state.tool];
+  const radius = { batter: 6, oil: 20, filling: 10, flip: 34, serve: 36 }[state.tool];
   state.cursor = { x: p.x, y: p.y, radius, active };
 }
 
@@ -403,12 +403,21 @@ function updateChips(cavities, width, height) {
     } else if (top.state >= 1 || bottom.state >= 1) {
       const pct = Math.round(Math.min(1, (top.topSetMean + bottom.topSetMean) / 2 / 0.6) * 100);
       text =
-        top.state >= 1 && top.topSetMean > 0.45
-          ? t('chip.ready')
-          : top.state >= 1
-            ? t('chip.cooking', { pct })
-            : t('chip.batter', { ml: Math.round(bottom.batterMl) });
-      tone = top.bottomBrownMean > 1.05 ? 'warn' : top.topSetMean > 0.45 ? 'good' : '';
+        top.state === 1
+          ? t('chip.pouring', { ml: Math.round(top.batterMl) })
+          : top.state >= 1 && top.topSetMean > 0.45
+            ? t('chip.ready')
+            : top.state >= 1
+              ? t('chip.cooking', { pct })
+              : t('chip.batter', { ml: Math.round(bottom.batterMl) });
+      tone =
+        top.bottomBrownMean > 1.05
+          ? 'warn'
+          : top.state === 1 && top.batterMl >= 40
+            ? 'good'
+            : top.topSetMean > 0.45
+              ? 'good'
+              : '';
     }
     const chip = chips[pair];
     if (chip.textContent !== text) chip.textContent = text;
