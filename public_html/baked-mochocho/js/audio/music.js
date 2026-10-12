@@ -1,80 +1,80 @@
 // Original music and cue data (composed for this app). Pure data + helpers, no Web Audio here,
 // so unit tests can check the cue-design rules without a browser.
 
-export const BPM = 96;
+export const BPM = 120;
 export const SWING = 0.58;
-export const KEY = { tonic: 62, mode: 'mixolydian' };
+export const KEY = { tonic: 67, mode: 'mixolydian' };
 const MIXOLYDIAN = [0, 2, 4, 5, 7, 9, 10];
 
 // Melody in eighth notes: [midi, eighths]. midi null is a rest. 8 bars of 4/4.
 export const MELODY = [
   [
-    [69, 2],
-    [66, 1],
-    [69, 1],
-    [71, 3],
-    [69, 1],
-  ],
-  [
-    [67, 1],
-    [64, 1],
-    [67, 1],
-    [72, 2],
-    [71, 1],
-    [67, 2],
-  ],
-  [
-    [71, 2],
-    [74, 1],
-    [71, 1],
-    [69, 1],
-    [67, 1],
-    [69, 2],
-  ],
-  [
-    [66, 3],
-    [64, 1],
-    [62, 4],
-  ],
-  [
-    [78, 2],
-    [76, 1],
-    [74, 1],
-    [71, 2],
     [74, 2],
-  ],
-  [
-    [76, 1],
-    [79, 1],
-    [76, 1],
-    [72, 1],
-    [74, 2],
-    [72, 2],
-  ],
-  [
     [71, 1],
-    [69, 1],
-    [67, 1],
-    [69, 1],
+    [74, 1],
     [76, 3],
     [74, 1],
   ],
   [
-    [74, 6],
+    [72, 1],
+    [69, 1],
+    [72, 1],
+    [77, 2],
+    [76, 1],
+    [72, 2],
+  ],
+  [
+    [76, 2],
+    [79, 1],
+    [76, 1],
+    [74, 1],
+    [72, 1],
+    [74, 2],
+  ],
+  [
+    [71, 3],
+    [69, 1],
+    [67, 4],
+  ],
+  [
+    [83, 2],
+    [81, 1],
+    [79, 1],
+    [76, 2],
+    [79, 2],
+  ],
+  [
+    [81, 1],
+    [84, 1],
+    [81, 1],
+    [77, 1],
+    [79, 2],
+    [77, 2],
+  ],
+  [
+    [76, 1],
+    [74, 1],
+    [72, 1],
+    [74, 1],
+    [81, 3],
+    [79, 1],
+  ],
+  [
+    [79, 6],
     [null, 2],
   ],
 ];
 
 // One chord per bar: root midi + chord tones (semitones above root).
 export const CHORDS = [
-  { root: 50, tones: [0, 4, 7] },
+  { root: 55, tones: [0, 4, 7] },
+  { root: 53, tones: [0, 4, 7] },
   { root: 48, tones: [0, 4, 7] },
-  { root: 43, tones: [0, 4, 7] },
-  { root: 50, tones: [0, 4, 7] },
-  { root: 47, tones: [0, 3, 7] },
-  { root: 48, tones: [0, 4, 7] },
-  { root: 45, tones: [0, 5, 7, 10] },
-  { root: 50, tones: [0, 4, 7] },
+  { root: 55, tones: [0, 4, 7] },
+  { root: 52, tones: [0, 3, 7] },
+  { root: 53, tones: [0, 4, 7] },
+  { root: 50, tones: [0, 5, 7, 10] },
+  { root: 55, tones: [0, 4, 7] },
 ];
 
 // Cue set (bard cuecraft): notes are [midi, ms]; every cue starts and ends on a sounded note.
@@ -83,52 +83,52 @@ export const CUES = {
     purpose: 'confirm',
     wave: 'marimba',
     notes: [
-      [81, 60],
-      [86, 100],
+      [86, 60],
+      [91, 100],
     ],
   },
   notification: {
     purpose: 'notification',
     wave: 'bell',
     notes: [
-      [88, 80],
-      [88, 140],
+      [93, 80],
+      [93, 140],
     ],
   },
   success: {
     purpose: 'success',
     wave: 'marimba',
     notes: [
-      [74, 90],
-      [78, 90],
-      [81, 220],
+      [79, 90],
+      [83, 90],
+      [86, 220],
     ],
   },
   completion: {
     purpose: 'completion',
     wave: 'marimba',
     notes: [
-      [74, 180],
-      [81, 110],
-      [78, 110],
-      [86, 420],
+      [79, 180],
+      [86, 110],
+      [83, 110],
+      [91, 420],
     ],
   },
   perfect: {
     purpose: 'success',
     wave: 'bell',
     notes: [
-      [86, 70],
-      [91, 80],
-      [98, 160],
+      [91, 70],
+      [96, 80],
+      [103, 160],
     ],
   },
   warning: {
     purpose: 'warning',
     wave: 'square',
     notes: [
-      [84, 180],
-      [83, 260],
+      [89, 180],
+      [88, 260],
     ],
     loop: true,
     restMs: 700,
@@ -137,19 +137,19 @@ export const CUES = {
     purpose: 'error',
     wave: 'square',
     notes: [
-      [69, 140],
-      [63, 200],
+      [74, 140],
+      [68, 200],
     ],
   },
 };
 
 export const CUE_DURATION_MS = {
-  confirm: [50, 300],
-  success: [150, 500],
-  completion: [300, 1000],
-  notification: [100, 600],
-  warning: [200, 800],
-  error: [150, 500],
+  confirm: [55, 300],
+  success: [155, 500],
+  completion: [305, 1000],
+  notification: [105, 600],
+  warning: [205, 800],
+  error: [155, 500],
 };
 
 export const midiToHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
