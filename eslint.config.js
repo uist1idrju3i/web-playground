@@ -8,6 +8,7 @@ export default [
       'playwright-report/**',
       'test-results/**',
       'public_html/library/wasm/toolchains/**',
+      'public_html/ruby-wasm/vendor/**',
     ],
   },
   js.configs.recommended,
