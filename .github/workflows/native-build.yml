@@ -48,7 +48,7 @@ jobs:
         working-directory: native/electron
         run: |
           set +e
-          timeout 20 xvfb-run -a npx electron .
+          timeout 20 xvfb-run -a npx electron . --no-sandbox
           code=$?
           set -e
           # 124 = killed by timeout while the app was still running = success
