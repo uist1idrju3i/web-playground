@@ -531,8 +531,8 @@ export class Renderer {
   }
 
   // Original procedural space actors (all quads/triangles, no assets):
-  // a rocket that launches past 100 km, and the ISS with a tethered
-  // astronaut cruising past ~380 km. Everything in km units.
+  // a rocket that streaks past on each new tower-height record, and the
+  // ISS with a tethered astronaut cruising past ~380 km. Everything in km.
   _buildSpaceActors() {
     const gl = this.gl;
     const quad = (w, h) => [
@@ -565,7 +565,6 @@ export class Renderer {
     const panel = [0.16, 0.28, 0.72];
     const rocket = {
       on: false,
-      t: 6,
       x: 0,
       y: 0,
       rot: 0.3,
@@ -605,24 +604,24 @@ export class Renderer {
     return { list: [rocket, iss, astro], rocket, iss, astro };
   }
 
+  // Called by the game each time the tower sets a new height record.
+  rocketFlyby() {
+    const r = this.spaceActors.rocket;
+    if (r.on) return;
+    r.on = true;
+    const side = Math.random() < 0.5 ? -1 : 1;
+    r.x = this.cam.x + side * this.cam.h * 0.42;
+    r.y = this.cam.y - this.cam.h * 0.35;
+    r.rot = -side * 0.26 + (Math.random() - 0.5) * 0.12;
+  }
+
   _updateSpaceActors(dt) {
     const alt = this.cam.y;
     const r = this.spaceActors.rocket;
-    if (alt > 100) {
-      r.t += dt;
-      if (!r.on && r.t > 11) {
-        r.on = true;
-        r.t = 0;
-        const side = Math.random() < 0.5 ? -1 : 1;
-        r.x = this.cam.x + side * this.cam.h * 0.42;
-        r.y = this.cam.y - this.cam.h * 0.35;
-        r.rot = -side * 0.26 + (Math.random() - 0.5) * 0.12;
-      }
-      if (r.on) {
-        r.y += 320 * dt;
-        r.x += 90 * dt * Math.sign(-r.rot);
-        if (r.y > this.cam.y + this.cam.h * 0.75) r.on = false;
-      }
+    if (r.on) {
+      r.y += 320 * dt;
+      r.x += 90 * dt * Math.sign(-r.rot);
+      if (r.y > this.cam.y + this.cam.h * 0.75) r.on = false;
     }
     r.visible = r.on;
 
