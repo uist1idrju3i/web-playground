@@ -11,8 +11,9 @@ use core::ptr;
 //
 // Two entropy regimes share one draw order:
 //   mode 0 "feel" — seeded xoshiro128** plus game-style shaping (PRD phase
-//     transitions, quantile shuffle-bags for intervals/counts/depths, and
-//     azimuth-bin coverage for ejection directions).
+//     transitions, quantile shuffle-bags for intervals/counts/depths/speeds,
+//     azimuth-bin coverage for ejection directions, stratified burst fans,
+//     and a floor on successive ejection intervals).
 //   mode 1 "trng" — raw u32 words from crypto.getRandomValues, fed by JS
 //     through a ring; all distributions are memoryless/unshaped.
 // Positions are millimetres, times are seconds, angles are radians.
@@ -155,6 +156,8 @@ struct Sim {
     count_pos: usize,
     depth_bag: [f32; BAG],
     depth_pos: usize,
+    speed_bag: [f32; BAG],
+    speed_pos: usize,
     dir_bins: [u32; DIR_BINS],
     step: u32,
     prd_n: u32,
@@ -189,6 +192,8 @@ impl Sim {
             count_pos: 0,
             depth_bag: [0.0; BAG],
             depth_pos: 0,
+            speed_bag: [0.0; BAG],
+            speed_pos: 0,
             dir_bins: [0; DIR_BINS],
             step: 0,
             prd_n: 0,
@@ -237,14 +242,15 @@ impl Sim {
     // a fresh permutation, so draws spread across the whole range instead of
     // clustering — the "human-fair" substitute for iid sampling.
     fn shaped(&mut self, which: usize) -> f32 {
-        // which: 0 interval, 1 count, 2 depth. trng mode: raw uniform.
+        // which: 0 interval, 1 count, 2 depth, 3 speed. trng: raw uniform.
         if self.state[S_MODE] > 0.5 {
             return self.u();
         }
         let need_fill = match which {
             0 => self.interval_pos,
             1 => self.count_pos,
-            _ => self.depth_pos,
+            2 => self.depth_pos,
+            _ => self.speed_pos,
         } >= BAG;
         if need_fill {
             let mut bag = [0f32; BAG];
@@ -267,9 +273,13 @@ impl Sim {
                     self.count_bag = bag;
                     self.count_pos = 0;
                 }
-                _ => {
+                2 => {
                     self.depth_bag = bag;
                     self.depth_pos = 0;
+                }
+                _ => {
+                    self.speed_bag = bag;
+                    self.speed_pos = 0;
                 }
             }
         }
@@ -284,9 +294,14 @@ impl Sim {
                 self.count_pos += 1;
                 v
             }
-            _ => {
+            2 => {
                 let v = self.depth_bag[self.depth_pos];
                 self.depth_pos += 1;
+                v
+            }
+            _ => {
+                let v = self.speed_bag[self.speed_pos];
+                self.speed_pos += 1;
                 v
             }
         }
@@ -299,15 +314,15 @@ impl Sim {
             return self.u() * core::f32::consts::TAU;
         }
         let mut best = 0usize;
-        let mut best_score = u32::MAX;
-        let mut ties = 0u32;
-        for i in 0..DIR_BINS {
+        let mut best_age = self.step.wrapping_sub(self.dir_bins[0]);
+        let mut ties = 1u32;
+        for i in 1..DIR_BINS {
             let age = self.step.wrapping_sub(self.dir_bins[i]);
-            if age < best_score {
-                best_score = age;
+            if age > best_age {
+                best_age = age;
                 best = i;
                 ties = 1;
-            } else if age == best_score {
+            } else if age == best_age {
                 ties += 1;
                 if self.u() * ties as f32 >= 1.0 {
                     best = i;
@@ -324,11 +339,17 @@ impl Sim {
     }
 
     // Draw an ejection interval. trng: exponential (memoryless Poisson).
-    // feel: quantile-bagged exponential — same mean, bounded gaps.
+    // feel: quantile-bagged exponential with a floor — bounded gaps, and
+    // no two pops close enough to feel simultaneous.
     fn draw_interval(&mut self) -> f32 {
         let mean = EJECT_MEAN[self.phase_index()];
         let u = self.shaped(0);
-        -ln(1.0 - u.min(0.9999)) * mean
+        let raw = -ln(1.0 - u.min(0.9999)) * mean;
+        if self.state[S_MODE] > 0.5 {
+            raw
+        } else {
+            raw.max(mean * 0.25)
+        }
     }
 
     fn draw_count(&mut self) -> f32 {
@@ -412,7 +433,7 @@ impl Sim {
         for _ in 0..count {
             let angle = self.dir_angle();
             let i = self.phase_index();
-            let speed = SPEED_MIN[i] + self.u() * SPEED_SPAN[i];
+            let speed = SPEED_MIN[i] + self.shaped(3) * SPEED_SPAN[i];
             let depth = self.draw_depth();
             self.spawn_droplet(bx + cos(angle) * br * 0.6, by + sin(angle) * br * 0.6, angle, speed, 1.0, depth);
         }
@@ -453,8 +474,16 @@ impl Sim {
         if (self.state[S_BURSTS] as u32) % 24 == 0 {
             self.emit(EV_BURST, children as f32, self.state[S_BURSTS], 0.0);
         }
-        for _ in 0..children {
-            let spread = (self.u() - 0.5) * 1.5;
+        for k in 0..children {
+            let spread = if self.state[S_MODE] > 0.5 {
+                (self.u() - 0.5) * 1.5
+            } else {
+                // Stratified fan: children cover the whole ±0.75rad fan
+                // evenly with a small jitter each, so every burst looks
+                // balanced instead of leaning to one side.
+                ((k as f32 + 0.5) / children as f32 - 0.5) * 1.5
+                    + (self.u() - 0.5) * (1.5 / children as f32)
+            };
             let angle = heading + spread;
             let child_speed = speed * (0.5 + self.u() * 0.35);
             let child = self.free_slot();
@@ -660,6 +689,7 @@ impl Sim {
         self.interval_pos = BAG;
         self.count_pos = BAG;
         self.depth_pos = BAG;
+        self.speed_pos = BAG;
         self.dir_bins = [0; DIR_BINS];
         self.step = 0;
         self.prd_n = 0;

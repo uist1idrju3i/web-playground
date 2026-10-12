@@ -1,6 +1,6 @@
 // All audio is synthesized in Web Audio — no audio files. Cues: ignition
-// whoosh, ejection crackle ticks, cascade pops (throttled), landing thud,
-// spent chime. A continuous hiss node tracks spark density during matsuba.
+// whoosh, ejection crackle ticks, cascade pops (throttled), landing tap with
+// steam hiss, spent evaporation hiss. A continuous hiss tracks spark density.
 // Ambient music lives in music.js (quiet yonanuki-scale koto phrase).
 
 import { createMusic } from './music.js';
@@ -170,27 +170,30 @@ export function createAudioEngine() {
       });
     },
     land() {
-      thump({ freq: 130, gain: 0.4, dur: 0.16 });
-      tick(0.25, { freq: 2000, q: 3, gain: 0.1, sweep: 0.3 });
+      // Ember meets the ground: a soft tap under a short steam hiss.
+      thump({ freq: 110, gain: 0.08, dur: 0.12 });
+      tick(0.5, { freq: 1600, q: 1.2, gain: 0.05, sweep: 0.25 });
     },
     spent() {
+      // Quiet evaporation: noise swept down through a lowpass, fading over
+      // ~1.6s — the ember sizzles out ("ju..."/"shu...") instead of chimes.
       const c = ensure();
       const t = c.currentTime;
-      for (const [off, f] of [
-        [0, 659.3],
-        [0.28, 523.3],
-      ]) {
-        const osc = c.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = f;
-        const g = c.createGain();
-        g.gain.setValueAtTime(0, t + off);
-        g.gain.linearRampToValueAtTime(0.07, t + off + 0.03);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + off + 0.5);
-        osc.connect(g).connect(sfxBus);
-        osc.start(t + off);
-        osc.stop(t + off + 0.55);
-      }
+      const len = Math.floor(c.sampleRate * 1.6);
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i += 1) d[i] = Math.random() * 2 - 1;
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(2400, t);
+      lp.frequency.exponentialRampToValueAtTime(300, t + 1.5);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+      src.connect(lp).connect(g).connect(sfxBus);
+      src.start(t);
     },
     startBgm() {
       if (music) music.start();
