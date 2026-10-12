@@ -11,14 +11,14 @@ export class AudioEngine {
     this.lastPop = 0;
   }
 
-  async unlock() {
+  async unlock(context = null) {
     if (this.ctx) {
       if (this.ctx.state !== 'running') await this.ctx.resume();
       return true;
     }
     const AudioContextClass = globalThis.AudioContext ?? globalThis.webkitAudioContext;
-    if (!AudioContextClass) return false;
-    const ctx = new AudioContextClass({ latencyHint: 'interactive' });
+    if (!context && !AudioContextClass) return false;
+    const ctx = context ?? new AudioContextClass({ latencyHint: 'interactive' });
     this.ctx = ctx;
     this.master = ctx.createGain();
     this.master.gain.value = this.enabled ? 0.9 : 0;
@@ -38,7 +38,8 @@ export class AudioEngine {
     await this.makeSizzle();
     this.makePour();
     this.makeSteam();
-    if (ctx.state !== 'running') await ctx.resume();
+    // OfflineAudioContext.resume exists but throws before startRendering.
+    if (ctx.state !== 'running' && typeof ctx.startRendering !== 'function') await ctx.resume();
     this.nextLoop = ctx.currentTime + 0.1;
     this.ready = true;
     return true;
@@ -197,6 +198,34 @@ export class AudioEngine {
     osc.connect(gain).connect(this.fx);
     osc.start(when);
     osc.stop(when + 0.06);
+  }
+
+  // Light wooden knock when a finished cake lands on the tray.
+  koron() {
+    if (!this.ctx || this.ctx.state !== 'running' || !this.ready) return;
+    const { ctx } = this;
+    const when = ctx.currentTime + 0.02;
+    const body = ctx.createOscillator();
+    const g = ctx.createGain();
+    body.frequency.setValueAtTime(720, when);
+    body.frequency.exponentialRampToValueAtTime(460, when + 0.05);
+    g.gain.setValueAtTime(0.5, when);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.13);
+    body.connect(g).connect(this.fx);
+    g.connect(this.reverbSend);
+    body.start(when);
+    body.stop(when + 0.15);
+    const click = this.noiseSource(false);
+    const cg = ctx.createGain();
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2600;
+    bp.Q.value = 1.2;
+    cg.gain.setValueAtTime(0.2, when);
+    cg.gain.exponentialRampToValueAtTime(0.0001, when + 0.04);
+    click.connect(bp).connect(cg).connect(this.fx);
+    click.start(when, Math.random());
+    click.stop(when + 0.05);
   }
 
   thunk(when) {
