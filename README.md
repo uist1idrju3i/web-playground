@@ -1,10 +1,10 @@
 # Web Playground
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/uist1idrju3i/web-playground)
 [![CI](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml)
 [![Scorecard](https://api.securityscorecards.dev/projects/github.com/uist1idrju3i/web-playground/badge)](https://securityscorecards.dev/viewer/?uri=github.com/uist1idrju3i/web-playground)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/uist1idrju3i/web-playground)
 
 A static playground for learning what the browser you are using can actually do.
 
