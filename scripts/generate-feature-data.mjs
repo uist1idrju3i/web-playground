@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import bcd from '@mdn/browser-compat-data/forLegacyNode';
 import { features } from 'web-features';
+import { escapeMarkdownTableCell } from './markdown-table.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const jsonPath = resolve(root, 'public_html/library/data/web-features.json');
@@ -154,9 +155,9 @@ for (const [group, entries] of Object.entries(groups)) {
     '| --- | --- | --- | --- | --- |',
   );
   for (const item of entries) {
-    const summary = item.description.replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+    const summary = escapeMarkdownTableCell(item.description.replace(/\s+/g, ' ').trim());
     lines.push(
-      `| ${item.name.replace(/\|/g, '\\|')} | ${item.support.chrome ?? '—'} | ${item.support.safari ?? '—'} | ${item.baseline.status} | ${summary} |`,
+      `| ${escapeMarkdownTableCell(item.name)} | ${escapeMarkdownTableCell(item.support.chrome ?? '—')} | ${escapeMarkdownTableCell(item.support.safari ?? '—')} | ${item.baseline.status} | ${summary} |`,
     );
   }
   lines.push('');
@@ -170,9 +171,9 @@ lines.push(
   '| --- | --- | --- | --- | --- | --- |',
 );
 for (const item of excludedFeatures) {
-  const summary = item.description.replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+  const summary = escapeMarkdownTableCell(item.description.replace(/\s+/g, ' ').trim());
   lines.push(
-    `| ${item.name.replace(/\|/g, '\\|')} | ${item.exclusionReasons.join(', ')} | ${item.support.chrome ?? '—'} | ${item.support.safari ?? '—'} | ${item.baseline.status} | ${summary} |`,
+    `| ${escapeMarkdownTableCell(item.name)} | ${escapeMarkdownTableCell(item.exclusionReasons.join(', '))} | ${escapeMarkdownTableCell(item.support.chrome ?? '—')} | ${escapeMarkdownTableCell(item.support.safari ?? '—')} | ${item.baseline.status} | ${summary} |`,
   );
 }
 

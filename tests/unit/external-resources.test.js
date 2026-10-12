@@ -14,12 +14,20 @@ test('rejects external origins, unpinned cdnjs, missing SRI, and unprotected mod
   const violations = await checkExternalResources(badFixture);
   const messages = violations.map(({ message }) => message);
 
-  assert.ok(messages.some((message) => message.includes('https://example.com')));
-  assert.ok(messages.some((message) => message.includes('exact /ajax/libs')));
-  assert.ok(messages.some((message) => message.includes('must include sha384 or sha512')));
-  assert.ok(messages.some((message) => message.includes('crossorigin="anonymous"')));
-  assert.ok(messages.some((message) => message.includes('ES module imports need an import-map')));
-  assert.ok(messages.some((message) => message.includes('https://example.org')));
-  assert.ok(messages.some((message) => message.includes('https://fonts.googleapis.com')));
-  assert.ok(!messages.some((message) => message.includes('developer.mozilla.org')));
+  assert.ok(messages.includes('Resource origin is not allowed: https://example.com.'));
+  assert.ok(
+    messages.includes(
+      'cdnjs URL must use an exact /ajax/libs/<name>/<x.y.z>/ version: https://cdnjs.cloudflare.com/ajax/libs/dayjs/latest/dayjs.min.js',
+    ),
+  );
+  assert.ok(messages.includes('cdnjs link must include sha384 or sha512 integrity.'));
+  assert.ok(messages.includes('cdnjs link must set crossorigin="anonymous".'));
+  assert.ok(
+    messages.includes(
+      'cdnjs ES module imports need an import-map integrity entry: https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js',
+    ),
+  );
+  assert.ok(messages.includes('Resource origin is not allowed: https://example.org.'));
+  assert.ok(messages.includes('Resource origin is not allowed: https://fonts.googleapis.com.'));
+  assert.ok(!messages.includes('Resource origin is not allowed: https://developer.mozilla.org.'));
 });

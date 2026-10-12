@@ -28,7 +28,7 @@ function expectedValue(id, value) {
   return id === 'wasm-bigint' ? String(value) : value;
 }
 
-function workerResult(id, url, timeoutMs) {
+function workerResult(id, timeoutMs) {
   return new Promise((resolve) => {
     const worker = new Worker('/library/js/wasm-probe-worker.js', { type: 'module' });
     const timeoutId = setTimeout(() => {
@@ -60,7 +60,7 @@ function workerResult(id, url, timeoutMs) {
         ),
       );
     };
-    worker.postMessage({ id, url });
+    worker.postMessage({ probeId: id });
   });
 }
 
@@ -161,7 +161,7 @@ async function executeProbe(id, expected, timeoutMs) {
         `Main thread returned ${mainResult.value}; expected ${expected}.`,
       );
     }
-    const worker = await workerResult(id, url, timeoutMs);
+    const worker = await workerResult(id, timeoutMs);
     if (worker.status) return worker;
     if (expectedValue(id, worker.value) !== expectedValue(id, expected)) {
       return failure('wrong-result', `Worker returned ${worker.value}; expected ${expected}.`);

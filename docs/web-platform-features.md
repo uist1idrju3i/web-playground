@@ -576,7 +576,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | rect() and xywh() | 119 | 17.2 | widely | The rect() CSS function creates a rectangle shape with insets from the edges of an element. The xywh() CSS function creates a rectangle shifted by an x and y distance. They can be used with clip-path and shape-outside. |
 | Referrer policy | 85 | 15 | widely | The Referrer-Policy HTTP header and referrerpolicy HTML attributes control whether requests have the Referer header and what information the header contains. |
 | Regular expressions | 1 | 1 | widely | The RegExp object represents a regular expression, a notation for matching text patterns. |
-| RegExp.escape() | 136 | 18.2 | newly | The RegExp.escape() static method takes a string and replaces any characters that are potentially special characters of a regular expression with equivalent escape sequences. For example, RegExp.escape("[abc]") returns "\\[abc\\]". |
+| RegExp.escape() | 136 | 18.2 | newly | The RegExp.escape() static method takes a string and replaces any characters that are potentially special characters of a regular expression with equivalent escape sequences. For example, RegExp.escape("[abc]") returns "\\\\[abc\\\\]". |
 | Registered custom properties | 85 | 16.4 | newly | The CSS.registerProperty() static method and the @property CSS at-rule register custom properties for which types and behaviors can be defined. |
 | Relative colors | 125 | 18 | newly | The from keyword for color functions (color(), hsl(), oklch(), etc.) creates a new color based on a given color by modifying the values of the input color. Also known as relative color syntax (RCS). |
 | Relative positioning | 1 | 1 | widely | The position: relative CSS declaration offsets the position of an element relative to its position in the normal flow. |
@@ -607,7 +607,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | ruby-align | 128 | 18.2 | newly | The ruby-align CSS property sets the spacing and alignment of ruby annotation text when it does not fill its available space. |
 | ruby-position | 84 | 18.2 | newly | The ruby-position CSS property sets the position of a ruby annotation in relation to its base text. Annotations can display over, under, or interleaved with the base text. |
 | <s> | 1 | ≤4 | widely | The <s> HTML element indicates text that is no longer relevant or accurate, styling text as strikethrough by default. |
-| Safe area inset environment variables | 69 | 11.1 | widely | The safe-area-inset- CSS environment variables represent a rectangle that cannot cut off content within a non-rectangular screen. For example, top:\ env(safe-area-inset-top); positions the top of an element below the notch on an iPhone. |
+| Safe area inset environment variables | 69 | 11.1 | widely | The safe-area-inset- CSS environment variables represent a rectangle that cannot cut off content within a non-rectangular screen. For example, top:\\ env(safe-area-inset-top); positions the top of an element below the notch on an iPhone. |
 | <samp> | 1 | ≤4 | widely | The <samp> element represents a sample or quoted output from a computer program. Styled in a monospace font by default. |
 | @scope | 143 | 26.4 | newly | The @scope CSS at-rule sets the scope for a group of rules. |
 | :scope (pseudo-class) | 27 | 7 | widely | The :scope CSS pseudo-class matches the scoping root, for instance the element that querySelector() is called on, or the root of a DOM subtree specified with @scope. |
@@ -755,7 +755,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Typed arrays (initial support) | 7 | 5.1 | widely | Typed arrays are ordered lists of JavaScript values, where all values are of the same numerical type, such as 8-bit integers or 32-bit floating point numbers. |
 | <u> | 1 | 1 | widely | The <u> HTML element makes non-textual annotations, styling text as underlined by default. |
 | Uint8Array base64 and hex conversion | 140 | 18.2 | newly | The Uint8Array.fromBase64() static method and the toBase64() and setFromBase64() instance methods convert to and from base64 strings. Similarly, the Uint8Array.fromHex() static method and the toHex() and setFromHex() instance methods convert to and from hex strings. |
-| Unicode point escapes | 44 | 9 | widely | Unicode point escapes (\\u{}) represent Unicode characters within strings. |
+| Unicode point escapes | 44 | 9 | widely | Unicode point escapes (\\\\u{}) represent Unicode characters within strings. |
 | unset | 41 | 9.1 | widely | The unset keyword resets any CSS property, removing any values previously set by the author, user, or browser. Inherited properties (like color) reset to the parent element's computed value. Non-inherited properties (like display) reset to the specified initial value (inline). |
 | Update frequency media query | 113 | 17 | widely | The update CSS media query sets styles based on whether and how fast the user's device can modify display after it has been rendered. For example, you can avoid animations on devices that aren't fast enough to display them smoothly. |
 | Upgrade insecure requests | 44 | 10.1 | widely | The Upgrade-Insecure-Requests HTTP request header tells the server that the response should redirect to a secure (HTTPS) resource. |
