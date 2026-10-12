@@ -4,7 +4,7 @@
 - Keep this a static site with no build step. Load JavaScript/CSS only from this origin or `https://cdnjs.cloudflare.com`. cdnjs resources must be version-pinned and use `integrity` (SRI sha384/sha512 from the cdnjs API) with `crossorigin="anonymous"`. Do not use any other third-party origin.
 - Put shared runtime code only in `public_html/library/`.
 - Every app must call `checkRequirements` before using its required capabilities. Never trigger permission prompts while a page loads.
-- Never weaken, bypass, skip, or allowlist around the static resource gate, runtime resource E2E gate, CSP lock test, or CodeQL. Fix the source instead. Never add `'unsafe-inline'` or `'unsafe-eval'`.
+- Never weaken or bypass the static resource gate, runtime resource E2E gate, CSP lock test, or CodeQL. The only runtime CSP exception is the exact WebKit user-agent sample in `tests/e2e/csp-violations.js`; never broaden it to cover app-originated violations. Fix the source instead. Never add `'unsafe-inline'` or `'unsafe-eval'`.
 - Never add secrets or private credentials. Write repository documentation and comments in English.
 
 ## Tie-break examples
@@ -16,26 +16,26 @@
 
 ## Repository map
 
-| Path | Purpose | Ownership |
-| --- | --- | --- |
-| `public_html/` | Cloudflare Pages static site and apps | Hand-written HTML/CSS/JS except generated datasets and WASM |
-| `public_html/library/` | Shared capability, requirements, WebMCP, CSS and WASM runtime | Hand-written runtime; `data/` and `wasm/` outputs are generated |
-| `scripts/` | Generators, local server, resource/doc gates, WASM builds | Hand-written tooling |
-| `wasm/` | WAT and native toolchain source profiles | Hand-written source |
-| `tests/` | Unit tests and three-engine browser tests | Hand-written |
-| `docs/web-platform-features.md` | Generated browser-compatibility dataset | Generated; edit source/generator, never this output |
-| `docs/capability-reference.md` | Generated capability API index | Generated from the shared runtime |
-| `.github/workflows/` | CI, CodeQL, security, deployment smoke and toolchain checks | Hand-written, SHA-pinned |
+| Path                            | Purpose                                                       | Ownership                                                       |
+| ------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `public_html/`                  | Cloudflare Pages static site and apps                         | Hand-written HTML/CSS/JS except generated datasets and WASM     |
+| `public_html/library/`          | Shared capability, requirements, WebMCP, CSS and WASM runtime | Hand-written runtime; `data/` and `wasm/` outputs are generated |
+| `scripts/`                      | Generators, local server, resource/doc gates, WASM builds     | Hand-written tooling                                            |
+| `wasm/`                         | WAT and native toolchain source profiles                      | Hand-written source                                             |
+| `tests/`                        | Unit tests and three-engine browser tests                     | Hand-written                                                    |
+| `docs/web-platform-features.md` | Generated browser-compatibility dataset                       | Generated; edit source/generator, never this output             |
+| `docs/capability-reference.md`  | Generated capability API index                                | Generated from the shared runtime                               |
+| `.github/workflows/`            | CI, CodeQL, security, deployment smoke and toolchain checks   | Hand-written, SHA-pinned                                        |
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm ci --ignore-scripts && npm audit signatures` | Install the lockfile and verify package signatures |
-| `npm run generate` | Regenerate datasets, capability reference, and WASM probes |
-| `npm test` | Lint, security/doc gates, format, generated checks, unit, and Chromium/WebKit/Firefox E2E |
-| `scripts/build-wasm-toolchains.sh` | Build deterministic Layer 2 WebAssembly profiles |
-| `uvx zizmor . && actionlint` | Check workflow security and syntax |
+| Command                                           | Purpose                                                                                   |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts && npm audit signatures` | Install the lockfile and verify package signatures                                        |
+| `npm run generate`                                | Regenerate datasets, capability reference, and WASM probes                                |
+| `npm test`                                        | Lint, security/doc gates, format, generated checks, unit, and Chromium/WebKit/Firefox E2E |
+| `scripts/build-wasm-toolchains.sh`                | Build deterministic Layer 2 WebAssembly profiles                                          |
+| `uvx zizmor . && actionlint`                      | Check workflow security and syntax                                                        |
 
 ## Recipes
 
@@ -60,4 +60,5 @@
 - Never hand-edit generated files; fix their source and regenerate.
 - `untestable` is not the same as `unsupported`.
 - Playwright WebKit screenshotting injects a temporary inline stylesheet; assert CSP diagnostics before screenshotting.
+- The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.

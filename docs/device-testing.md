@@ -2,15 +2,15 @@
 
 ## Engine coverage
 
-| Device / OS | Browser examples | Engine expected by this project | Guidance |
-| --- | --- | --- | --- |
-| Windows 11 | Chrome, Edge | Chromium | Compare with Chromium E2E results |
-| Windows 11 | Firefox | Gecko | Desktop Firefox result is a reference, not mobile parity |
-| macOS | Safari | WebKit | Record Safari and OS versions |
-| iPhone / iPad | Safari, Chrome, Firefox and other browsers | WebKit | All iOS/iPadOS browsers use WebKit |
-| Android | Chrome | Chromium | Test permission and sensor behavior on hardware |
-| Android | Firefox | GeckoView | Do not assume desktop Firefox parity |
-| ChromeOS | Chrome | Chromium | Note managed-device policy restrictions |
+| Device / OS   | Browser examples                           | Engine expected by this project | Guidance                                                 |
+| ------------- | ------------------------------------------ | ------------------------------- | -------------------------------------------------------- |
+| Windows 11    | Chrome, Edge                               | Chromium                        | Compare with Chromium E2E results                        |
+| Windows 11    | Firefox                                    | Gecko                           | Desktop Firefox result is a reference, not mobile parity |
+| macOS         | Safari                                     | WebKit                          | Record Safari and OS versions                            |
+| iPhone / iPad | Safari, Chrome, Firefox and other browsers | WebKit                          | All iOS/iPadOS browsers use WebKit                       |
+| Android       | Chrome                                     | Chromium                        | Test permission and sensor behavior on hardware          |
+| Android       | Firefox                                    | GeckoView                       | Do not assume desktop Firefox parity                     |
+| ChromeOS      | Chrome                                     | Chromium                        | Note managed-device policy restrictions                  |
 
 ## WebAssembly reference
 

@@ -2,15 +2,15 @@
 
 ## Workflow map
 
-| Workflow | Trigger and responsibility |
-| --- | --- |
-| `ci.yml` | Static checks and Chromium/WebKit/Firefox E2E; `ci-ok` aggregates required jobs |
-| `codeql.yml` | Advanced CodeQL for Actions and JavaScript/TypeScript, PRs, main pushes, weekly |
-| `workflow-lint.yml` | zizmor and actionlint |
-| `dependency-review.yml` | Dependency changes on pull requests |
-| `scorecard.yml` | Scorecard publishing on main and weekly |
-| `wasm-toolchains.yml` | Rebuilds and byte-compares WASM outputs when sources/build script change |
-| `deploy-smoke.yml` | Main-branch deployment smoke check; skips with notice until the custom domain serves the site marker |
+| Workflow                | Trigger and responsibility                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| `ci.yml`                | Static checks and Chromium/WebKit/Firefox E2E; `ci-ok` aggregates required jobs                      |
+| `codeql.yml`            | Advanced CodeQL for Actions and JavaScript/TypeScript, PRs, main pushes, weekly                      |
+| `workflow-lint.yml`     | zizmor and actionlint                                                                                |
+| `dependency-review.yml` | Dependency changes on pull requests                                                                  |
+| `scorecard.yml`         | Scorecard publishing on main and weekly                                                              |
+| `wasm-toolchains.yml`   | Rebuilds and byte-compares WASM outputs when sources/build script change                             |
+| `deploy-smoke.yml`      | Main-branch deployment smoke check; skips with notice until the custom domain serves the site marker |
 
 Actions are pinned to full commit SHAs with version comments. Jobs use minimal permissions, `persist-credentials: false`, and `step-security/harden-runner`. Node is pinned to 24.21.0. Ubuntu 26.04 is currently a public runner-image preview; see [maintenance](maintenance.md) for the fallback policy.
 

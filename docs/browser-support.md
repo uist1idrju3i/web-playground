@@ -1,12 +1,14 @@
 # Browser support
 
-The app detects the current runtime; this table describes measured Layer 1 WebAssembly execution results, not a promise for all versions or devices.
+The app detects the current runtime. All 17 Layer 1 probes passed on the Playwright 1.64 engines measured below; these results are not a promise for every browser version or device.
 
-| Engine | Passing probes | Measured missing probes |
-| --- | ---: | --- |
-| Chromium | 17/17 | None in the tested build |
-| Firefox | 15/17 | `wasm-relaxed-simd`, `wasm-jspi` |
-| WebKit | 13/17 | `wasm-relaxed-simd`, `wasm-memory64`, `wasm-multi-memory`, `wasm-jspi` |
+| Engine   | Version | Passing probes | Measured missing probes |
+| -------- | ------: | -------------: | ----------------------- |
+| Chromium |     156 |          17/17 | None                    |
+| Firefox  |     157 |          17/17 | None                    |
+| WebKit   |    27.2 |          17/17 | None                    |
+
+Real Safari and Firefox release channels can differ from the Playwright engine builds.
 
 See [device testing](device-testing.md) for OS-to-engine mapping. All iOS and iPadOS browsers use WebKit. Device APIs can depend on secure context, permission, user gesture, hardware, and embedding policy; the app does not prompt on load.
 
