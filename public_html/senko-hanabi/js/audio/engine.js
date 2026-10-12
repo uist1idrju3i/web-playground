@@ -1,6 +1,7 @@
 // All audio is synthesized in Web Audio — no audio files. Cues: ignition
 // whoosh, ejection crackle ticks, cascade pops (throttled), landing thud,
-// spend chime. A continuous hiss node tracks spark density during matsuba.
+// spent chime. A continuous hiss node tracks spark density during matsuba.
+// Ambient music lives in music.js (quiet yonanuki-scale koto phrase).
 
 import { createMusic } from './music.js';
 
@@ -13,7 +14,6 @@ export function createAudioEngine() {
   let hiss = null;
   let hissGain = null;
   let hissTarget = 0;
-  let cricketTimer = null;
   let started = false;
   let lastCrackAt = 0;
   let lastPopAt = 0;
@@ -91,35 +91,6 @@ export function createAudioEngine() {
     osc.stop(t + dur + 0.02);
   }
 
-  function scheduleCrickets() {
-    if (!ctx || cricketTimer) return;
-    const step = () => {
-      cricketTimer = setTimeout(
-        () => {
-          cricketTimer = null;
-          if (!ctx || ctx.state !== 'running') return;
-          // Sparse two-pulse cricket chirps, very quiet.
-          const t = ctx.currentTime;
-          for (const off of [0, 0.09]) {
-            const osc = ctx.createOscillator();
-            osc.type = 'sine';
-            osc.frequency.value = 4200;
-            const g = ctx.createGain();
-            g.gain.setValueAtTime(0, t + off);
-            g.gain.linearRampToValueAtTime(0.015, t + off + 0.012);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + off + 0.07);
-            osc.connect(g).connect(ambBus);
-            osc.start(t + off);
-            osc.stop(t + off + 0.08);
-          }
-          step();
-        },
-        3000 + Math.random() * 5000,
-      );
-    };
-    step();
-  }
-
   return {
     ensure,
     get context() {
@@ -134,7 +105,6 @@ export function createAudioEngine() {
           /* resume() rejects if the gesture was already consumed */
         }
       }
-      if (c && c.state === 'running' && !cricketTimer) scheduleCrickets();
       return c;
     },
     get started() {
@@ -229,7 +199,6 @@ export function createAudioEngine() {
       if (music) music.stop();
     },
     dispose() {
-      if (cricketTimer) clearTimeout(cricketTimer);
       if (ctx) ctx.close();
       ctx = null;
     },

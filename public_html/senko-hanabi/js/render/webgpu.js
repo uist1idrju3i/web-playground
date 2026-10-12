@@ -206,7 +206,8 @@ export async function createWebGPU(canvas) {
       context.configure({ device, format, alphaMode: 'opaque' });
     }
     writeUniforms(scene, w, h);
-    const pass = device.createCommandEncoder().beginRenderPass({
+    const encoder = device.createCommandEncoder();
+    const pass = encoder.beginRenderPass({
       colorAttachments: [
         {
           view: context.getCurrentTexture().createView(),
@@ -251,7 +252,7 @@ export async function createWebGPU(canvas) {
       pass.draw(4, scene.instCount);
     }
     pass.end();
-    device.queue.submit([pass.encoder.finish()]);
+    device.queue.submit([encoder.finish()]);
   }
 
   return {
