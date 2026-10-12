@@ -23,6 +23,7 @@ Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pa
 ## Apps
 
 - **Browser Features** (`/browser-features/`) — measured capability support, permission-policy information, and WebAssembly probes.
+- **Baked Mochocho** (`/baked-mochocho/`) — a griddle-cake game with a Rust/WebAssembly physics simulation, WebGPU rendering with a WebGL2 fallback, synthesized Web Audio, and HMAC-signed saves. See [the app guide](docs/baked-mochocho.md).
 
 ## Quick start
 

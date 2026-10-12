@@ -159,6 +159,10 @@ test('flags JavaScript URL sinks and parses HTML inserted as a static string', a
       'XMLHttpRequest.open',
       `const xhr = new XMLHttpRequest(); xhr.open('GET', 'https://evil.example/data');`,
     ],
+    [
+      'XMLHttpRequest.open optional call',
+      `const xhr = new XMLHttpRequest(); xhr?.open('GET', 'https://evil.example/data');`,
+    ],
     ['src assignment', `element.src = 'https://evil.example/a';`],
     ['href assignment', `element.href = 'https://evil.example/a';`],
     ['srcset assignment', `element.srcset = 'https://evil.example/a 1x, //evil.example/b 2x';`],
@@ -197,6 +201,16 @@ test('flags JavaScript URL sinks and parses HTML inserted as a static string', a
         name,
       );
     }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('parses numeric member access and optional call chains without false violations', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'web-playground-safe-chains-'));
+  try {
+    await writeFile(join(root, 'case.js'), 'const a = [1]; a[0]; foo?.bar?.();');
+    assert.deepEqual(await checkExternalResources(root), []);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

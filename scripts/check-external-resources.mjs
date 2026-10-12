@@ -67,7 +67,7 @@ function propertyName(node) {
   if (node?.type === 'ChainExpression') return propertyName(node.expression);
   if (node?.type !== 'MemberExpression') return null;
   if (!node.computed && node.property.type === 'Identifier') return node.property.name;
-  return node.computed && node.property.type === 'Literal' ? node.property.value : null;
+  return node.computed && node.property.type === 'Literal' ? String(node.property.value) : null;
 }
 
 function memberPath(node) {
@@ -499,6 +499,7 @@ function checkJavaScript(source, file, violations, validModuleUrls, lineOffset =
     CallExpression(node) {
       const path = memberPath(node.callee);
       const method = path.at(-1);
+      const callee = node.callee.type === 'ChainExpression' ? node.callee.expression : node.callee;
       if (method === 'fetch' || method === 'importScripts') {
         const args = method === 'importScripts' ? node.arguments : node.arguments.slice(0, 1);
         for (const argument of args) report(node, staticString(argument), { kind: method });
@@ -511,9 +512,10 @@ function checkJavaScript(source, file, violations, validModuleUrls, lineOffset =
       }
       if (
         method === 'open' &&
-        (node.callee.object.type === 'NewExpression'
-          ? memberPath(node.callee.object.callee).at(-1) === 'XMLHttpRequest'
-          : node.callee.object.type === 'Identifier' && xhrNames.has(node.callee.object.name))
+        callee.type === 'MemberExpression' &&
+        (callee.object.type === 'NewExpression'
+          ? memberPath(callee.object.callee).at(-1) === 'XMLHttpRequest'
+          : callee.object.type === 'Identifier' && xhrNames.has(callee.object.name))
       ) {
         report(node, staticString(node.arguments[1]), { kind: 'XMLHttpRequest.open' });
       }
