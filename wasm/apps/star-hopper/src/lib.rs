@@ -158,15 +158,20 @@ impl Sim {
         self.islands[4] = 7.0;
         self.islands[5] = self.rand();
         self.islands[6] = 0.0;
-        // Islands 1..6: golden-angle spiral drifting outward and upward.
+        // Islands 1..6: a chain — every hop must be physically jumpable.
+        // Single jump covers ~6m/2m up, double ~10m/3.7m up, so each next
+        // island sits within reach of the previous one. The golden-angle
+        // turns keep the chain spiralling through the sky.
         let mut angle = self.rand() * core::f32::consts::TAU;
+        let (mut px, mut pz, mut pr, mut pt) = (0.0f32, 0.0f32, 9.5f32, 0.0f32);
         for i in 1..ISLAND_COUNT {
             let radius = 6.0 + self.rand() * 3.5;
-            let distance = 15.0 + i as f32 * 9.0 + self.rand() * 6.0;
-            let top = 3.0 + i as f32 * 6.5 + self.rand() * 4.0;
             angle += 2.399_963_1; // golden angle in radians
-            let x = cos(angle) * distance;
-            let z = sin(angle) * distance;
+            let gap = 3.5 + self.rand() * 3.5; // edge-to-edge gap, jumpable
+            let top = pt + 1.8 + self.rand() * 1.4; // climbable with the double jump
+            let step = pr + radius + gap; // center-to-center
+            let x = px + cos(angle) * step;
+            let z = pz + sin(angle) * step;
             let base = i * ISLAND_STRIDE;
             self.islands[base] = x;
             self.islands[base + 1] = top;
@@ -175,6 +180,10 @@ impl Sim {
             self.islands[base + 4] = 4.0 + self.rand() * 5.0;
             self.islands[base + 5] = self.rand();
             self.islands[base + 6] = self.rand();
+            px = x;
+            pz = z;
+            pr = radius;
+            pt = top;
         }
 
         // Shards: two grounded + one bonus per island. Bonus shards hover just

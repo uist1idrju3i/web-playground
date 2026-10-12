@@ -44,6 +44,27 @@ for (const build of wasmBuilds) {
     }
   });
 
+  test(`every island hop is physically jumpable (${build.name})`, async () => {
+    const sim = await makeSimulation(build);
+    // Reachability contract vs physics: a double jump covers ~10m of edge
+    // gap and ~3.7m of rise. The world chain must stay inside both.
+    for (let i = 0; i + 1 < sim.islandCount; i += 1) {
+      const a = sim.island(i);
+      const b = sim.island(i + 1);
+      const centers = Math.hypot(b.x - a.x, b.z - a.z);
+      const edgeGap = centers - a.radius - b.radius;
+      const rise = b.topY - a.topY;
+      assert.ok(
+        edgeGap >= 1 && edgeGap <= 10,
+        `hop ${i}->${i + 1}: edge gap ${edgeGap.toFixed(1)}m out of jump range`,
+      );
+      assert.ok(
+        rise >= 0.5 && rise <= 3.7,
+        `hop ${i}->${i + 1}: rise ${rise.toFixed(1)}m exceeds the double-jump apex`,
+      );
+    }
+  });
+
   test(`player spawns grounded on the start island (${build.name})`, async () => {
     const sim = await makeSimulation(build);
     const p = sim.playerInto();
