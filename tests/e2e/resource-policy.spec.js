@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import {
   attachConsoleWarnings,
-  filterWebKitUaStyleViolations,
+  filterWebKitUaStyleDiagnostics,
+  WEBKIT_UA_STYLE_CONSOLE_ERROR,
   WEBKIT_UA_STYLE_SAMPLES,
 } from './csp-violations.js';
 
@@ -86,19 +87,19 @@ for (const path of pages) {
     try {
       await page.goto(path, { waitUntil: 'load' });
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-      cspViolations.push(
-        ...filterWebKitUaStyleViolations(
-          await page.evaluate(() => window.__resourcePolicyViolations),
-          browserName,
-        ),
+      const diagnostics = filterWebKitUaStyleDiagnostics(
+        await page.evaluate(() => window.__resourcePolicyViolations),
+        consoleErrors,
+        browserName,
       );
+      cspViolations.push(...diagnostics.violations);
       await attachConsoleWarnings(testInfo, consoleWarnings);
       expect(
         {
           externalRequests: [...externalRequests],
           cspViolations,
           pageErrors,
-          consoleErrors,
+          consoleErrors: diagnostics.consoleErrors,
         },
         path,
       ).toEqual({ externalRequests: [], cspViolations: [], pageErrors: [], consoleErrors: [] });
@@ -129,6 +130,10 @@ test('WebKit user-agent style CSP canary remains exact-match', async ({
       });
     });
   });
+  const consoleErrors = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
   await page.goto(new URL('/__tests__/webkit-select-csp.html', baseURL).href);
   const violations = await page.evaluate(() => window.__resourcePolicyViolations);
   expect(violations.length).toBeGreaterThan(0);
@@ -140,6 +145,7 @@ test('WebKit user-agent style CSP canary remains exact-match', async ({
   expect([...new Set(violations.map(({ sample }) => sample))].sort()).toEqual(
     [...WEBKIT_UA_STYLE_SAMPLES].sort(),
   );
+  expect(consoleErrors).toEqual(Array(violations.length).fill(WEBKIT_UA_STYLE_CONSOLE_ERROR));
 });
 
 test('portal links resolve and every app index is registered', async ({ page, baseURL }) => {

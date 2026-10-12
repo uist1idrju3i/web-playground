@@ -14,7 +14,7 @@ async function runEmscriptenProfile(profile) {
 async function runRustBindgenProfile(profile) {
   const modulePath = `${basePath}${profile.entry}`;
   const { default: initialize, run } = await import(modulePath);
-  await initialize(`${basePath}${profile.wasm}`);
+  await initialize({ module_or_path: `${basePath}${profile.wasm}` });
   return run();
 }
 
