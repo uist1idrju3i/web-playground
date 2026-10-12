@@ -23,6 +23,7 @@ export class Game {
     this.lives = 0; // escapes used
     this.drops = 0;
     this.heightM = 0;
+    this._heightRecord = 0;
     this.wind = { x: 0, t: 0, next: 0 };
     this.collected = new Set(save.data.collected);
     this.achievements = new Set(save.data.achievements ?? []);
@@ -45,6 +46,7 @@ export class Game {
     this.lives = 0;
     this.drops = 0;
     this.heightM = 0;
+    this._heightRecord = 0;
     this.aimX = 0;
     this.wind = { x: 0, t: 0, next: 0 };
     this.pending = false;
@@ -199,12 +201,18 @@ export class Game {
     const altitude = Math.max(0, topY - WORLD.platformY);
     this.heightM = altitude; // 1 world unit = 1 km
     this._checkHeight();
-    if (this.heightM > 60) {
+    // each new tower-height record sends a rocket past
+    if (altitude > this._heightRecord + 1) {
+      this._heightRecord = altitude;
+      this.renderer.rocketFlyby();
+    }
+    // wind: a light gust hint above ~200 km — a nudge, never a push
+    if (this.heightM > 200) {
       this.wind.t += dt;
       if (this.wind.t > this.wind.next) {
         this.wind.t = 0;
-        this.wind.next = 2.5 + Math.random() * 4;
-        const strength = Math.min(34, (this.heightM - 60) * 0.08);
+        this.wind.next = 4 + Math.random() * 5;
+        const strength = Math.min(3.5, (this.heightM - 200) * 0.004);
         this.wind.x = (Math.random() - 0.5) * 2 * strength;
       }
       this.physics.setWind(this.wind.x, 0);
