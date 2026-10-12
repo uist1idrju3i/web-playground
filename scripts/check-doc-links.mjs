@@ -114,7 +114,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const rootMarkdown = (await readdir(root, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && extname(entry.name).toLowerCase() === '.md')
     .map((entry) => resolve(root, entry.name));
-  const files = [...rootMarkdown, ...(await markdownFiles(resolve(root, 'docs')))].sort();
+  const files = [
+    ...rootMarkdown,
+    ...(await markdownFiles(resolve(root, 'docs'))),
+    ...(await markdownFiles(resolve(root, '.agents'))),
+  ].sort();
   const violations = await checkMarkdownLinks(files, root);
   if (violations.length) {
     for (const violation of violations) console.error(violation);

@@ -26,6 +26,7 @@
 | `docs/web-platform-features.md` | Generated browser-compatibility dataset                       | Generated; edit source/generator, never this output             |
 | `docs/capability-reference.md`  | Generated capability API index                                | Generated from the shared runtime                               |
 | `.github/workflows/`            | CI, CodeQL, security, deployment smoke and toolchain checks   | Hand-written, SHA-pinned                                        |
+| `.agents/skills/`               | Project skills: app-building and maintenance procedures       | Hand-written                                                    |
 
 ## Commands
 
@@ -37,20 +38,31 @@
 | `scripts/build-wasm-toolchains.sh`                | Build deterministic Layer 2 WebAssembly profiles                                                                  |
 | `uvx zizmor . && actionlint`                      | Check workflow security and syntax                                                                                |
 
-## Recipes
+## Skills
 
-- **New app:** add an app directory with `index.html`, shared-library imports, a clear entry in `/index.html`, and an E2E page. The resource-policy test discovers every HTML page automatically.
-- **New capability:** add metadata and a conservative detector in `public_html/library/js/capabilities.js`; route app usage through `checkRequirements`; regenerate the capability reference; add focused unit/E2E coverage.
-- **Dataset update:** change the source or generator, run `npm run generate`, review generated data and totals, then run `npm run check:generated`.
-- **Workflow change:** pin every action to a full 40-character SHA with a version comment; use empty top-level permissions and minimal job permissions, `persist-credentials: false`, and `step-security/harden-runner`. Validate with `uvx zizmor .` and `actionlint`.
-- **WASM change:** edit WAT or toolchain sources under `wasm/`, regenerate Layer 1 outputs, build Layer 2 outputs, update manifest/notices and cross-engine tests, then update the WASM and capability references.
-- **Dependency update:** read the complete changelog from the pinned version to the target, adopt relevant improvements, and record evaluated/adopted/deferred changes in `docs/maintenance.md`.
+Procedures live in project skills under `.agents/skills/`. Read the matching skill before starting; this file keeps only the invariants.
+
+| Skill                                                                            | Use it for                                                                                   |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [building-browser-apps](.agents/skills/building-browser-apps/SKILL.md)           | Any new app or major app feature: research, deep plan, app defaults, license recheck, done   |
+| [browser-platform-apis](.agents/skills/browser-platform-apis/SKILL.md)           | Choosing Web Platform capabilities, permission/gesture rules, iPhone and CSP limits          |
+| [browser-app-ux](.agents/skills/browser-app-ux/SKILL.md)                         | UX method (jobs, core loop, statechart, feedback budgets, contrast) and iPhone/touch layout  |
+| [browser-app-graphics](.agents/skills/browser-app-graphics/SKILL.md)             | WebGPU with WebGL2 fallback, high-fidelity procedural visuals, adaptive resolution           |
+| [browser-app-sound](.agents/skills/browser-app-sound/SKILL.md)                   | Original Web Audio BGM and sound effects, cue design, iPhone audio unlock                    |
+| [browser-app-wasm](.agents/skills/browser-app-wasm/SKILL.md)                     | WebAssembly hot paths: Rust `no_std` crates, SIMD builds, loading, frame budgets             |
+| [browser-app-saves](.agents/skills/browser-app-saves/SKILL.md)                   | HMAC-signed saves with `signed-storage.js`, status handling, tamper tests                    |
+| [maintaining-web-playground](.agents/skills/maintaining-web-playground/SKILL.md) | Capabilities, datasets, WASM probes, workflows, dependencies, Servo, test debugging, deploys |
+
+## App defaults
+
+Unless the requester says otherwise, every app: is researched and planned before code; uses the browser fully through `checkRequirements`; works on iPhone (WebKit, portrait and landscape, safe areas, touch); renders with WebGPU and a WebGL2 fallback; plays original, synthesized Web Audio BGM and effects; runs hot paths in WebAssembly; signs saves with Web Crypto HMAC through `public_html/library/js/signed-storage.js`; and has its licenses rechecked before every commit. Details and deviations: [building-browser-apps](.agents/skills/building-browser-apps/SKILL.md).
 
 ## Definition of done
 
 - `npm test` passes on all four browser engines (Chromium, WebKit, Firefox, servoshell).
 - Generated files are current; portal registration and relevant documentation are updated.
-- Rendered pages are visually checked at desktop and mobile widths.
+- Rendered pages are visually checked at desktop and iPhone widths (portrait and landscape) in Chromium and WebKit.
+- Licenses and attribution of every added file are rechecked before each commit.
 - Any untested browser, physical-device, or hosted deployment behavior is reported explicitly.
 
 ## Pitfalls
@@ -59,9 +71,6 @@
 - COEP can block cross-origin assets even when ordinary CORS would allow them.
 - Never hand-edit generated files; fix their source and regenerate.
 - `untestable` is not the same as `unsupported`.
-- Playwright WebKit screenshotting injects a temporary inline stylesheet; assert CSP diagnostics before screenshotting.
 - The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
 - Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader or automatic Web Analytics injection.
-- servoshell is driven over W3C WebDriver (sync execute only, one session per process), not Playwright. Keep the pin in `tests/servo/servo-version.json` and its sha256 in sync; record bumps in `docs/maintenance.md`.
-- Servo reports `style-src-attr` CSP violations for UA/author stylesheet rules; `'inline'` violations are diagnostics in `test-results/servo/diagnostics.json`, not failures.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.

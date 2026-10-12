@@ -2,6 +2,8 @@
 
 Each app is a static directory under `public_html/`. The resource-policy E2E discovers every `.html` file automatically; still add the app's index link to the root portal so visitors can find it.
 
+Before building a real app, follow the [building-browser-apps skill](../.agents/skills/building-browser-apps/SKILL.md): it sets the default research and planning workflow, iPhone support, graphics, sound, WebAssembly, signed saves, and the license recheck. The template below is only the minimal skeleton.
+
 ## Minimal template
 
 `public_html/example/index.html`:
@@ -49,4 +51,5 @@ Use the required list only for features without which the app cannot work; put p
 - Call `checkRequirements` before using required browser APIs.
 - Keep JavaScript/CSS on the same origin or use a pinned, SRI-protected cdnjs resource.
 - Add a portal entry in `public_html/index.html`, then update relevant docs and generated references.
-- Run `npm run generate` and `npm test`. Inspect a desktop and mobile rendering.
+- Run `npm run generate` and `npm test`. Inspect desktop and iPhone portrait/landscape renderings in Chromium and WebKit.
+- Recheck licenses and `THIRD_PARTY_NOTICES.md` before each commit.
