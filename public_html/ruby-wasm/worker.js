@@ -303,7 +303,9 @@ async function boot(options = {}) {
     // the loader without string eval; sync eval installs it before evalAsync
     // starts depending on JS.__eval_async_rb.
     vm.eval(compat);
-    vm.eval(prelude);
+    // The prelude builds Playground::STAGE_CANVAS via Dom.qs(...).await, so it
+    // must run under evalAsync (await is legal only there).
+    await vm.evalAsync(prelude);
   }
   const target = options.env ? instance.vm : vm;
   const info = {

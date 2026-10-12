@@ -52,6 +52,14 @@ async function assertClean(page, diagnostics, browserName) {
   expect(diagnostics.pageErrors).toEqual([]);
 }
 
+async function openSnippetGroup(page, snippetId) {
+  await page
+    .locator(`details.snippet-group:has(.snippet-item[data-snippet="${snippetId}"])`)
+    .evaluate((el) => {
+      el.open = true;
+    });
+}
+
 async function waitForBoot(page) {
   await expect(page.locator('#vm-state')).toContainText('ready', { timeout: 60_000 });
 }
@@ -99,6 +107,7 @@ test('snippet gallery loads and runs the click counter on the stage', async ({
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
 
+  await openSnippetGroup(page, 'counter');
   await page.locator('.snippet-item[data-snippet="counter"]').click();
   await page.locator('#run-button').click();
   await expect(page.locator('.irb-entry').last()).toContainText('listener armed', {
@@ -114,6 +123,7 @@ test('canvas snippet paints pixels through the DOM bridge', async ({ page, brows
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
 
+  await openSnippetGroup(page, 'rainbow');
   await page.locator('.snippet-item[data-snippet="rainbow"]').click();
   await page.locator('#run-button').click();
   await expect(page.locator('.irb-entry').last()).toContainText('=>', { timeout: 15_000 });

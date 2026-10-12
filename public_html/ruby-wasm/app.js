@@ -392,8 +392,8 @@ async function runCurrent() {
   }
   clearInterval(runTimer);
   const ms = Math.round(performance.now() - runStartedAt);
-  history.push(source);
-  historyIndex = history.length;
+  commandHistory.push(source);
+  historyIndex = commandHistory.length;
   appendEntry(source, outcome, ms);
   setVmState('ready');
   refreshFs();
