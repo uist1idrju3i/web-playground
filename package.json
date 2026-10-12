@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node scripts/generate-feature-data.mjs && node scripts/generate-wasm-probes.mjs",
     "check:generated": "npm run generate && git diff --exit-code HEAD -- public_html/library/data/web-features.json docs/web-platform-features.md public_html/library/wasm/probes",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-external-resources.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:unit": "node --test tests/unit",

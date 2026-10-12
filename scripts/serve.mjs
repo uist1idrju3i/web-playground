@@ -54,8 +54,9 @@ function responseHeaders(pathname) {
   const headers = {
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Cross-Origin-Resource-Policy': 'same-origin',
     'Content-Security-Policy':
-      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+      "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' https://cdnjs.cloudflare.com 'sha256-YjaKGiklmzC6wjXA513HAMmzus8VE61XCOT+SmwNZWA='; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
   };
   for (const rule of headerRules) {
     if (rule.matcher.test(pathname)) Object.assign(headers, rule.headers);

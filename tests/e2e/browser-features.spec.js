@@ -1,16 +1,35 @@
 import { expect, test } from '@playwright/test';
 
-test('the portal links to Browser Features', async ({ page }) => {
+function trackExternalRequests(page, baseURL) {
+  const sameOrigin = new URL(baseURL).origin;
+  const externalRequests = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== sameOrigin) externalRequests.push(request.url());
+  });
+  return externalRequests;
+}
+
+test('the portal links to Browser Features without third-party requests', async ({
+  page,
+  baseURL,
+}) => {
+  const externalRequests = trackExternalRequests(page, baseURL);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'See what your browser can do.' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Browser Features/ })).toHaveAttribute(
     'href',
     '/browser-features/',
   );
+  expect(externalRequests).toEqual([]);
 });
 
-test('Browser Features loads without console errors', async ({ page }) => {
-  const errors = [];
+test('Browser Features loads without console errors or third-party requests', async ({
+  page,
+  baseURL,
+}) => {
+  const consoleMessages = [];
+  const pageErrors = [];
+  const externalRequests = trackExternalRequests(page, baseURL);
   await page.addInitScript(() => {
     window.__securityPolicyViolations = [];
     document.addEventListener('securitypolicyviolation', (event) => {
@@ -23,21 +42,21 @@ test('Browser Features loads without console errors', async ({ page }) => {
     });
   });
   page.on('console', (message) => {
-    const messageText = message.text();
-    if (
-      message.type() === 'error' ||
-      /content security policy|refused to apply|style-src/i.test(messageText)
-    ) {
-      errors.push(messageText);
-    }
+    consoleMessages.push({ type: message.type(), text: message.text() });
   });
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   await page.goto('/browser-features/');
   await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  await page.screenshot();
   const violations = await page.evaluate(() => window.__securityPolicyViolations);
-  expect({ errors, violations }).toEqual({ errors: [], violations: [] });
+  expect({
+    consoleErrors: consoleMessages.filter(({ type }) => type === 'error'),
+    pageErrors,
+    violations,
+    externalRequests,
+  }).toEqual({ consoleErrors: [], pageErrors: [], violations: [], externalRequests: [] });
 });
 
 test('Permissions Policy features are disclosed as wrapped chips', async ({ page }) => {
@@ -237,9 +256,16 @@ test('local and session storage complete write/read/remove round-trips', async (
 
 test('WebAssembly compiles and instantiates under the served CSP', async ({ page }) => {
   const response = await page.goto('/browser-features/');
-  expect(response?.headers()['content-security-policy']).toContain(
-    "script-src 'self' 'wasm-unsafe-eval'",
+  const contentSecurityPolicy = response?.headers()['content-security-policy'] ?? '';
+  expect(contentSecurityPolicy).toContain(
+    "script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com",
   );
+  expect(contentSecurityPolicy).toContain("style-src 'self' https://cdnjs.cloudflare.com");
+  expect(contentSecurityPolicy).toContain("'sha256-YjaKGiklmzC6wjXA513HAMmzus8VE61XCOT+SmwNZWA='");
+  expect(contentSecurityPolicy).toContain("connect-src 'self'");
+  expect(contentSecurityPolicy).toContain("font-src 'self'");
+  const wasmResponse = await page.request.get('/library/wasm/probes/wasm-simd.wasm');
+  expect(wasmResponse.headers()['content-type']).toContain('application/wasm');
   const result = await page.evaluate(async () => {
     const bytes = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]);
     const { module, instance } = await WebAssembly.instantiate(bytes);
@@ -254,6 +280,72 @@ test('WebAssembly compiles and instantiates under the served CSP', async ({ page
   expect(result.compiled).toBe(true);
   expect(result.instantiated).toBe(true);
   expect(result.capability.status).toBe('supported');
+});
+
+test('WebAssembly proposal probes match the engine compatibility table', async ({
+  page,
+  browserName,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const results = await page.evaluate(async () => {
+    const { capabilities, detectCapability } = await import('/library/js/capabilities.js');
+    return Promise.all(
+      capabilities
+        .filter((capability) => capability.id.startsWith('wasm-'))
+        .map(async (capability) => ({
+          id: capability.id,
+          ...(await detectCapability(capability)),
+        })),
+    );
+  });
+  const expectedUnsupported = {
+    chromium: [],
+    firefox: ['wasm-relaxed-simd', 'wasm-jspi'],
+    webkit: ['wasm-relaxed-simd', 'wasm-memory64', 'wasm-multi-memory', 'wasm-jspi'],
+  };
+  const unsupported = results
+    .filter((result) => result.status !== 'supported')
+    .map((result) => result.id)
+    .sort();
+  expect(unsupported, `${browserName} WebAssembly results: ${JSON.stringify(results)}`).toEqual(
+    expectedUnsupported[browserName].sort(),
+  );
+  const validReasons = new Set([
+    'compile-failed',
+    'instantiate-failed',
+    'wrong-result',
+    'blocked-by-csp',
+    'needs-cross-origin-isolation',
+    'timeout',
+  ]);
+  expect(
+    results
+      .filter((result) => result.status !== 'supported')
+      .every((result) => validReasons.has(result.reason)),
+  ).toBe(true);
+  await expect(page.locator('#wasm-probe-list [data-wasm-probe-id]')).toHaveCount(17);
+});
+
+test('WebAssembly toolchain profiles run or explain their missing requirements', async ({
+  page,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const rows = page.locator('#wasm-toolchain-list [data-wasm-toolchain-id]');
+  await expect(rows).toHaveCount(10);
+  const profiles = await rows.evaluateAll((items) =>
+    items.map((item) => ({
+      id: item.dataset.wasmToolchainId,
+      status: item.querySelector('.status-chip')?.getAttribute('aria-label'),
+      detail: item.querySelector('.capability-copy p')?.textContent ?? '',
+    })),
+  );
+  for (const profile of profiles) {
+    expect(profile.status, `${profile.id}: ${profile.detail}`).toBe(
+      profile.detail.startsWith('Requires ') ? 'Profile failed' : 'Profile passed',
+    );
+  }
 });
 
 test('the requirements helper announces missing required features', async ({ page }) => {
