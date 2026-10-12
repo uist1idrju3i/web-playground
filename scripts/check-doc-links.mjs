@@ -1,5 +1,5 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { dirname, extname, relative, resolve, sep } from 'node:path';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { dirname, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -73,13 +73,17 @@ export async function checkMarkdownLinks(files, repositoryRoot = root) {
         continue;
       }
       const relativeFile = relative(repositoryRoot, file);
-      const relativeDestination = relative(repositoryRoot, destination);
       try {
+        if ((await stat(destination)).isDirectory())
+          destination = resolve(destination, 'index.html');
         const targetText = await readFile(destination, 'utf8');
+        const relativeDestination = relative(repositoryRoot, destination);
         if (anchor && extname(destination).toLowerCase() === '.md') {
           const decodedAnchor = decodeURIComponent(anchor);
           if (!headingSlugs(targetText).has(decodedAnchor)) {
-            violations.push(`${relativeFile}: missing anchor #${decodedAnchor} in ${relativeDestination}`);
+            violations.push(
+              `${relativeFile}: missing anchor #${decodedAnchor} in ${relativeDestination}`,
+            );
           }
         }
       } catch {

@@ -25,7 +25,11 @@ for (const item of capabilities) {
   );
 }
 
-lines.push('', `WebAssembly probe IDs (${wasmProbeIds.size}): ${[...wasmProbeIds].join(', ')}.`, '');
+lines.push(
+  '',
+  `WebAssembly probe IDs (${wasmProbeIds.size}): ${[...wasmProbeIds].join(', ')}.`,
+  '',
+);
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, lines.join('\n'));
 console.log(`Generated ${capabilities.length} capability reference entries.`);
