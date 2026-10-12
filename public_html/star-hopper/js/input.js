@@ -29,6 +29,9 @@ export function createInput({
   let mouseDrag = null; // { x, y }
   let lookDX = 0;
   let lookDY = 0;
+  // Camera look only runs while a run is live: menus must not rotate the
+  // world and pointer lock must never engage over a screen.
+  let lookEnabled = false;
   let jumpHeld = false;
   let usedTouch = false;
   let gestured = false;
@@ -71,17 +74,14 @@ export function createInput({
   function onPointerDown(event) {
     gesture();
     if (!pointerKind(event)) {
-      // Mouse: prefer pointer lock on canvas click; otherwise drag-look.
+      // Mouse: pointer lock on canvas click while a run is live.
+      if (!lookEnabled) return;
       if (pointerLockOk && document.pointerLockElement !== canvas) {
         try {
-          const lock = canvas.requestPointerLock({ unadjustedMovement: true });
+          const lock = canvas.requestPointerLock();
           if (lock && typeof lock.catch === 'function') lock.catch(() => {});
         } catch {
-          try {
-            canvas.requestPointerLock();
-          } catch {
-            /* pointer lock unsupported */
-          }
+          /* pointer lock unsupported or rejected */
         }
       }
       mouseDrag = { x: event.clientX, y: event.clientY };
@@ -93,7 +93,7 @@ export function createInput({
     if (insideX < rect.width * 0.5) {
       if (stick) return; // one stick at a time
       stick = { id: event.pointerId, baseX: event.clientX, baseY: event.clientY, dx: 0, dy: 0 };
-    } else if (!lookTouch) {
+    } else if (lookEnabled && !lookTouch) {
       lookTouch = { id: event.pointerId, x: event.clientX, y: event.clientY };
     }
     event.preventDefault();
@@ -101,8 +101,10 @@ export function createInput({
 
   function onPointerMove(event) {
     if (document.pointerLockElement === canvas) {
-      lookDX += event.movementX;
-      lookDY += event.movementY;
+      if (lookEnabled) {
+        lookDX += event.movementX;
+        lookDY += event.movementY;
+      }
       return;
     }
     if (stick && event.pointerId === stick.id) {
@@ -117,14 +119,15 @@ export function createInput({
       return;
     }
     if (lookTouch && event.pointerId === lookTouch.id) {
-      lookDX += event.clientX - lookTouch.x;
-      lookDY += event.clientY - lookTouch.y;
+      // Touch drags are short swipes, so they scale up against mouse deltas.
+      lookDX += (event.clientX - lookTouch.x) * 1.4;
+      lookDY += (event.clientY - lookTouch.y) * 1.4;
       lookTouch.x = event.clientX;
       lookTouch.y = event.clientY;
       event.preventDefault();
       return;
     }
-    if (mouseDrag && event.buttons & 1) {
+    if (mouseDrag && lookEnabled && event.buttons & 1) {
       lookDX += event.clientX - mouseDrag.x;
       lookDY += event.clientY - mouseDrag.y;
       mouseDrag.x = event.clientX;
@@ -232,6 +235,10 @@ export function createInput({
       lookDX = 0;
       lookDY = 0;
       return out;
+    },
+    setLookEnabled(v) {
+      lookEnabled = v;
+      if (!v && document.pointerLockElement === canvas) document.exitPointerLock();
     },
     get locked() {
       return document.pointerLockElement === canvas;

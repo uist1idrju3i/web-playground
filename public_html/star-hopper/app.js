@@ -90,8 +90,8 @@ async function boot() {
     },
   });
 
+  // The touch UI itself is toggled per-phase in the frame loop.
   if (input.coarse || 'ontouchstart' in globalThis) {
-    $('touch-ui').classList.add('on');
     $('title-hint').textContent = t('touchHint');
   } else {
     $('title-hint').textContent = t('pointerHint');
@@ -329,10 +329,13 @@ async function boot() {
     game.lastTs = ts;
     const time = ts / 1000;
 
-    // Look applies in every phase that shows the world.
+    // Look only while a run is live; touch UI follows the same phase.
+    const lookOn = game.phase === 'playing' || game.phase === 'countdown';
+    input.setLookEnabled(lookOn);
+    $('touch-ui').classList.toggle('on', (input.coarse || 'ontouchstart' in globalThis) && lookOn);
     const look = input.consumeLook();
-    game.yaw -= look.dx * 0.003;
-    game.pitch = Math.max(-1.45, Math.min(1.45, game.pitch - look.dy * 0.003));
+    game.yaw -= look.dx * 0.0024;
+    game.pitch = Math.max(-1.45, Math.min(1.45, game.pitch - look.dy * 0.0024));
 
     const playing = game.phase === 'playing';
     if (playing) {
