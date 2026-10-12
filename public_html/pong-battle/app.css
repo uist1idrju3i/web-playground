@@ -94,7 +94,8 @@ button {
   text-align: center;
   padding: 24px;
 }
-body[data-hero='done'] #hero {
+body[data-hero='done'] #hero,
+#hero[hidden] {
   display: none;
 }
 .hero-inner {

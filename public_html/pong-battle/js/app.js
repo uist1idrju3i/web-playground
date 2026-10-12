@@ -355,8 +355,12 @@ if (editor) editor.on('change', () => (save.data.code = getCode()));
 
 /* ---------- deploy ---------- */
 async function deploy() {
-  await audio.unlock();
-  audio.startMusic();
+  audio
+    .unlock()
+    .then((ok) => {
+      if (ok) audio.startMusic();
+    })
+    .catch(() => {});
   const code = getCode();
   save.data.sample = selectedSample;
   save.data.code = code;
@@ -443,11 +447,15 @@ async function boot() {
   });
 }
 
-els.heroCta.addEventListener('click', async () => {
-  await audio.unlock();
-  audio.startMusic();
+els.heroCta.addEventListener('click', () => {
   els.hero.hidden = true;
   document.body.dataset.hero = 'done';
+  audio
+    .unlock()
+    .then((ok) => {
+      if (ok) audio.startMusic();
+    })
+    .catch(() => {});
 });
 els.heroHow.addEventListener('click', () => (els.howPanel.hidden = !els.howPanel.hidden));
 els.deployBtn.addEventListener('click', deploy);
