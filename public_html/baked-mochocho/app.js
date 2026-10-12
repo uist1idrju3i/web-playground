@@ -15,6 +15,7 @@ const TIME_SCALE = Math.min(40, Math.max(1, Number(params.get('speed')) || 5));
 const POUR_RATE = 6;
 const BORDER = 10;
 const SAVE_VERSION = 1;
+const CUSTOMERS_PER_DAY = 5;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const isAppleTouch =
   navigator.maxTouchPoints > 1 && /iPhone|iPad|Macintosh/.test(navigator.userAgent);
@@ -30,6 +31,11 @@ const state = {
     best: 0,
     round: 0,
     served: 0,
+    day: 1,
+    dayServed: 0,
+    dayCoins: 0,
+    dayBest: 0,
+    dayBestCombo: 0,
     lang: 'ja',
     sound: true,
     bgm: true,
@@ -188,6 +194,7 @@ function onPointerDown(event) {
     caption('cap.pour');
   } else if (state.tool === 'oil') {
     state.sim.grease(p.x, p.y, 20, 0.8);
+    state.sim.wipe(p.x, p.y, 20, 2.5);
   } else if (state.tool === 'filling') {
     if (cavity < 0) return;
     const code = state.sim.addFilling(cavity, state.filling, p.x, p.y);
@@ -223,12 +230,10 @@ function onPointerMove(event) {
     const steps = Math.ceil(Math.hypot(p.x - state.pointer.last.x, p.y - state.pointer.last.y) / 4);
     for (let i = 1; i <= steps; i += 1) {
       const k = i / steps;
-      state.sim.grease(
-        state.pointer.last.x + (p.x - state.pointer.last.x) * k,
-        state.pointer.last.y + (p.y - state.pointer.last.y) * k,
-        20,
-        0.5,
-      );
+      const wx = state.pointer.last.x + (p.x - state.pointer.last.x) * k;
+      const wy = state.pointer.last.y + (p.y - state.pointer.last.y) * k;
+      state.sim.grease(wx, wy, 20, 0.5);
+      state.sim.wipe(wx, wy, 20, 2.0);
     }
   }
   state.pointer.last = p;
@@ -369,6 +374,10 @@ async function serve(pair) {
   state.save.best = Math.max(state.save.best, score.total);
   state.save.served += 1;
   state.save.round += 1;
+  state.save.dayServed += 1;
+  state.save.dayCoins += price;
+  state.save.dayBest = Math.max(state.save.dayBest, score.total);
+  state.save.dayBestCombo = Math.max(state.save.dayBestCombo, state.bestCombo);
   state.audio.cue(score.stars >= 4 ? 'completion' : score.stars >= 3 ? 'success' : 'notification');
   caption('cap.success');
   haptic([15, 30, 15]);
@@ -451,6 +460,21 @@ function updateHud() {
   $('coins').textContent = String(state.save.coins);
   $('best').textContent = String(state.save.best);
   $('order-items').textContent = t(`filling.${state.order.filling}`);
+  $('order-count').textContent = t('day.customer', {
+    day: state.save.day,
+    n: Math.min(state.save.dayServed + 1, CUSTOMERS_PER_DAY),
+    total: CUSTOMERS_PER_DAY,
+  });
+}
+
+function showDayResult() {
+  $('day-heading').textContent = t('day.result', { day: state.save.day });
+  $('day-coins').textContent = String(state.save.dayCoins);
+  $('day-best').textContent = String(state.save.dayBest);
+  $('day-combo').textContent = `×${state.save.dayBestCombo}`;
+  $('day-screen').hidden = false;
+  state.paused = true;
+  $('day-next-button').focus();
 }
 
 function updateGuide(cavities) {
@@ -669,6 +693,27 @@ function bindUi() {
     state.cakeView?.dispose();
     state.cakeView = null;
     $('result-screen').hidden = true;
+    if (state.save.dayServed >= CUSTOMERS_PER_DAY) {
+      showDayResult();
+    } else {
+      state.paused = false;
+    }
+    state.audio.cue('confirm');
+  });
+  $('day-next-button').addEventListener('click', () => {
+    $('day-screen').hidden = true;
+    Object.assign(state.save, {
+      day: state.save.day + 1,
+      dayServed: 0,
+      dayCoins: 0,
+      dayBest: 0,
+      dayBestCombo: 0,
+    });
+    state.combo = 0;
+    state.bestCombo = 0;
+    updateCombo();
+    updateHud();
+    persist();
     state.paused = false;
     state.audio.cue('confirm');
   });
@@ -679,7 +724,8 @@ function bindUi() {
   });
   $('close-menu').addEventListener('click', () => {
     $('menu-screen').hidden = true;
-    state.paused = !$('result-screen').hidden || !$('title-screen').hidden;
+    state.paused =
+      !$('result-screen').hidden || !$('day-screen').hidden || !$('title-screen').hidden;
   });
   $('sound-toggle').addEventListener('change', (e) => {
     state.save.sound = e.target.checked;
@@ -694,7 +740,17 @@ function bindUi() {
   $('reset-save').addEventListener('click', async () => {
     if (!confirm(t('confirmReset'))) return;
     await state.store?.clear();
-    Object.assign(state.save, { coins: 0, best: 0, round: 0, served: 0 });
+    Object.assign(state.save, {
+      coins: 0,
+      best: 0,
+      round: 0,
+      served: 0,
+      day: 1,
+      dayServed: 0,
+      dayCoins: 0,
+      dayBest: 0,
+      dayBestCombo: 0,
+    });
     updateHud();
     toast(t('save.empty'));
   });

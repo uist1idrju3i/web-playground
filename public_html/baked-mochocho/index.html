@@ -28,6 +28,7 @@
       <div class="order-card" id="order-card" aria-live="polite">
         <span class="order-label" data-i18n="order">ご注文</span>
         <span class="order-items" id="order-items">—</span>
+        <span class="order-count" id="order-count"></span>
       </div>
       <div class="hud-stats">
         <span class="stat"
@@ -140,6 +141,24 @@
         <dl class="result-grid" id="result-grid"></dl>
         <p class="result-comment" id="result-comment"></p>
         <button class="primary-button" id="next-button" type="button" data-i18n="next">次へ</button>
+      </div>
+    </section>
+
+    <section class="overlay" id="day-screen" hidden aria-labelledby="day-heading">
+      <div class="overlay-card result-card">
+        <p class="eyebrow" data-i18n="day.close">営業終了</p>
+        <h2 id="day-heading" class="result-title"></h2>
+        <dl class="result-grid">
+          <dt data-i18n="day.coins">今日の売上</dt>
+          <dd id="day-coins">0</dd>
+          <dt data-i18n="day.best">今日のベスト</dt>
+          <dd id="day-best">0</dd>
+          <dt data-i18n="day.combo">ベストコンボ</dt>
+          <dd id="day-combo">0</dd>
+        </dl>
+        <button class="primary-button" id="day-next-button" type="button" data-i18n="day.next">
+          次の日へ
+        </button>
       </div>
     </section>
 

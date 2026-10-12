@@ -112,6 +112,7 @@ function requireExports(exports) {
     'set_heat',
     'set_nozzle',
     'grease',
+    'wipe',
     'add_filling',
     'start_flip',
     'take_out',
@@ -193,6 +194,7 @@ export async function createSimulation({ seed = 1, simd = undefined, source = un
     setHeat: (level) => exports.set_heat(level),
     setNozzle: (x, y, rate) => exports.set_nozzle(x, y, rate),
     grease: (x, y, radius, amount) => exports.grease(x, y, radius, amount),
+    wipe: (x, y, radius, amount) => exports.wipe(x, y, radius, amount),
     addFilling: (cavity, kind, x, y) => exports.add_filling(cavity, kind, x, y),
     startFlip: (pair) => exports.start_flip(pair),
     takeOut(pair) {

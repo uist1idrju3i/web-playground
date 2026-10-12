@@ -1138,6 +1138,41 @@ fn sim_step_internal(sim: &mut Simulation, dt: f32) {
             cell.oil = (cell.oil - ((plate - 150.0).max(0.0) * 0.00001 * dt)).max(0.0);
             let progress = ((cell.b_bot - 0.9) / 0.3).clamp(0.0, 1.0);
             burn_audio = burn_audio.max(progress);
+            // Thin batter spilled on the flat plate desiccates and flakes off:
+            // once fully dry and set, it crumbles away with an occasional wisp.
+            let (cx, cy) = cell_xy(index);
+            let px = (cx as f32 + 0.5) * CELL_MM;
+            let py = (cy as f32 + 0.5) * CELL_MM;
+            if mold_height(px, py) > -0.5 && cell.h < 2.0 && cell.moisture <= 0.002
+                && cell.set > 0.5
+            {
+                cell.h -= dt * 0.05;
+                if cell.h <= 0.02 {
+                    cell.h = 0.0;
+                    cell.set = 0.0;
+                    cell.b_bot = 0.0;
+                    cell.b_top = 0.0;
+                    cell.bubbles = 0.0;
+                    let seed = random01(sim);
+                    if seed < 0.3 {
+                        add_particle(
+                            sim,
+                            Particle {
+                                x: px,
+                                y: py,
+                                z: mold_height(px, py) + 1.0,
+                                size: 1.5 + seed * 2.0,
+                                life: 1.0 + seed,
+                                kind: 0.0,
+                                alpha: 0.4,
+                                seed,
+                                vz: 6.0 + seed * 5.0,
+                                volume_mm3: 0.0,
+                            },
+                        );
+                    }
+                }
+            }
         } else {
             cell.set = cell.set.max(0.0);
         }
@@ -1254,6 +1289,45 @@ pub extern "C" fn grease(x_mm: f32, y_mm: f32, radius_mm: f32, amount: f32) {
             let falloff = 1.0 - r / radius_mm;
             sim.cells[index].oil =
                 (sim.cells[index].oil + amount.max(0.0) * falloff).min(1.0);
+        }
+        index += 1;
+    }
+}
+
+// The oil brush also wipes spilled batter off the flat plate. Only cells
+// outside the cavities are touched, so batter inside a mold is never removed.
+#[unsafe(no_mangle)]
+pub extern "C" fn wipe(x_mm: f32, y_mm: f32, radius_mm: f32, amount: f32) {
+    if !x_mm.is_finite()
+        || !y_mm.is_finite()
+        || !radius_mm.is_finite()
+        || !amount.is_finite()
+        || radius_mm <= 0.0
+    {
+        return;
+    }
+    let sim = unsafe { sim_mut() };
+    let mut index = 0;
+    while index < CELL_COUNT {
+        let (x, y) = cell_xy(index);
+        let px = (x as f32 + 0.5) * CELL_MM;
+        let py = (y as f32 + 0.5) * CELL_MM;
+        let r = distance(px, py, x_mm, y_mm);
+        if r <= radius_mm && mold_height(px, py) > -0.5 {
+            let mut cell = sim.cells[index];
+            if cell.h > 0.0 {
+                let falloff = 1.0 - r / radius_mm;
+                cell.h -= amount.max(0.0) * falloff;
+                if cell.h <= 0.02 {
+                    cell.h = 0.0;
+                    cell.moisture = 0.0;
+                    cell.set = 0.0;
+                    cell.b_bot = 0.0;
+                    cell.b_top = 0.0;
+                    cell.bubbles = 0.0;
+                }
+                sim.cells[index] = cell;
+            }
         }
         index += 1;
     }

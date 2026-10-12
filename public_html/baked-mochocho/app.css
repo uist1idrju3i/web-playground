@@ -122,6 +122,12 @@ a {
   text-overflow: ellipsis;
 }
 
+.order-count {
+  font-size: 0.68rem;
+  color: var(--bm-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .hud-stats {
   display: flex;
   gap: 10px;
