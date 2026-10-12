@@ -124,27 +124,43 @@ export class Ui {
     ctx.font = '600 13px system-ui, sans-serif';
     ctx.fillText('おきなわ', 20, 366);
     ctx.restore();
+    // The main map fills the top ~330px; Okinawa stays inside its inset box.
+    const mainPieces = pieces.filter((p) => p.code !== 'JP-47');
+    const mxs = mainPieces.flatMap((p) => p.mapPoly.map((q) => q[0]));
+    const mys = mainPieces.flatMap((p) => p.mapPoly.map((q) => q[1]));
+    const mMinX = Math.min(...mxs);
+    const mMinY = Math.min(...mys);
+    const mw = Math.max(...mxs) - mMinX;
+    const mh = Math.max(...mys) - mMinY;
+    const s = Math.min(400 / mw, 330 / mh);
+    const ox = (480 - mw * s) / 2 - mMinX * s;
+    const oy = 10 - mMinY * s;
     for (const p of pieces) {
       const has = collected.has(p.code);
       const cols = pieceColor(p);
       ctx.save();
-      let s;
+      let k;
       if (p.code === 'JP-47') {
-        // Center the shape inside the inset box (shape spans ±0.3 units).
-        s = 90;
-        ctx.translate(66, 400);
-        ctx.translate(-0.019 * s, 0.014 * s);
+        // Fit inside the labelled inset box (8,344,116,106).
+        const bxs = p.mapPoly.map((q) => q[0]);
+        const bys = p.mapPoly.map((q) => q[1]);
+        const bMinX = Math.min(...bxs);
+        const bMinY = Math.min(...bys);
+        const bw = Math.max(...bxs) - bMinX;
+        const bh = Math.max(...bys) - bMinY;
+        k = Math.min(92 / bw, 72 / bh);
+        ctx.translate(66 - (bMinX + bw / 2) * k, 397 - (bMinY + bh / 2) * k);
       } else {
-        s = 54;
-        ctx.translate(26, 14);
-        ctx.translate(p.map[0] * s, p.map[1] * s);
+        k = s;
+        ctx.translate(ox, oy);
       }
+      ctx.scale(k, k);
       ctx.beginPath();
-      p.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)));
+      p.mapPoly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.closePath();
       ctx.fillStyle = has ? cols.main : 'rgba(255,255,255,0.05)';
       ctx.strokeStyle = has ? cols.edge : 'rgba(255,255,255,0.18)';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.4 / k;
       ctx.fill();
       ctx.stroke();
       ctx.restore();
