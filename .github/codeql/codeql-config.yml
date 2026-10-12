@@ -1,0 +1,6 @@
+name: web-playground-codeql
+queries: security-and-quality
+paths-ignore:
+  - public_html/library/data/**
+  - public_html/library/wasm/toolchains/*.js
+  - tests/e2e/fixtures/**
