@@ -1,5 +1,6 @@
 // DOM HUD and overlay panels for the tsumiki game.
 import { pieceColor } from './geometry.js';
+import { achievementGroups, ACHIEVEMENT_SECTIONS } from './groups.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -100,7 +101,7 @@ export class Ui {
     this.drawPreview(piece, this.el.nextCanvas);
   }
 
-  buildCollection(pieces, collected, onPick) {
+  buildCollection(pieces, collected, onPick, achievements) {
     const grid = this.el.collectionGrid;
     grid.textContent = '';
     // Japan mosaic canvas on top
@@ -145,6 +146,34 @@ export class Ui {
       list.appendChild(cell);
     }
     grid.appendChild(list);
+    if (achievements) this._renderAchievements(grid, pieces, collected, achievements);
+  }
+
+  // Achievement rows: one chip per group showing progress or ★ complete.
+  _renderAchievements(grid, pieces, collected, achievements) {
+    const done = achievements instanceof Set ? achievements : new Set(achievements);
+    const groupDefs = achievementGroups(pieces);
+    const wrap = document.createElement('div');
+    wrap.className = 'achievements';
+    for (const sec of ACHIEVEMENT_SECTIONS) {
+      const groups = sec.groups === 'modern' ? groupDefs.modern : sec.groups;
+      const h = document.createElement('h3');
+      h.className = 'ach-h';
+      h.textContent = sec.title;
+      wrap.appendChild(h);
+      const row = document.createElement('div');
+      row.className = 'ach-row';
+      for (const g of groups) {
+        const have = g.codes.filter((c) => collected.has(c)).length;
+        const complete = done.has(g.id) || have === g.codes.length;
+        const chip = document.createElement('div');
+        chip.className = `ach-chip${complete ? ' done' : ''}`;
+        chip.textContent = complete ? `★ ${g.name}` : `${g.name} ${have}/${g.codes.length}`;
+        row.appendChild(chip);
+      }
+      wrap.appendChild(row);
+    }
+    grid.appendChild(wrap);
   }
 
   _buildOobe() {

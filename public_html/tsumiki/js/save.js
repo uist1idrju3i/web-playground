@@ -95,6 +95,7 @@ export class SaveStore {
       bestScore: 0,
       bestHeight: 0,
       collected: [],
+      achievements: [],
       totalDrops: 0,
       runs: 0,
       oobeDone: false,

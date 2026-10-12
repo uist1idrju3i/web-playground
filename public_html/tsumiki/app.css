@@ -440,3 +440,38 @@ button.primary {
     transition-duration: 0.01s !important;
   }
 }
+
+/* Achievement chips inside the collection screen */
+.achievements {
+  margin-top: 1.1rem;
+}
+
+.ach-h {
+  font-size: 0.78rem;
+  color: #b9c6ee;
+  margin: 0.7rem 0 0.35rem;
+  letter-spacing: 0.06em;
+}
+
+.ach-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ach-chip {
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  color: #b9c6ee;
+  font-variant-numeric: tabular-nums;
+}
+
+.ach-chip.done {
+  background: linear-gradient(135deg, #ffb45c, #ff7d5c);
+  border-color: transparent;
+  color: #2a1400;
+  font-weight: 700;
+}

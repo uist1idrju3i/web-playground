@@ -1,5 +1,6 @@
 // Game orchestration: states, spawning, scoring, wind, milestones, save sync.
 import { WORLD } from './physics.js';
+import { achievementGroups } from './groups.js';
 
 const ESCAPE_LIMIT = 3;
 
@@ -24,6 +25,8 @@ export class Game {
     this.heightM = 0;
     this.wind = { x: 0, t: 0, next: 0 };
     this.collected = new Set(save.data.collected);
+    this.achievements = new Set(save.data.achievements ?? []);
+    this.groupDefs = achievementGroups(pieces);
     this.pending = false; // waiting for current piece to settle/escape
     this.acc = 0;
     this.reduceMotion =
@@ -78,6 +81,7 @@ export class Game {
     if (isBest) s.bestScore = this.score;
     if (this.heightM > s.bestHeight) s.bestHeight = this.heightM;
     s.collected = [...this.collected];
+    s.achievements = [...this.achievements];
     s.totalDrops += this.drops;
     s.runs += 1;
     this.onPersist?.();
@@ -133,6 +137,19 @@ export class Game {
   _clampAim(x) {
     const lim = WORLD.platformHalfW + 1.6;
     return Math.max(-lim, Math.min(lim, x));
+  }
+
+  _checkAchievements() {
+    for (const groups of Object.values(this.groupDefs)) {
+      for (const g of groups) {
+        if (this.achievements.has(g.id)) continue;
+        if (g.codes.every((c) => this.collected.has(c))) {
+          this.achievements.add(g.id);
+          this.ui.toast(`${g.name}を コンプリート！`, 'じっせきを とった！');
+          this.audio.playCue('completion');
+        }
+      }
+    }
   }
 
   // Pieces appear just under the top edge of the current view so the player
@@ -193,6 +210,7 @@ export class Game {
       const p = ev.rec.piece;
       const firstTime = !this.collected.has(p.code);
       this.collected.add(p.code);
+      this._checkAchievements();
       const gain = Math.round(90 * this.combo + this.heightM * 6);
       this.score += gain;
       this.combo = Math.min(9, this.combo + 0.5);

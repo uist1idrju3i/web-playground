@@ -138,12 +138,12 @@ async function boot() {
     document.body.classList.remove('in-game');
   });
   on('btn-collection', () => {
-    ui.buildCollection(pieces, game.collected, null);
+    ui.buildCollection(pieces, game.collected, null, game.achievements);
     ui.show('collection');
     audio.playCue('notification');
   });
   on('btn-collection-2', () => {
-    ui.buildCollection(pieces, game.collected, null);
+    ui.buildCollection(pieces, game.collected, null, game.achievements);
     ui.show('collection');
   });
   on('collection-close', () => {
