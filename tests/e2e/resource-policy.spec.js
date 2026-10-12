@@ -2,6 +2,11 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import {
+  attachConsoleWarnings,
+  filterWebKitUaStyleViolations,
+  WEBKIT_UA_STYLE_SAMPLES,
+} from './csp-violations.js';
 
 const publicRoot = fileURLToPath(new URL('../../public_html/', import.meta.url));
 const cdnjsPath = /^\/ajax\/libs\/[^/]+\/\d+\.\d+\.\d+\//;
@@ -26,13 +31,15 @@ const appPaths = readdirSync(publicRoot, { withFileTypes: true })
   .map((entry) => `/${entry.name}/`);
 
 for (const path of pages) {
-  test(`static resource policy: ${path}`, async ({ browser, baseURL }) => {
+  test(`static resource policy: ${path}`, async ({ browser, browserName, baseURL }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const allowedOrigin = new URL(baseURL).origin;
     const externalRequests = new Set();
     const cspViolations = [];
     const pageErrors = [];
+    const consoleErrors = [];
+    const consoleWarnings = [];
     context.on('request', (request) => {
       const url = new URL(request.url());
       if (
@@ -60,8 +67,15 @@ for (const path of pages) {
         window.__resourcePolicyViolations.push({
           directive: event.violatedDirective,
           blockedURI: event.blockedURI,
+          sample: event.sample,
+          sourceFile: event.sourceFile,
+          line: event.lineNumber,
         });
       });
+    });
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+      if (message.type() === 'warning') consoleWarnings.push(message.text());
     });
     page.on('websocket', (socket) => {
       const url = new URL(socket.url());
@@ -72,26 +86,67 @@ for (const path of pages) {
     try {
       await page.goto(path, { waitUntil: 'load' });
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-      cspViolations.push(...(await page.evaluate(() => window.__resourcePolicyViolations)));
+      cspViolations.push(
+        ...filterWebKitUaStyleViolations(
+          await page.evaluate(() => window.__resourcePolicyViolations),
+          browserName,
+        ),
+      );
+      await attachConsoleWarnings(testInfo, consoleWarnings);
       expect(
         {
           externalRequests: [...externalRequests],
           cspViolations,
           pageErrors,
+          consoleErrors,
         },
         path,
-      ).toEqual({ externalRequests: [], cspViolations: [], pageErrors: [] });
+      ).toEqual({ externalRequests: [], cspViolations: [], pageErrors: [], consoleErrors: [] });
     } finally {
       await context.close();
     }
   });
 }
 
+test('WebKit user-agent style CSP canary remains exact-match', async ({
+  browserName,
+  page,
+  baseURL,
+}) => {
+  test.skip(
+    browserName !== 'webkit',
+    'This canary verifies WebKit-specific native select behavior.',
+  );
+  await page.addInitScript(() => {
+    window.__resourcePolicyViolations = [];
+    document.addEventListener('securitypolicyviolation', (event) => {
+      window.__resourcePolicyViolations.push({
+        directive: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        sample: event.sample,
+        sourceFile: event.sourceFile,
+        line: event.lineNumber,
+      });
+    });
+  });
+  await page.goto(new URL('/__tests__/webkit-select-csp.html', baseURL).href);
+  const violations = await page.evaluate(() => window.__resourcePolicyViolations);
+  expect(violations.length).toBeGreaterThan(0);
+  expect(
+    violations.every(
+      ({ directive, blockedURI }) => directive === 'style-src-attr' && blockedURI === 'inline',
+    ),
+  ).toBe(true);
+  expect([...new Set(violations.map(({ sample }) => sample))].sort()).toEqual(
+    [...WEBKIT_UA_STYLE_SAMPLES].sort(),
+  );
+});
+
 test('portal links resolve and every app index is registered', async ({ page, baseURL }) => {
   await page.goto('/');
-  const links = await page.locator('a[href]').evaluateAll((anchors) =>
-    anchors.map((anchor) => anchor.href),
-  );
+  const links = await page
+    .locator('a[href]')
+    .evaluateAll((anchors) => anchors.map((anchor) => anchor.href));
   const origin = new URL(baseURL).origin;
   const internalLinks = [...new Set(links.filter((href) => new URL(href).origin === origin))];
   for (const appPath of appPaths) {

@@ -16,8 +16,9 @@ function parseHeaderBlocks(source) {
     } else if (current) {
       const separator = line.indexOf(':');
       if (separator > -1) {
-        current.headers[line.slice(0, separator).trim().toLowerCase()] =
-          line.slice(separator + 1).trim();
+        current.headers[line.slice(0, separator).trim().toLowerCase()] = line
+          .slice(separator + 1)
+          .trim();
       }
     }
   }
@@ -40,8 +41,13 @@ test('locks the global CSP and security-header scopes', async () => {
   const csp = parseCsp(global.headers['content-security-policy']);
   assert.deepEqual(csp, {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'wasm-unsafe-eval'", 'https://cdnjs.cloudflare.com'],
-    'style-src': ["'self'", 'https://cdnjs.cloudflare.com'],
+    'script-src': [
+      "'self'",
+      "'wasm-unsafe-eval'",
+      "'report-sample'",
+      'https://cdnjs.cloudflare.com',
+    ],
+    'style-src': ["'self'", "'report-sample'", 'https://cdnjs.cloudflare.com'],
     'img-src': ["'self'", 'data:'],
     'connect-src': ["'self'"],
     'font-src': ["'self'"],

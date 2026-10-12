@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { attachConsoleWarnings, filterWebKitUaStyleViolations } from './csp-violations.js';
 
 function trackExternalRequests(page, baseURL) {
   const sameOrigin = new URL(baseURL).origin;
@@ -28,8 +29,10 @@ test('the portal links to Browser Features without third-party requests', async 
 test('Browser Features loads without console errors or third-party requests', async ({
   page,
   baseURL,
-}) => {
-  const consoleMessages = [];
+  browserName,
+}, testInfo) => {
+  const consoleErrors = [];
+  const consoleWarnings = [];
   const pageErrors = [];
   const requestTracker = trackExternalRequests(page, baseURL);
   let collecting = true;
@@ -39,6 +42,7 @@ test('Browser Features loads without console errors or third-party requests', as
       window.__securityPolicyViolations.push({
         directive: event.violatedDirective,
         blockedURI: event.blockedURI,
+        sample: event.sample,
         sourceFile: event.sourceFile,
         line: event.lineNumber,
       });
@@ -46,7 +50,9 @@ test('Browser Features loads without console errors or third-party requests', as
     document.addEventListener('securitypolicyviolation', window.__securityPolicyListener);
   });
   const consoleListener = (message) => {
-    if (collecting) consoleMessages.push({ type: message.type(), text: message.text() });
+    if (!collecting) return;
+    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'warning') consoleWarnings.push(message.text());
   };
   const pageErrorListener = (error) => {
     if (collecting) pageErrors.push(error.message);
@@ -57,13 +63,17 @@ test('Browser Features loads without console errors or third-party requests', as
   await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
-  const violations = await page.evaluate(() => window.__securityPolicyViolations);
+  const violations = filterWebKitUaStyleViolations(
+    await page.evaluate(() => window.__securityPolicyViolations),
+    browserName,
+  );
+  await attachConsoleWarnings(testInfo, consoleWarnings);
   expect({
-    consoleMessages,
+    consoleErrors,
     pageErrors,
     violations,
     externalRequests: requestTracker.externalRequests,
-  }).toEqual({ consoleMessages: [], pageErrors: [], violations: [], externalRequests: [] });
+  }).toEqual({ consoleErrors: [], pageErrors: [], violations: [], externalRequests: [] });
   // Playwright's WebKit screenshotter injects body {}, triggering an expected post-assertion CSP violation.
   await page.screenshot();
   collecting = false;
@@ -276,9 +286,11 @@ test('WebAssembly compiles and instantiates under the served CSP', async ({ page
   const response = await page.goto('/browser-features/');
   const contentSecurityPolicy = response?.headers()['content-security-policy'] ?? '';
   expect(contentSecurityPolicy).toContain(
-    "script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com",
+    "script-src 'self' 'wasm-unsafe-eval' 'report-sample' https://cdnjs.cloudflare.com",
   );
-  expect(contentSecurityPolicy).toContain("style-src 'self' https://cdnjs.cloudflare.com");
+  expect(contentSecurityPolicy).toContain(
+    "style-src 'self' 'report-sample' https://cdnjs.cloudflare.com",
+  );
   expect(contentSecurityPolicy).toContain("connect-src 'self'");
   expect(contentSecurityPolicy).toContain("font-src 'self'");
   const wasmResponse = await page.request.get('/library/wasm/probes/wasm-simd.wasm');
@@ -316,11 +328,8 @@ test('WebAssembly proposal probes match the engine compatibility table', async (
         })),
     );
   });
-  const expectedUnsupported = {
-    chromium: [],
-    firefox: ['wasm-relaxed-simd', 'wasm-jspi'],
-    webkit: ['wasm-relaxed-simd', 'wasm-memory64', 'wasm-multi-memory', 'wasm-jspi'],
-  };
+  // Measured with Playwright 1.64: Chromium 156, Firefox 157, and WebKit 27.2.
+  const expectedUnsupported = { chromium: [], firefox: [], webkit: [] };
   const unsupported = results
     .filter((result) => result.status !== 'supported')
     .map((result) => result.id)
