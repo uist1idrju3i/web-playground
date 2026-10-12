@@ -1,3 +1,5 @@
+import { runWasmProbe } from './wasm-probes.js';
+
 function available(value, detail) {
   return value
     ? { status: 'supported', detail }
@@ -15,6 +17,13 @@ function capability(id, name, category, detect, options = {}) {
     web_features_id: options.web_features_id ?? null,
     permissionsPolicyFeature: options.permissionsPolicyFeature ?? null,
   };
+}
+
+function wasmCapability(id, name) {
+  return capability(id, name, 'WebAssembly', async () => {
+    const result = await runWasmProbe(id);
+    return { status: result.status, reason: result.reason, detail: result.detail };
+  });
 }
 
 function uniqueProbeId() {
@@ -556,23 +565,22 @@ export const capabilities = [
       };
     }
   }),
-  capability('wasm-simd', 'WebAssembly SIMD', 'JavaScript', () => {
-    const moduleBytes = new Uint8Array([
-      0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 22, 1, 20, 0, 253, 12, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,
-    ]);
-    const supported = globalThis.WebAssembly?.validate(moduleBytes) ?? false;
-    return available(
-      'WebAssembly' in globalThis,
-      `WebAssembly SIMD validation: ${supported ? 'supported' : 'not supported'}.`,
-    );
-  }),
-  capability('wasm-threads', 'WebAssembly threads', 'JavaScript', () =>
-    available(
-      'SharedArrayBuffer' in globalThis && crossOriginIsolated,
-      'SharedArrayBuffer and cross-origin isolation are required for threads.',
-    ),
-  ),
+  wasmCapability('wasm-simd', 'WebAssembly SIMD'),
+  wasmCapability('wasm-relaxed-simd', 'WebAssembly relaxed SIMD'),
+  wasmCapability('wasm-threads', 'WebAssembly threads'),
+  wasmCapability('wasm-bigint', 'WebAssembly BigInt'),
+  wasmCapability('wasm-exceptions-legacy', 'WebAssembly legacy exceptions'),
+  wasmCapability('wasm-exnref', 'WebAssembly exception references'),
+  wasmCapability('wasm-tail-call', 'WebAssembly tail calls'),
+  wasmCapability('wasm-gc', 'WebAssembly GC'),
+  wasmCapability('wasm-memory64', 'WebAssembly memory64'),
+  wasmCapability('wasm-multi-memory', 'WebAssembly multi-memory'),
+  wasmCapability('wasm-extended-const', 'WebAssembly extended const'),
+  wasmCapability('wasm-bulk-memory', 'WebAssembly bulk memory'),
+  wasmCapability('wasm-reference-types', 'WebAssembly reference types'),
+  wasmCapability('wasm-jspi', 'WebAssembly JSPI'),
+  wasmCapability('wasm-js-string-builtins', 'WebAssembly JS string builtins'),
+  wasmCapability('wasm-streaming', 'WebAssembly streaming compilation'),
   capability(
     'web-share',
     'Web Share',
