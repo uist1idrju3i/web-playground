@@ -1,14 +1,25 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { dirname, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFragment } from 'parse5';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 
+function appendText(node, parts) {
+  if (node.nodeName === '#text') {
+    parts.push(node.value);
+    return;
+  }
+  if (node.tagName === 'script' || node.tagName === 'style') return;
+  for (const child of node.childNodes ?? []) appendText(child, parts);
+}
+
 export function slugHeading(text) {
-  return text
-    .replace(/`([^`]*)`/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]*>/g, '')
+  const markdown = text.replace(/`([^`]*)`/g, '$1').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+  const parts = [];
+  appendText(parseFragment(markdown), parts);
+  return parts
+    .join(' ')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -74,9 +85,14 @@ export async function checkMarkdownLinks(files, repositoryRoot = root) {
       }
       const relativeFile = relative(repositoryRoot, file);
       try {
-        if ((await stat(destination)).isDirectory())
+        let targetText;
+        try {
+          targetText = await readFile(destination, 'utf8');
+        } catch (error) {
+          if (error.code !== 'EISDIR') throw error;
           destination = resolve(destination, 'index.html');
-        const targetText = await readFile(destination, 'utf8');
+          targetText = await readFile(destination, 'utf8');
+        }
         const relativeDestination = relative(repositoryRoot, destination);
         if (anchor && extname(destination).toLowerCase() === '.md') {
           const decodedAnchor = decodeURIComponent(anchor);

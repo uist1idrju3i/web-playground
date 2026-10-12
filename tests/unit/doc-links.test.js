@@ -7,6 +7,7 @@ import { checkMarkdownLinks, headingSlugs, slugHeading } from '../../scripts/che
 
 test('heading slugs normalize formatting and suffix duplicate headings', () => {
   assert.equal(slugHeading('Quick `start` guide'), 'quick-start-guide');
+  assert.equal(slugHeading('Heading <em>with markup</em>'), 'heading-with-markup');
   assert.deepEqual(
     [...headingSlugs('# Quick Start\n## Quick Start\n### Support (iOS)')],
     ['quick-start', 'quick-start-1', 'support-ios'],
