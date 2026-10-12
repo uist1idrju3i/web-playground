@@ -165,6 +165,8 @@ export class AudioEngine {
     // not touch sizzleGain/pourGain/steamGain before they are built.
     if (!this.ctx || this.ctx.state !== 'running' || !this.ready) return;
     const now = this.ctx.currentTime;
+    // Cooking tension drives the taiko layer level in scheduleMusic.
+    this.intensity = Math.min(1, 0.25 + audio.sizzle * 0.5 + audio.burning * 0.5);
     const sizzle = Math.min(1, audio.sizzle + audio.contactBurst * 0.6);
     if (this.sizzleParam) this.sizzleParam.setTargetAtTime(sizzle, now, 0.05);
     this.sizzleGain.gain.setTargetAtTime(this.sizzleParam ? 0.9 : sizzle * 0.12, now, 0.05);
@@ -285,14 +287,7 @@ export class AudioEngine {
     if (!this.bgmEnabled || now + 0.6 < this.nextLoop) return;
     const start = Math.max(this.nextLoop, now + 0.05);
     for (const event of melodyEvents()) {
-      this.voice(
-        'marimba',
-        midiToHz(event.midi),
-        start + event.start,
-        event.dur * 0.8,
-        this.music,
-        0.22,
-      );
+      this.pluck(midiToHz(event.midi), start + event.start, event.dur * 0.9, this.music, 0.5);
     }
     const beat = 60 / BPM;
     const eighth = beat / 2;
@@ -324,6 +319,9 @@ export class AudioEngine {
       }
       for (let i = 0; i < 8; i += 1)
         this.shaker(barStart + swungTime(i, eighth), i % 2 ? 0.05 : 0.025);
+      const drumLevel = 0.05 + 0.14 * (this.intensity ?? 0.3);
+      this.taiko(barStart, drumLevel);
+      this.taiko(barStart + 2 * beat, drumLevel * 0.65);
     });
     this.nextLoop = start + LOOP_SECONDS;
   }
@@ -340,6 +338,58 @@ export class AudioEngine {
     osc.connect(gain).connect(this.music);
     osc.start(when);
     osc.stop(when + dur + 0.02);
+  }
+
+  // Karplus-Strong plucked string: a noise burst through a filtered delay
+  // loop reads as a shamisen-like twang.
+  pluck(hz, when, dur, bus, level) {
+    const { ctx } = this;
+    const delay = ctx.createDelay(0.05);
+    delay.delayTime.value = 1 / hz;
+    const fb = ctx.createGain();
+    fb.gain.value = 0.955;
+    const tone = ctx.createBiquadFilter();
+    tone.type = 'lowpass';
+    tone.frequency.value = Math.min(6000, hz * 3);
+    const excite = this.noiseSource(false);
+    const eg = ctx.createGain();
+    eg.gain.setValueAtTime(level, when);
+    eg.gain.exponentialRampToValueAtTime(0.0001, when + 0.006);
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(1, when);
+    out.gain.setValueAtTime(1, when + dur);
+    out.gain.exponentialRampToValueAtTime(0.0001, when + dur + 0.5);
+    excite.connect(eg).connect(delay);
+    delay.connect(tone).connect(fb).connect(delay);
+    delay.connect(out).connect(bus);
+    out.connect(this.reverbSend);
+    excite.start(when, Math.random());
+    excite.stop(when + 0.01);
+  }
+
+  // Taiko-style drum hit: a dropping sine body plus a low noise slap.
+  taiko(when, level, bus = this.music) {
+    const { ctx } = this;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.setValueAtTime(150, when);
+    osc.frequency.exponentialRampToValueAtTime(52, when + 0.08);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(level, when + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.28);
+    osc.connect(gain).connect(bus);
+    osc.start(when);
+    osc.stop(when + 0.3);
+    const src = this.noiseSource(false);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 900;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(level * 0.4, when);
+    ng.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    src.connect(lp).connect(ng).connect(bus);
+    src.start(when, Math.random());
+    src.stop(when + 0.06);
   }
 
   shaker(when, level) {
