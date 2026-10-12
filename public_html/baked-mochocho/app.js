@@ -1,5 +1,6 @@
 import { checkRequirements } from '/library/js/requirements.js';
 import { transition } from './js/statechart.js';
+import { makeCakeView } from './js/render/cakeview.js';
 import { createSignedStore } from '/library/js/signed-storage.js';
 import { createSimulation } from './js/sim.js';
 import { AudioEngine } from './js/audio/engine.js';
@@ -300,7 +301,13 @@ function showResult(stats, score, price) {
     grid.append(dt, dd);
   }
   $('result-comment').textContent = t(score.comment);
-  drawPreview($('result-preview'), stats);
+  try {
+    state.cakeView?.dispose();
+    state.cakeView = makeCakeView($('result-preview'), stats);
+  } catch {
+    state.cakeView = null;
+    drawPreview($('result-preview'), stats);
+  }
   $('result-screen').hidden = false;
   state.paused = true;
   $('next-button').focus();
@@ -559,6 +566,8 @@ function bindUi() {
   });
   $('start-button').addEventListener('click', start);
   $('next-button').addEventListener('click', () => {
+    state.cakeView?.dispose();
+    state.cakeView = null;
     $('result-screen').hidden = true;
     state.paused = false;
     state.audio.cue('confirm');
