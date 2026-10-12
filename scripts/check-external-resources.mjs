@@ -534,7 +534,8 @@ function checkJavaScript(source, file, violations, validModuleUrls, lineOffset =
     },
     AssignmentExpression(node) {
       if (node.left.type === 'MemberExpression') {
-        const property = propertyName(node.left)?.toLowerCase();
+        const name = propertyName(node.left);
+        const property = typeof name === 'string' ? name.toLowerCase() : null;
         if (jsUrlProperties.has(property)) {
           report(node, staticString(node.right), {
             kind: `.${property} assignment`,
@@ -542,9 +543,11 @@ function checkJavaScript(source, file, violations, validModuleUrls, lineOffset =
           });
         }
       }
+      const innerName = propertyName(node.left);
       if (
         node.left.type === 'MemberExpression' &&
-        ['innerhtml', 'outerhtml'].includes(propertyName(node.left)?.toLowerCase())
+        typeof innerName === 'string' &&
+        ['innerhtml', 'outerhtml'].includes(innerName.toLowerCase())
       ) {
         report(node, staticString(node.right), { html: true });
       }

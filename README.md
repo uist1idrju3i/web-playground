@@ -24,6 +24,7 @@ Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pa
 
 - **Browser Features** (`/browser-features/`) — measured capability support, permission-policy information, and WebAssembly probes.
 - **Baked Mochocho** (`/baked-mochocho/`) — a griddle-cake game with a Rust/WebAssembly physics simulation, WebGPU rendering with a WebGL2 fallback, synthesized Web Audio, and HMAC-signed saves. See [the app guide](docs/baked-mochocho.md).
+- **たのしい都道府県つみき** (`/tsumiki/`) — a physics stacking toy: drop all 47 prefecture blocks (Natural Earth shapes, public domain) onto a torii pedestal with Rapier (WASM) physics, a WebGL2/WebGPU procedural scene, an adaptive WebAudio score, and WebCrypto HMAC-signed saves.
 
 ## Quick start
 
@@ -37,11 +38,11 @@ npm audit signatures
 npm run serve
 ```
 
-Open <http://127.0.0.1:4173>. Run `npm test` for lint, security and documentation gates, generated-file checks, unit tests, and Chromium/WebKit/Firefox E2E.
+Open <http://127.0.0.1:4173>. Run `npm test` for lint, security and documentation gates, generated-file checks, unit tests, Chromium/WebKit/Firefox E2E, and the servoshell WebDriver checks (`node scripts/fetch-servo.mjs` installs the pinned Servo build first; the suite skips with a reason when it is absent).
 
 ## Support summary
 
-Capability results are measured at runtime and may be `supported`, `partial`, `unsupported`, or `untestable`. Layer 1 WebAssembly execution probes currently measure Chromium **17/17**, Firefox **15/17** (relaxed SIMD and JSPI absent), and WebKit **13/17** (relaxed SIMD, memory64, multi-memory, and JSPI absent). See [browser support](docs/browser-support.md) for caveats and device guidance.
+Capability results are measured at runtime and may be `supported`, `partial`, `unsupported`, or `untestable`. Layer 1 WebAssembly execution probes currently measure Chromium **17/17**, Firefox **15/17** (relaxed SIMD and JSPI absent), WebKit **13/17** (relaxed SIMD, memory64, multi-memory, and JSPI absent), and servoshell **16/17** (shared-memory WebAssembly threads absent). See [browser support](docs/browser-support.md) for caveats and device guidance.
 
 ## Security and external resources
 

@@ -1,0 +1,34 @@
+{
+  "comment": "Native-shell mirror of public_html/_headers. tests/unit/native-headers.test.js asserts parity; update both together.",
+  "global": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'report-sample' https://cdnjs.cloudflare.com; style-src 'self' 'report-sample' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+  },
+  "rules": [
+    {
+      "pattern": "*.wasm",
+      "contentType": "application/wasm"
+    },
+    {
+      "pattern": "/library/js/wasm-probe-worker.js",
+      "headers": {
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    },
+    {
+      "pattern": "/library/wasm/toolchains/*",
+      "headers": {
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    },
+    {
+      "pattern": "/browser-features/*",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    }
+  ]
+}

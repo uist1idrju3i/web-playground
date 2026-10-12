@@ -13,6 +13,8 @@ function inferBrowser(brands, userAgent) {
   if (/Opera/i.test(brand) || /OPR\//.test(userAgent)) return 'Opera';
   if (/CriOS/i.test(userAgent)) return 'Chrome';
   if (/Google Chrome|Chromium/i.test(brand) || /Chrome\//.test(userAgent)) return 'Chrome';
+  // Servo's user agent contains a Firefox/ token, so it must be checked first.
+  if (/Servo\//.test(userAgent)) return 'Servo';
   if (/Firefox|FxiOS/i.test(userAgent)) return 'Firefox';
   if (/Safari/i.test(userAgent)) return 'Safari';
   return 'Unknown';
@@ -31,6 +33,7 @@ function inferOS(platform, userAgent, isIOS) {
 function inferEngine(browser, isIOS, userAgent) {
   if (isIOS) return 'WebKit';
   if (browser === 'Firefox') return 'Gecko';
+  if (browser === 'Servo') return 'Servo';
   if (browser === 'Chrome' || browser === 'Edge' || browser === 'Opera') return 'Blink';
   if (/AppleWebKit/i.test(userAgent)) return 'WebKit';
   return 'Unknown';
@@ -85,6 +88,7 @@ export async function getBrowserEnvironment() {
     browserVersion:
       highEntropy.uaFullVersion ??
       brands.find((item) => /Chrome|Edge|Firefox|Safari/.test(item.brand))?.version ??
+      (browser === 'Servo' ? userAgent.match(/Servo\/([\d.]+)/)?.[1] : undefined) ??
       null,
     engine: inferEngine(browser, isIOS, userAgent),
     os: inferOS(platform, userAgent, isIOS),
@@ -129,3 +133,6 @@ export async function getBrowserEnvironment() {
     permissionsPolicy: readPermissionsPolicy(),
   };
 }
+
+// Exported for unit tests.
+export { inferBrowser, inferEngine };

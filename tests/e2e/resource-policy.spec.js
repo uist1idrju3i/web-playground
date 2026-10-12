@@ -1,7 +1,5 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { appPaths, cdnjsPath, htmlPages } from '../pages.mjs';
 import {
   attachConsoleWarnings,
   filterWebKitUaStyleDiagnostics,
@@ -9,27 +7,8 @@ import {
   WEBKIT_UA_STYLE_SAMPLES,
 } from './csp-violations.js';
 
-const publicRoot = fileURLToPath(new URL('../../public_html/', import.meta.url));
-const cdnjsPath = /^\/ajax\/libs\/[^/]+\/\d+\.\d+\.\d+\//;
-
-function htmlPages(directory = publicRoot) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) return htmlPages(path);
-    if (!entry.isFile() || !['.html', '.htm'].includes(path.slice(path.lastIndexOf('.')))) {
-      return [];
-    }
-    const relativePath = relative(publicRoot, path).split(sep).join('/');
-    if (relativePath === 'index.html') return ['/'];
-    if (relativePath.endsWith('/index.html')) return [`/${relativePath.slice(0, -10)}`];
-    return [`/${relativePath}`];
-  });
-}
-
 const pages = htmlPages();
-const appPaths = readdirSync(publicRoot, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && existsSync(join(publicRoot, entry.name, 'index.html')))
-  .map((entry) => `/${entry.name}/`);
+const apps = appPaths();
 
 for (const path of pages) {
   test(`static resource policy: ${path}`, async ({ browser, browserName, baseURL }, testInfo) => {
@@ -155,7 +134,7 @@ test('portal links resolve and every app index is registered', async ({ page, ba
     .evaluateAll((anchors) => anchors.map((anchor) => anchor.href));
   const origin = new URL(baseURL).origin;
   const internalLinks = [...new Set(links.filter((href) => new URL(href).origin === origin))];
-  for (const appPath of appPaths) {
+  for (const appPath of apps) {
     expect(links.map((href) => new URL(href).pathname)).toContain(appPath);
   }
   for (const href of internalLinks) {
