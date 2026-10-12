@@ -22,20 +22,20 @@
 | `public_html/library/`          | Shared capability, requirements, WebMCP, CSS and WASM runtime | Hand-written runtime; `data/` and `wasm/` outputs are generated |
 | `scripts/`                      | Generators, local server, resource/doc gates, WASM builds     | Hand-written tooling                                            |
 | `wasm/`                         | WAT and native toolchain source profiles                      | Hand-written source                                             |
-| `tests/`                        | Unit tests and three-engine browser tests                     | Hand-written                                                    |
+| `tests/`                        | Unit tests and four-engine browser tests                      | Hand-written                                                    |
 | `docs/web-platform-features.md` | Generated browser-compatibility dataset                       | Generated; edit source/generator, never this output             |
 | `docs/capability-reference.md`  | Generated capability API index                                | Generated from the shared runtime                               |
 | `.github/workflows/`            | CI, CodeQL, security, deployment smoke and toolchain checks   | Hand-written, SHA-pinned                                        |
 
 ## Commands
 
-| Command                                           | Purpose                                                                                   |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `npm ci --ignore-scripts && npm audit signatures` | Install the lockfile and verify package signatures                                        |
-| `npm run generate`                                | Regenerate datasets, capability reference, and WASM probes                                |
-| `npm test`                                        | Lint, security/doc gates, format, generated checks, unit, and Chromium/WebKit/Firefox E2E |
-| `scripts/build-wasm-toolchains.sh`                | Build deterministic Layer 2 WebAssembly profiles                                          |
-| `uvx zizmor . && actionlint`                      | Check workflow security and syntax                                                        |
+| Command                                           | Purpose                                                                                                           |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts && npm audit signatures` | Install the lockfile and verify package signatures                                                                |
+| `npm run generate`                                | Regenerate datasets, capability reference, and WASM probes                                                        |
+| `npm test`                                        | Lint, security/doc gates, format, generated checks, unit, Chromium/WebKit/Firefox E2E, and Servo WebDriver checks |
+| `scripts/build-wasm-toolchains.sh`                | Build deterministic Layer 2 WebAssembly profiles                                                                  |
+| `uvx zizmor . && actionlint`                      | Check workflow security and syntax                                                                                |
 
 ## Recipes
 
@@ -48,7 +48,7 @@
 
 ## Definition of done
 
-- `npm test` passes on all three browser engines.
+- `npm test` passes on all four browser engines (Chromium, WebKit, Firefox, servoshell).
 - Generated files are current; portal registration and relevant documentation are updated.
 - Rendered pages are visually checked at desktop and mobile widths.
 - Any untested browser, physical-device, or hosted deployment behavior is reported explicitly.
@@ -62,4 +62,6 @@
 - Playwright WebKit screenshotting injects a temporary inline stylesheet; assert CSP diagnostics before screenshotting.
 - The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
 - Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader or automatic Web Analytics injection.
+- servoshell is driven over W3C WebDriver (sync execute only, one session per process), not Playwright. Keep the pin in `tests/servo/servo-version.json` and its sha256 in sync; record bumps in `docs/maintenance.md`.
+- Servo reports `style-src-attr` CSP violations for UA/author stylesheet rules; `'inline'` violations are diagnostics in `test-results/servo/diagnostics.json`, not failures.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.

@@ -21,6 +21,10 @@ Use Node 24 LTS, pinned by `.nvmrc` and the package engine range. Ubuntu 26.04 i
 
 Change source data or generators, run `npm run generate`, inspect generated diffs, and run `npm run check:generated`. For Layer 2, run `scripts/build-wasm-toolchains.sh`, inspect the manifest and binaries, and update [third-party notices](../THIRD_PARTY_NOTICES.md).
 
+### servoshell pin
+
+`tests/servo/` drives the pinned servoshell nightly from `servo/servo-nightly-builds`. To update: pick a dated release tag, download `servo-x86_64-linux-gnu.tar.gz` plus its `.sha256` sidecar, update `tag`, `asset`, and `sha256` in `tests/servo/servo-version.json`, run `node scripts/fetch-servo.mjs`, then `npm run test:servo`. Treat a servoshell update like a dependency bump: check the release notes and record the outcome here. Do not track the floating `latest` artifacts — the pin plus sidecar checksum is the integrity gate.
+
 ### Dependabot and releases
 
 Review grouped Dependabot PRs together with their release notes and security advisories. Verify signature and lockfile changes before merge. Deployments and rollbacks use Cloudflare Pages deployments; owner-side DNS and project configuration remain outside this repository.

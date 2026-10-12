@@ -4,7 +4,7 @@
 
 | Workflow                | Trigger and responsibility                                                                                                                                                                             |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ci.yml`                | Static checks and Chromium/WebKit/Firefox E2E; `ci-ok` aggregates required jobs                                                                                                                        |
+| `ci.yml`                | Static checks and Chromium/WebKit/Firefox E2E plus the pinned servoshell WebDriver leg; `ci-ok` aggregates required jobs                                                                               |
 | `codeql.yml`            | Advanced CodeQL for Actions and JavaScript/TypeScript, PRs, main pushes, weekly                                                                                                                        |
 | `workflow-lint.yml`     | zizmor and actionlint                                                                                                                                                                                  |
 | `dependency-review.yml` | Dependency changes on pull requests                                                                                                                                                                    |

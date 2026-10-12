@@ -1,5 +1,6 @@
 node_modules/
 playwright-report/
 test-results/
+tests/servo/bin/
 coverage/
 .DS_Store

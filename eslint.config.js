@@ -7,6 +7,7 @@ export default [
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
+      'tests/servo/bin/**',
       'public_html/library/wasm/toolchains/**',
     ],
   },
