@@ -23,7 +23,7 @@ test('HMAC sign/verify round-trips and detects tampering', async () => {
   const tampered = { ...data, bestScore: 999999 };
   assert.ok(!(await verify(key, tampered, mac)));
   // tampered mac fails
-  const badMac = `0${mac.slice(1)}`;
+  const badMac = `${mac[0] === '0' ? '1' : '0'}${mac.slice(1)}`;
   assert.ok(!(await verify(key, data, badMac)));
   // a different key fails
   const other = await testKey();
