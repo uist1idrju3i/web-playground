@@ -156,38 +156,43 @@ describe('ruby brains (real ruby.wasm)', () => {
     return { winner: game.winner, ticks };
   }
 
-  test(
-    'skill ordering: rookie loses to samples and enemies',
-    { timeout: 180_000 },
-    async () => {
-      const umd = join(dirname(fileURLToPath(import.meta.url)), '../../public_html/ruby-wasm/vendor/browser.umd.js');
-      const { mkdtempSync, cpSync } = await import('node:fs');
-      const { tmpdir } = await import('node:os');
-      const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
-      cpSync(umd, cjs);
-      factory = require(cjs);
-      const wasmBytes = gunzipSync(
-        readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz')),
-      );
-      mod = await WebAssembly.compile(wasmBytes);
-      kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
-      for (const [name, path] of [
-        ['rookie', 'ruby/enemy/rookie.rb'],
-        ['club', 'ruby/enemy/club.rb'],
-        ['ace', 'ruby/enemy/ace.rb'],
-        ['chaser', 'ruby/samples/chaser.rb'],
-      ]) brains[name] = readFileSync(join(APP, path), 'utf8');
+  test('skill ordering: rookie loses to samples and enemies', { timeout: 180_000 }, async () => {
+    const umd = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../public_html/ruby-wasm/vendor/browser.umd.js',
+    );
+    const { mkdtempSync, cpSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
+    cpSync(umd, cjs);
+    factory = require(cjs);
+    const wasmBytes = gunzipSync(
+      readFileSync(
+        join(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz',
+        ),
+      ),
+    );
+    mod = await WebAssembly.compile(wasmBytes);
+    kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
+    for (const [name, path] of [
+      ['rookie', 'ruby/enemy/rookie.rb'],
+      ['club', 'ruby/enemy/club.rb'],
+      ['ace', 'ruby/enemy/ace.rb'],
+      ['chaser', 'ruby/samples/chaser.rb'],
+    ])
+      brains[name] = readFileSync(join(APP, path), 'utf8');
 
-      // Every serious brain should beat the rookie decisively.
-      const [r1, r2, r3] = await Promise.all([
-        playMatch(brains.chaser, brains.rookie, { points: 2, seed: 701 }),
-        playMatch(brains.club, brains.rookie, { points: 2, seed: 702 }),
-        playMatch(brains.ace, brains.rookie, { points: 2, seed: 703 }),
-      ]);
-      assert.equal(r1.winner, 'left');
-      assert.equal(r2.winner, 'left');
-      assert.equal(r3.winner, 'left');
-      assert.ok(Math.max(r1.ticks, r2.ticks, r3.ticks) < 90000);
-    },
-  );
+    // Every serious brain should beat the rookie decisively.
+    const [r1, r2, r3] = await Promise.all([
+      playMatch(brains.chaser, brains.rookie, { points: 2, seed: 701 }),
+      playMatch(brains.club, brains.rookie, { points: 2, seed: 702 }),
+      playMatch(brains.ace, brains.rookie, { points: 2, seed: 703 }),
+    ]);
+    assert.equal(r1.winner, 'left');
+    assert.equal(r2.winner, 'left');
+    assert.equal(r3.winner, 'left');
+    assert.ok(Math.max(r1.ticks, r2.ticks, r3.ticks) < 90000);
+  });
 });
