@@ -24,7 +24,7 @@ export const DEFAULT_SAVE = {
 export async function createSave() {
   const store = await createSignedStore({ name: APP_NAME, version: SAVE_VERSION });
   const data = { ...DEFAULT_SAVE };
-  let status = 'empty';
+  let status;
   try {
     const result = await store.load();
     status = result.status;

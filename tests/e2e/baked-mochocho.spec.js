@@ -396,8 +396,9 @@ test('tool, language, and menu controls respond through the UI', async ({ page }
 test('signed save verifies after reload and detects localStorage tampering', async ({
   page,
 }, testInfo) => {
-  if (test.info().project.name === 'chromium') test.setTimeout(60_000);
-  await page.goto('/baked-mochocho/?debug=1&speed=40');
+  // Save behavior does not depend on the GPU; the WebGL2 path avoids the slow
+  // software-WebGPU init on CI runners and keeps the test under the 30s cap.
+  await page.goto('/baked-mochocho/?debug=1&speed=40&renderer=webgl2');
   await requireTitleOrSkip(page, testInfo);
   await expect(page.locator('body')).toHaveAttribute('data-phase', 'title');
   await clickAtCenter(page, '#start-button');

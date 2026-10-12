@@ -5,13 +5,16 @@ import { expect, test } from '@playwright/test';
 
 async function startRun(page) {
   await page.locator('#btn-start').click();
-  // First run shows the onboarding cards.
+  // First run shows the onboarding cards; the close button dismisses them.
   if (await page.locator('#screen-oobe.visible').count()) {
-    for (let i = 0; i < 3; i++) await page.locator('#oobe-next').click();
+    await page.locator('#oobe-close').click();
   }
-  // Countdown takes ~2.8s before the HUD counts as playing.
+  // Countdown takes ~2.8s before the HUD counts as playing; wait for the
+  // timer to tick rather than sleeping a fixed real-time duration.
   await expect(page.locator('#hud')).toHaveClass(/visible/);
-  await page.waitForTimeout(3400);
+  await expect
+    .poll(() => page.locator('#hud-time').textContent(), { timeout: 8000 })
+    .not.toBe('240');
 }
 
 test('star-hopper boots to the title screen and starts a run', async ({ page }, testInfo) => {
@@ -30,15 +33,21 @@ test('star-hopper boots to the title screen and starts a run', async ({ page }, 
 
   // Move forward and jump: the player should stay on the wide start island.
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(700);
   await page.keyboard.press('Space');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
   await page.keyboard.up('KeyW');
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(600);
   expect(pageErrors).toEqual([]);
 
   // HUD keeps tracking the run.
   await expect(page.locator('#hud-time')).toContainText(/^(23\d|240)$/);
+
+  // Pause and resume through the pause screen.
+  await page.locator('#btn-pause').click();
+  await expect(page.locator('#screen-pause')).toBeVisible();
+  await page.locator('#btn-resume').click();
+  await expect(page.locator('#screen-pause')).not.toBeVisible();
+  await expect(page.locator('#hud')).toHaveClass(/visible/);
 });
 
 test('star-hopper save is HMAC-signed and tamper-evident', async ({ page }, testInfo) => {
@@ -73,18 +82,4 @@ test('star-hopper save is HMAC-signed and tamper-evident', async ({ page }, test
   await page.reload();
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
   await expect(page.locator('#save-warning')).toBeVisible();
-});
-
-test('star-hopper pauses and resumes through the pause screen', async ({ page }, testInfo) => {
-  await page.goto('/star-hopper/');
-  await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
-  const appHidden = await page.locator('#app').evaluate((el) => el.hidden);
-  testInfo.skip(appHidden, 'required capabilities unavailable in this browser');
-
-  await startRun(page);
-  await page.locator('#btn-pause').click();
-  await expect(page.locator('#screen-pause')).toBeVisible();
-  await page.locator('#btn-resume').click();
-  await expect(page.locator('#screen-pause')).not.toBeVisible();
-  await expect(page.locator('#hud')).toHaveClass(/visible/);
 });
