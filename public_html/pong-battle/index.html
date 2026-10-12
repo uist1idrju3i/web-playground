@@ -50,6 +50,10 @@
           <input type="checkbox" id="thought-toggle" />
           <span data-i18n="showThought">思考を表示</span>
         </label>
+        <label class="switch">
+          <input type="checkbox" id="trace-toggle" />
+          <span data-i18n="showTrace">実行行を光らせる</span>
+        </label>
         <button id="sound-btn" class="chip"></button>
         <button id="lang-btn" class="chip"></button>
         <button id="pause-btn" class="chip" hidden>⏸</button>
@@ -96,6 +100,23 @@
         <div id="boot-bar" hidden>Ruby.wasm …</div>
       </div>
 
+      <section id="editor-panel" class="panel grow">
+        <div class="panel-head">
+          <h3 data-i18n="editorTitle">プログラム（Ruby）</h3>
+          <button
+            id="editor-expand"
+            class="chip"
+            data-i18n-title="expandEditor"
+            aria-label="Expand editor"
+          >
+            ⛶
+          </button>
+        </div>
+        <p class="hint" data-i18n="editHint"></p>
+        <button id="deploy" class="cta" data-i18n="deploy">このコードで出撃</button>
+        <textarea id="editor" spellcheck="false"></textarea>
+      </section>
+
       <aside id="bench">
         <section class="panel">
           <h3 data-i18n="pickSample">味方のプログラム</h3>
@@ -104,12 +125,6 @@
         <section class="panel">
           <h3 data-i18n="pickEnemy">対戦レベル</h3>
           <div id="enemy-list" class="picks"></div>
-        </section>
-        <section class="panel grow">
-          <h3 data-i18n="editorTitle">プログラム（Ruby）</h3>
-          <p class="hint" data-i18n="editHint"></p>
-          <button id="deploy" class="cta" data-i18n="deploy">このコードで出撃</button>
-          <textarea id="editor" spellcheck="false"></textarea>
         </section>
         <details id="enemy-code-panel" class="panel">
           <summary data-i18n="brainSource">敵のコードを見る</summary>

@@ -123,7 +123,8 @@ async function handle(message) {
     }
     case 'tick': {
       const started = performance.now();
-      const result = evalJson(`Battle.tick(${rubyString(message.state)})`);
+      const opts = `{trace: ${!!message.trace}, watch: ${!!message.watch}}`;
+      const result = evalJson(`Battle.tick(${rubyString(message.state)}, ${opts})`);
       const stdio = drainStdio();
       return {
         ok: true,

@@ -104,7 +104,11 @@ export function createGame({ seed = 1, pointsToWin = 5 } = {}) {
     time: 0,
     status: 'serving', // serving | rally | over
     serveTimer: SERVE_DELAY_S,
-    serveDir: 1,
+    // First serve direction is drawn, not fixed: a fixed dir=1 handed the
+    // left side the serve-receiver handicap every match (measured: the
+    // receiver's opening sprint spends stamina that never regens mid-rally,
+    // so mirror matches always collapse on the receiver's side).
+    serveDir: rng() < 0.5 ? -1 : 1,
     pointsToWin,
     score: { left: 0, right: 0 },
     rally: 0,
@@ -113,7 +117,7 @@ export function createGame({ seed = 1, pointsToWin = 5 } = {}) {
     wind: { base: 0, gust: 0, until: 0, ay: 0, sign: 0, strength: 0 },
     stamina: { left: 1, right: 1 },
     nextGustAt: 0,
-    ball: { x: COURT.W / 2, y: COURT.H / 2, vx: 0, vy: 0, speed: BALL.START_SPEED },
+    ball: { x: COURT.W / 2, y: COURT.H / 2, vx: 0, vy: 0, speed: BALL.START_SPEED, dead: null },
     paddles: {
       left: { x: PADDLE.CX_LEFT, y: COURT.H / 2, move: 0 },
       right: { x: PADDLE.CX_RIGHT, y: COURT.H / 2, move: 0 },
@@ -140,6 +144,7 @@ function launchServe(game, dir) {
   game.nextGustAt = 0;
   game.stamina.left = 1;
   game.stamina.right = 1;
+  game.ball.dead = null;
   game.status = 'rally';
 }
 
@@ -197,6 +202,28 @@ function stepWind(game) {
 function stepBall(game, dt, events) {
   const ball = game.ball;
   if (game.wind.ay !== 0) ball.vy += game.wind.ay * dt;
+  if (ball.dead) {
+    // Conceded ball: it already crossed the face plane and now just flies
+    // out of court. Keeping it visible until it exits makes a missed paddle
+    // read as a goal instead of a freeze-frame 'touch'.
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+    if (ball.y < BALL.R) {
+      ball.y = BALL.R;
+      ball.vy = -ball.vy;
+    } else if (ball.y > COURT.H - BALL.R) {
+      ball.y = COURT.H - BALL.R;
+      ball.vy = -ball.vy;
+    }
+    if (ball.x < -BALL.R * 2) {
+      events.push({ type: 'score', side: SIDES.RIGHT });
+      awardPoint(game, SIDES.RIGHT);
+    } else if (ball.x > COURT.W + BALL.R * 2) {
+      events.push({ type: 'score', side: SIDES.LEFT });
+      awardPoint(game, SIDES.LEFT);
+    }
+    return;
+  }
   let remaining = dt;
   // Swept collision: advance to the earliest plane crossing, resolve, continue.
   for (let guard = 0; guard < 8 && remaining > 1e-9; guard += 1) {
@@ -235,10 +262,9 @@ function stepBall(game, dt, events) {
     if (Math.abs(ball.y - paddle.y) <= reach) {
       events.push(bounceOffPaddle(game, hit.side));
     } else {
-      // Missed the paddle: the ball flies past the face and scores.
-      const scorer = hit.side === SIDES.LEFT ? SIDES.RIGHT : SIDES.LEFT;
-      events.push({ type: 'score', side: scorer });
-      awardPoint(game, scorer);
+      // Missed the paddle: mark the ball dead — it flies out of court and
+      // the point registers when it exits, so the goal reads as a goal.
+      ball.dead = hit.side;
       return;
     }
   }
@@ -263,8 +289,12 @@ function awardPoint(game, scorer) {
   }
   game.status = 'serving';
   game.serveTimer = SERVE_DELAY_S;
-  // The conceder receives the next serve (classic Pong service rule).
-  game.serveDir = scorer === SIDES.LEFT ? 1 : -1;
+  // Service alternates every point. Receiving is a real handicap (the
+  // sprint to the serve drains stamina that never regens mid-rally), so
+  // conceder-receives snowballed: whoever scored first kept handing the
+  // opponent the bad end of the court. Alternating splits the handicap
+  // fairly and lets skill decide the match.
+  game.serveDir = -game.serveDir;
   game.ball.vx = 0;
   game.ball.vy = 0;
 }
@@ -316,7 +346,13 @@ export function brainState(game, side) {
       speed_cap: Math.round(paddleEffSpeed(game, meSide) * 10) / 10,
       stamina: Math.round((game.stamina[meSide] ?? 1) * 100) / 100,
     },
-    enemy: { y: round2(enemy.y), side: enemySide, dir: -dir },
+    enemy: {
+      y: round2(enemy.y),
+      side: enemySide,
+      dir: -dir,
+      stamina: Math.round((game.stamina[enemySide] ?? 1) * 100) / 100,
+      speed_cap: Math.round(paddleEffSpeed(game, enemySide) * 10) / 10,
+    },
     court: { w: COURT.W, h: COURT.H, center_y: COURT.H / 2 },
     score: {
       me: game.score[meSide],

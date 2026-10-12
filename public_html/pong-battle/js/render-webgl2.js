@@ -50,7 +50,6 @@ void main() {
   } else {                      // line segment encoded as thin rect
     outColor = vColor;
   }
-  outColor.rgb *= outColor.a > 0.0 ? 1.0 : 1.0;
 }`;
 
   function compile(type, src) {
