@@ -544,14 +544,16 @@ test('a full batch bakes through the UI: oil, pour, fill, flip, serve, score', a
   baseURL,
   browserName,
 }, testInfo) => {
-  test.slow();
-  test.setTimeout(240_000);
+  // The app clamps ?speed to 40 and each frame's sim step to 50 ms, so on
+  // software-rendered CI WebKit the bake runs slower than wall-clock x40 and
+  // needed more than 240 s; the teardown then reported "Target crashed".
+  test.setTimeout(480_000);
   await startAndAssertGate(
     page,
     baseURL,
     browserName,
     testInfo,
-    '/baked-mochocho/?debug=1&speed=80',
+    '/baked-mochocho/?debug=1&speed=40',
   );
   await page.evaluate(() => {
     globalThis.mochochoDebug.paused = false;
