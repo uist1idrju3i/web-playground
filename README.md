@@ -7,7 +7,7 @@ Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pa
 [![CI](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml/badge.svg)](https://github.com/uist1idrju3i/web-playground/actions/workflows/codeql.yml)
 [![Scorecard](https://api.securityscorecards.dev/projects/github.com/uist1idrju3i/web-playground/badge)](https://securityscorecards.dev/viewer/?uri=github.com/uist1idrju3i/web-playground)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 
 ## Choose a path
 
@@ -58,4 +58,4 @@ See [the documentation index](docs/README.md) for persona-based reading order, a
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+BSD 3-Clause. See [LICENSE](LICENSE).
