@@ -68,3 +68,8 @@ production HTML even when CI is green. `deploy-smoke.yml` runs the resource-poli
 production. Before claiming production is fine, compare served HTML with `public_html/` and
 open the pages in all three Playwright engines. Never re-enable HTML-rewriting Cloudflare
 features.
+
+Signs that a zone feature is active again: a `Speculation-Rules: "/cdn-cgi/speculation"`
+response header (Speed Brain), or production smoke failures listing `[Report Only]` CSP
+violations for same-origin scripts (an injected `Content-Security-Policy-Report-Only` header).
+These are dashboard settings; report them to the owner instead of filtering the test.

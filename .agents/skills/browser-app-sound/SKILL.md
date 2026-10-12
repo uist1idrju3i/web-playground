@@ -11,7 +11,8 @@ nothing to license and nothing to download. Reference implementation:
 sequencer, `sizzle-worklet.js` AudioWorklet) and `public_html/tsumiki/js/audio.js`.
 
 The design method follows [VibeBB bard-agent](https://github.com/VibeBB/bard-agent)
-(`plugins/bard/skills/bard-cuecraft/` for product cues, `bard-songcraft/` for songs).
+(`plugins/bard/skills/bard-cuecraft/` for product cues, `bard-songcraft/` for songs), BSD 3-Clause,
+copyright (c) 2026 VibeBB. The cue table below is adapted from `bard-cuecraft`.
 
 ## 1. Plan the sound set before coding
 
@@ -21,6 +22,7 @@ paired visual. Use bard's purpose vocabulary:
 | Purpose      | Shape                                        | Duration    |
 | ------------ | -------------------------------------------- | ----------- |
 | startup      | rising 2-4 notes                             | 300-1200 ms |
+| shutdown     | the startup contour mirrored (falling)       | 300-1200 ms |
 | completion   | rising interval ending on the tonic          | 300-1000 ms |
 | success      | short rising pair                            | 150-500 ms  |
 | notification | two neutral notes                            | 200-700 ms  |
@@ -28,6 +30,7 @@ paired visual. Use bard's purpose vocabulary:
 | error        | falling or dissonant pair                    | 300-1500 ms |
 | confirm      | short high tick                              | 50-300 ms   |
 | cancel       | short falling pair                           | 50-300 ms   |
+| pairing      | alternating two notes (connecting, matching) | 300-1500 ms |
 
 Rules:
 

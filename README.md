@@ -12,13 +12,13 @@ Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pa
 
 ## Choose a path
 
-| Persona       | Start here                                                    |
-| ------------- | ------------------------------------------------------------- |
-| Learner       | [Learning path](docs/learning-path.md)                        |
-| Device tester | [Device testing guide](docs/device-testing.md)                |
-| App author    | [Add an app](docs/adding-an-app.md)                           |
-| AI agent      | [Agent constitution](AGENTS.md)                               |
-| Maintainer    | [Maintenance](docs/maintenance.md) and [CI/CD](docs/ci-cd.md) |
+| Persona       | Start here                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| Learner       | [Learning path](docs/learning-path.md)                                                      |
+| Device tester | [Device testing guide](docs/device-testing.md)                                              |
+| App author    | [Add an app](docs/adding-an-app.md)                                                         |
+| AI agent      | [Agent constitution](AGENTS.md) and [skills](.agents/skills/building-browser-apps/SKILL.md) |
+| Maintainer    | [Maintenance](docs/maintenance.md) and [CI/CD](docs/ci-cd.md)                               |
 
 ## Apps
 

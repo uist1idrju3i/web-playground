@@ -15,4 +15,9 @@ This project includes generated data from the following projects:
 - **@ruby/3.4-wasm-wasi 2.10.1** — CRuby 3.4.1 with stdlib compiled to WebAssembly, shipped compressed as `public_html/ruby-wasm/ruby+stdlib.wasm.gz`. Ruby itself is distributed under the Ruby License or the 2-clause BSDL; bundled stdlib and extension libraries carry their own permissive licenses (see the upstream `LEGAL` file in the ruby source).
 - **CodeMirror 6.65.7** — editor component loaded from cdnjs with SRI (core, `mode/ruby`, `closebrackets`, `matchbrackets`). Copyright (c) Marijn Haverbeke and others. Licensed under the MIT License.
 
+Design methods adapted into the project skills under `.agents/skills/`:
+
+- **VibeBB UX-creator-agent** — UX method (jobs to be done, ODI scoring, feedback budgets, statechart rules) summarized in `browser-app-ux`. BSD 3-Clause License; copyright (c) 2026, VibeBB.
+- **VibeBB bard-agent** — sound-cue purpose and duration table and originality rules adapted in `browser-app-sound`. BSD 3-Clause License; copyright (c) 2026, VibeBB.
+
 The generated feature data is distributed under the corresponding upstream terms. Source and license details are also recorded in the generated JSON metadata.
