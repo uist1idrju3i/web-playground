@@ -90,7 +90,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libunwind8 libxkbcommon0 libxcursor1 libxrandr2 \
             libxi6 libvulkan1 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
-            fonts-liberation
+            libgstreamer-plugins-bad1.0-0 fonts-liberation
       - run: node scripts/fetch-servo.mjs
       - name: Check servoshell shared libraries
         run: ldd tests/servo/bin/servo/servoshell | (! grep "not found")
