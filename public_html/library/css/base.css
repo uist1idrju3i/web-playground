@@ -271,6 +271,12 @@ h1 {
   color: var(--muted);
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
 .not-found {
   padding-top: 20vh;
 }
