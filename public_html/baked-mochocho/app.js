@@ -378,6 +378,7 @@ async function serve(pair) {
   state.save.dayCoins += price;
   state.save.dayBest = Math.max(state.save.dayBest, score.total);
   state.save.dayBestCombo = Math.max(state.save.dayBestCombo, state.bestCombo);
+  state.audio.koron();
   state.audio.cue(score.stars >= 4 ? 'completion' : score.stars >= 3 ? 'success' : 'notification');
   caption('cap.success');
   haptic([15, 30, 15]);

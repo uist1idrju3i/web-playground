@@ -461,6 +461,58 @@ test('WebGPU offscreen snapshot renders a non-black, non-uniform scene', async (
   expect(statistics.standardDeviation).toBeGreaterThan(8);
 });
 
+test('the audio graph renders non-silent, tonal audio offline', async ({ page }, testInfo) => {
+  await page.goto('/baked-mochocho/');
+  await requireTitleOrSkip(page, testInfo);
+  const stats = await page.evaluate(async () => {
+    const OfflineCtx = globalThis.OfflineAudioContext ?? globalThis.webkitOfflineAudioContext;
+    if (!OfflineCtx) return { skip: true };
+    const { AudioEngine } = await import('/baked-mochocho/js/audio/engine.js');
+    const ctx = new OfflineCtx(2, 44100 * 6, 44100);
+    const engine = new AudioEngine();
+    engine.setEnabled(true);
+    engine.setBgm(true);
+    await engine.unlock(ctx);
+    // Fire one of each synthesized cue plus a cooking frame so the BGM loop,
+    // sizzle bed, bubble pops and pour noise all enter the rendered buffer.
+    engine.cue('success');
+    engine.cue('perfect');
+    engine.koron();
+    engine.thunk(0.3);
+    engine.update({
+      sizzle: 0.8,
+      contactBurst: 0.2,
+      pourFlowMlS: 20,
+      steamRate: 0.5,
+      bubblePops: 2,
+      flipLandedEvents: 0,
+      burning: 0,
+    });
+    const buffer = await ctx.startRendering();
+    const data = buffer.getChannelData(0);
+    let sum = 0;
+    let peak = 0;
+    let crossings = 0;
+    for (let i = 1; i < data.length; i += 1) {
+      sum += data[i] * data[i];
+      peak = Math.max(peak, Math.abs(data[i]));
+      if (data[i - 1] < 0 !== data[i] < 0) crossings += 1;
+    }
+    return {
+      rms: Math.sqrt(sum / data.length),
+      peak,
+      zcrHz: crossings / 2 / (data.length / buffer.sampleRate),
+    };
+  });
+  testInfo.skip(stats.skip === true, 'OfflineAudioContext unavailable.');
+  expect(stats.rms).toBeGreaterThan(0.005);
+  expect(stats.peak).toBeGreaterThan(0.05);
+  expect(stats.peak).toBeLessThanOrEqual(1);
+  // Musical content sits between rumble and pure noise.
+  expect(stats.zcrHz).toBeGreaterThan(200);
+  expect(stats.zcrHz).toBeLessThan(6000);
+});
+
 // Screen position of a cavity centre via the renderer's own toScreen().
 async function cavityScreen(page, index) {
   return page.evaluate(async (i) => {
