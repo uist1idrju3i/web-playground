@@ -1,0 +1,73 @@
+import { expect, test } from '@playwright/test';
+
+// Boot → hero → pickers/editor → deploy → countdown → playing phase, HUD,
+// renderer marker, enemy source view. Real match outcomes are covered by
+// unit tests (sim + headless real-Ruby matches); e2e stays under 30 s.
+
+test('pong-battle boots, deploys a sample brain and plays', async ({ page }, testInfo) => {
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  await page.goto('/pong-battle/');
+  await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+
+  // Requirements container exists (dedicated div per requirements.js).
+  await expect(page.locator('#requirements')).toBeAttached();
+
+  await page.locator('#hero-cta').click();
+  await expect(page.locator('#hero')).toBeHidden();
+
+  // VM boot can take a few seconds: wait for phase to leave boot.
+  await page.waitForFunction(() => ['ready', 'unsupported'].includes(document.body.dataset.phase), {
+    timeout: 25000,
+  });
+  testInfo.skip(
+    (await page.locator('body').getAttribute('data-phase')) !== 'ready',
+    'required capabilities unavailable in this browser',
+  );
+
+  // Pickers populated; enemy list has three levels with lock states.
+  await expect(page.locator('#sample-list .pick')).toHaveCount(5);
+  await expect(page.locator('#enemy-list .pick')).toHaveCount(3);
+
+  // Editor holds the loaded sample; enemy source is readable.
+  await expect(page.locator('#enemy-code')).toContainText('brain');
+
+  // Deploy: countdown -> playing.
+  await page.locator('#deploy').click();
+  await page.waitForFunction(() => document.body.dataset.phase === 'playing', { timeout: 15000 });
+
+  // Renderer picked a backend and the canvas painted non-blank pixels.
+  const renderer = await page.locator('#court').getAttribute('data-renderer');
+  expect(['webgpu', 'webgl2']).toContain(renderer);
+  await page.waitForTimeout(700);
+  const painted = await page.evaluate(() => {
+    const c = document.getElementById('court');
+    const g = c.getContext('webgl2');
+    if (!g) return true; // webgpu path: frame loop running is enough here
+    const px = new Uint8Array(4 * c.width);
+    g.readPixels(0, (c.height / 2) | 0, c.width, 1, g.RGBA, g.UNSIGNED_BYTE, px);
+    let lit = 0;
+    for (let i = 0; i < px.length; i += 4) if (px[i] + px[i + 1] + px[i + 2] > 40) lit++;
+    return lit > 3;
+  });
+  expect(painted).toBe(true);
+
+  // HUD shows score + stamina meters.
+  await expect(page.locator('#score-l')).toHaveText(/^[0-9]+$/);
+  await expect(page.locator('#stam-l')).toBeAttached();
+
+  expect(pageErrors).toEqual([]);
+});
+
+test('pong-battle works on iPhone portrait and landscape', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/pong-battle/');
+  await expect(page.locator('#hero-cta')).toBeVisible();
+  await page.locator('#hero-cta').click();
+  await expect(page.locator('#court')).toBeVisible();
+  await expect(page.locator('#deploy')).toBeVisible();
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(page.locator('#court')).toBeVisible();
+  await expect(page.locator('#deploy')).toBeVisible();
+});

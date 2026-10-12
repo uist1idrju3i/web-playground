@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="PONG programming battle — your Ruby code drives the paddle. Ruby.wasm brains duel in real time."
+    />
+    <title>PONG Programming Battle · Web Playground</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"
+      integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ=="
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="/pong-battle/app.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"
+      integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/ruby/ruby.min.js"
+      integrity="sha512-kIWQdD2Oq6DBWghYgnP6MpRMCuPxBvSI8/UBo7yxVm1blEPnNxVkwypVXky2KmIUgN2oNN7yd5TCeXJ48e867A=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/edit/closebrackets.min.js"
+      integrity="sha512-tsjcYO5hFvViRssxiM7Jhd8601epWOx1He3Hl4yuI5dKKPxr43KxkOhc9GZeeqzlYJm9ABb7UPA9697NiqZZ7Q=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/edit/matchbrackets.min.js"
+      integrity="sha512-GSYCbN/le5gNmfAWVEjg1tKnOH7ilK6xCLgA7c48IReoIR2g2vldxTM6kZlN6o3VtWIe6fHu/qhwxIt11J8EBA=="
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="/pong-battle/js/app.js"></script>
+  </head>
+  <body data-phase="boot">
+    <div id="requirements" hidden></div>
+
+    <header id="topbar">
+      <h1 data-i18n="title">PONG・プログラミングバトル</h1>
+      <div class="top-actions">
+        <label class="switch">
+          <input type="checkbox" id="thought-toggle" />
+          <span data-i18n="showThought">思考を表示</span>
+        </label>
+        <button id="sound-btn" class="chip"></button>
+        <button id="lang-btn" class="chip"></button>
+        <button id="pause-btn" class="chip" hidden>⏸</button>
+      </div>
+    </header>
+
+    <section id="hero">
+      <div class="hero-inner">
+        <p class="kicker">Ruby.wasm × PONG</p>
+        <h2 data-i18n="tagline">パドルは Ruby が動かす。最高のアルゴリズムを書いて勝て。</h2>
+        <div class="hero-btns">
+          <button id="hero-cta" class="cta" data-i18n="heroCta">プレイする</button>
+          <button id="hero-how" class="ghost" data-i18n="heroHow">あそび方</button>
+        </div>
+        <div id="how-panel" hidden>
+          <p data-i18n="how1"></p>
+          <p data-i18n="how2"></p>
+          <p data-i18n="how3"></p>
+        </div>
+      </div>
+    </section>
+
+    <main id="stage">
+      <div id="board">
+        <div id="hud">
+          <div class="score"><span id="score-l">0</span><em>–</em><span id="score-r">0</span></div>
+          <div class="hud-meta">
+            <span id="hud-rally"></span>
+            <span id="hud-speed"></span>
+            <span id="hud-wind"></span>
+          </div>
+        </div>
+        <canvas id="court"></canvas>
+        <div class="stam-row">
+          <meter id="stam-l" min="0" max="1" value="1"></meter>
+          <meter id="stam-r" min="0" max="1" value="1"></meter>
+        </div>
+        <div id="banner" hidden></div>
+        <div id="phase-overlay">
+          <h2 id="overlay-title"></h2>
+          <p id="overlay-sub"></p>
+          <button id="rematch" class="cta" data-i18n="retry" hidden>もう一度</button>
+        </div>
+        <div id="boot-bar" hidden>Ruby.wasm …</div>
+      </div>
+
+      <aside id="bench">
+        <section class="panel">
+          <h3 data-i18n="pickSample">味方のプログラム</h3>
+          <div id="sample-list" class="picks"></div>
+        </section>
+        <section class="panel">
+          <h3 data-i18n="pickEnemy">対戦レベル</h3>
+          <div id="enemy-list" class="picks"></div>
+        </section>
+        <section class="panel grow">
+          <h3 data-i18n="editorTitle">プログラム（Ruby）</h3>
+          <p class="hint" data-i18n="editHint"></p>
+          <button id="deploy" class="cta" data-i18n="deploy">このコードで出撃</button>
+          <textarea id="editor" spellcheck="false"></textarea>
+        </section>
+        <details id="enemy-code-panel" class="panel">
+          <summary data-i18n="brainSource">敵のコードを見る</summary>
+          <pre><code id="enemy-code"></code></pre>
+        </details>
+        <section class="panel">
+          <h3 data-i18n="log">ログ</h3>
+          <div id="log" aria-live="polite"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div id="caption" hidden></div>
+    <noscript>This app requires JavaScript.</noscript>
+  </body>
+</html>
