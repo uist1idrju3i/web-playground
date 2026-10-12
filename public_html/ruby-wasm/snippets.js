@@ -311,10 +311,12 @@ res.call(:text).await.length
         needsAsync: true,
         note: 'JS::Object#await on a plain JS promise, three times',
         code: `3.times do |i|
-  JS.eval("return new Promise(r => setTimeout(r, 400))").await
+  JS.global[:Promise]
+    .new(->(ok, _err) { JS.global.call(:setTimeout, -> { ok.apply(i + 1) }, 400) })
+    .await
   puts "tick #{i + 1} at #{Time.now.strftime("%H:%M:%S.%L")}"
 end
-"three awaited promises"
+"three awaited promises (JS.eval is intentionally unavailable under this page's CSP — Promise.new works without it)"
 `,
       },
     ],

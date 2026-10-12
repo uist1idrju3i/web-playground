@@ -649,9 +649,16 @@ const checks = [
     group: 'JS interop',
     items: [
       {
-        name: 'JS.eval',
-        desc: 'evaluate JS inside the VM',
-        run: async () => evalOk(await send('eval', { code: 'JS.eval("return 6 * 7")' }), '42'),
+        name: 'JS.eval (documented limit)',
+        desc: "string eval is forbidden by this page's CSP — raises EvalError by design",
+        expectedLimit: true,
+        run: async () =>
+          evalOk(
+            await send('eval', {
+              code: 'begin; JS.eval("return 1"); "worked"; rescue EvalError; "limited"; end',
+            }),
+            'limited',
+          ),
       },
       {
         name: 'JS.global → host object',
@@ -676,7 +683,7 @@ const checks = [
         desc: 'RbValue.callAsync can await JS promises inside Ruby',
         run: async () => {
           const r = await send('callAsync', {
-            code: '->(n) { JS.eval("return new Promise(r => setTimeout(() => r(n * 2), 5))").await }',
+            code: '->(n) { JS.global[:Promise].call(:resolve, n * 2).await }',
             method: 'call',
             args: [21],
           });
@@ -685,12 +692,9 @@ const checks = [
       },
       {
         name: 'JS::Object property access',
-        desc: 'o[:key] reads a JS property',
+        desc: 'o[:key] reads a JS property (Hash#to_js builds the object)',
         run: async () =>
-          evalOk(
-            await send('eval', { code: 'JS.eval("return {deep: {n: 42}}")[:deep][:n]' }),
-            '42',
-          ),
+          evalOk(await send('eval', { code: '{"deep" => {"n" => 42}}.to_js[:deep][:n]' }), '42'),
       },
     ],
   },
@@ -712,7 +716,7 @@ const checks = [
         run: async () =>
           evalOk(
             await send('evalAsync', {
-              code: 'JS.eval("return Promise.resolve(42)").await',
+              code: 'JS.global[:Promise].call(:resolve, 42).await',
             }),
             '42',
           ),

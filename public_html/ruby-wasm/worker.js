@@ -7,6 +7,7 @@
 const WASM_URL = '/ruby-wasm/ruby+stdlib.wasm.gz';
 const UMD_URL = '/ruby-wasm/vendor/browser.umd.js';
 const PRELUDE_URL = '/ruby-wasm/prelude.rb';
+const JS_COMPAT_URL = '/ruby-wasm/js-compat.rb';
 
 const textDecoder = new TextDecoder();
 const textEncoder = new TextEncoder();
@@ -292,8 +293,17 @@ async function boot(options = {}) {
       throw new Error(`Prelude download failed with HTTP ${preludeResponse.status}.`);
     }
     const prelude = await preludeResponse.text();
-    vm.eval('require "js"');
-    await vm.evalAsync(prelude);
+    const compatResponse = await fetch(JS_COMPAT_URL);
+    if (!compatResponse.ok) {
+      throw new Error(`js-compat download failed with HTTP ${compatResponse.status}.`);
+    }
+    const compat = await compatResponse.text();
+    // `require "js"` cannot run under this page's CSP (its loader calls
+    // JS.eval at load time, which needs unsafe-eval). js-compat.rb reimplements
+    // the loader without string eval; sync eval installs it before evalAsync
+    // starts depending on JS.__eval_async_rb.
+    vm.eval(compat);
+    vm.eval(prelude);
   }
   const target = options.env ? instance.vm : vm;
   const info = {
