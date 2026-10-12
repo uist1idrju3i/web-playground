@@ -1,6 +1,8 @@
 // Dependency-free 3D cake preview for the result screen: a software
-// rasterized cylinder the player can drag to spin. Colors come from the
-// bake statistics so the two browned faces match what was cooked.
+// rasterized cylinder the player can drag to spin. When a snapshot of the
+// simulation field is provided, the actual browning maps (top face,
+// underside, rim thickness) drive every face's color so the cake on
+// screen is the cake that was baked — not an averaged illustration.
 
 const SEGS = 48;
 
@@ -24,23 +26,35 @@ const STOPS = [
 const CREAM = [250, 236, 205];
 const LIGHT = [-0.45, 0.75, 0.5];
 
-export function makeCakeView(canvas, stats, { radius = 36, heightMm = 22 } = {}) {
+export function makeCakeView(canvas, stats, { radius = 36, tex = null } = {}) {
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
+  const heightMm = 14 + Math.min(10, Math.max(4, (stats.volumeMl ?? 40) * 0.16));
   const mottle = (i, j) => {
     const s = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453;
     return s - Math.floor(s) - 0.5;
   };
 
-  // Build the mesh once: [x, y(mm up), z] per vertex, faces by kind.
-  const sideColor = (t) => {
-    // Pale angel's-ring band around mid-height fading into the browned rims.
-    const ring = stats.ringWhiteness ?? 0.6;
+  // Sample the captured browning map at a local position in [-r, r]^2.
+  const sample = (map, x, z) => {
+    const n = tex.size;
+    const i = Math.min(n - 1, Math.max(0, Math.round(((x / radius + 1) / 2) * (n - 1))));
+    const j = Math.min(n - 1, Math.max(0, Math.round(((z / radius + 1) / 2) * (n - 1))));
+    return map[j * n + i];
+  };
+
+  // Pale angel's-ring band around mid-height fading into the browned rims.
+  const sideColor = (t, thick) => {
     const edge = Math.min(1, Math.abs(t - 0.5) * 2.4);
-    const brown = brownRgb(stats.bottomBrownMean * (0.6 + 0.4 * edge), STOPS);
-    const k = Math.min(1, ring * (1 - edge));
+    const brown = brownRgb(stats.bottomBrownMean * (0.55 + 0.45 * edge), STOPS);
+    const k = Math.min(1, (stats.ringWhiteness ?? 0.6) * (1 - edge) * (0.6 + 0.4 * thick));
     return brown.map((c, i) => Math.round(c + (CREAM[i] - c) * k));
+  };
+
+  const capColor = (map, mean, x, z, i, cap) => {
+    if (tex) return brownRgb(sample(map, x, z) + mottle(i, cap) * 0.05, STOPS);
+    return brownRgb(mean + mottle(i, cap) * 0.18, STOPS);
   };
 
   let yaw = 0.4;
@@ -69,26 +83,26 @@ export function makeCakeView(canvas, stats, { radius = 36, heightMm = 22 } = {})
     };
 
     const faces = [];
-    // Top and bottom caps (fan of triangles, motley browning).
-    for (const [cap, brown] of [
-      [heightMm / 2, stats.topBrownMean],
-      [-heightMm / 2, stats.bottomBrownMean],
+    // Top and bottom caps (fans of triangles; real browning when tex exists).
+    for (const [cap, map, mean] of [
+      [heightMm / 2, tex?.top, stats.topBrownMean],
+      [-heightMm / 2, tex?.bottom, stats.bottomBrownMean],
     ]) {
       for (let i = 0; i < SEGS; i += 1) {
         const a0 = (i / SEGS) * Math.PI * 2;
         const a1 = ((i + 1) / SEGS) * Math.PI * 2;
+        const cx = Math.cos((a0 + a1) / 2) * radius * 0.66;
+        const cz = Math.sin((a0 + a1) / 2) * radius * 0.66;
         const v = [
           [0, cap, 0],
           [Math.cos(a0) * radius, cap, Math.sin(a0) * radius],
           [Math.cos(a1) * radius, cap, Math.sin(a1) * radius],
         ];
-        const m = Math.cos((a0 + a1) / 2);
-        const r0 = Math.sin((a0 + a1) / 2);
-        const color = brownRgb(
-          brown + mottle(i, cap) * 0.18 + (1 - Math.hypot(m, r0) * 0) * 0,
-          STOPS,
-        );
-        faces.push({ pts: v.map(project), color, nz: Math.sign(cap) });
+        faces.push({
+          pts: v.map(project),
+          color: capColor(map, mean, cx, cz, i, cap),
+          nz: Math.sign(cap),
+        });
       }
     }
     // Side strip.
@@ -97,8 +111,9 @@ export function makeCakeView(canvas, stats, { radius = 36, heightMm = 22 } = {})
       const a1 = ((i + 1) / SEGS) * Math.PI * 2;
       const nx = Math.cos((a0 + a1) / 2);
       const nz = Math.sin((a0 + a1) / 2);
-      const c0 = sideColor(0);
-      const c1 = sideColor(1);
+      const thick = tex ? sample(tex.rim, nx * radius * 0.9, nz * radius * 0.9) : 1;
+      const c0 = sideColor(0, thick);
+      const c1 = sideColor(1, thick);
       const light = 0.5 + 0.5 * Math.max(0, nx * LIGHT[0] + nz * LIGHT[2] + 0.6 * LIGHT[1]);
       const v = [
         [Math.cos(a0) * radius, -heightMm / 2, Math.sin(a0) * radius],

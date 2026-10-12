@@ -461,23 +461,16 @@ test('WebGPU offscreen snapshot renders a non-black, non-uniform scene', async (
   expect(statistics.standardDeviation).toBeGreaterThan(8);
 });
 
-// Screen position of a cavity centre, matching scene.js toScreen().
+// Screen position of a cavity centre via the renderer's own toScreen().
 async function cavityScreen(page, index) {
-  return page.evaluate((i) => {
-    const cam = globalThis.mochochoDebug.camera;
-    const X = 42 + 90 * (i % 3);
-    const Z = 42 + 84 * Math.floor(i / 3);
-    const m = cam.viewProj;
-    const p = [X, Z, 0];
-    const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
-    const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
-    const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
-    const canvas = document.querySelector('canvas.stage');
-    const r = canvas.getBoundingClientRect();
-    return {
-      x: r.left + ((x / w + 1) / 2) * r.width,
-      y: r.top + ((1 - y / w) / 2) * r.height,
-    };
+  return page.evaluate(async (i) => {
+    const { toScreen } = await import('/baked-mochocho/js/render/scene.js');
+    const s = globalThis.mochochoDebug;
+    const cv = document.querySelector('#stage');
+    const c = s.sim.cavities[i];
+    const pos = toScreen(s.camera, c.x, c.y, 0, cv.clientWidth, cv.clientHeight);
+    const r = cv.getBoundingClientRect();
+    return { x: r.left + pos.x, y: r.top + pos.y };
   }, index);
 }
 
@@ -500,12 +493,13 @@ test('a full batch bakes through the UI: oil, pour, fill, flip, serve, score', a
   browserName,
 }, testInfo) => {
   test.slow();
+  test.setTimeout(240_000);
   await startAndAssertGate(
     page,
     baseURL,
     browserName,
     testInfo,
-    '/baked-mochocho/?debug=1&speed=60',
+    '/baked-mochocho/?debug=1&speed=80',
   );
   await page.evaluate(() => {
     globalThis.mochochoDebug.paused = false;
@@ -515,30 +509,64 @@ test('a full batch bakes through the UI: oil, pour, fill, flip, serve, score', a
   await tool('oil');
   for (const i of [0, 1, 2, 3, 4, 5]) await holdOn(page, i, 60);
 
+  // Pour a cavity to the target ml and fill tops immediately — batter keeps
+  // relaxing and leaks out of the mold over time, so actions must not lag.
+  const pourUntil = async (i, ml) => {
+    const p = await cavityScreen(page, i);
+    await page.mouse.move(p.x, p.y);
+    await page.mouse.down();
+    try {
+      await page.waitForFunction(
+        (pair) => globalThis.mochochoDebug.sim.cavity(pair[0]).batterMl >= pair[1],
+        [i, ml],
+        {
+          timeout: 30_000,
+        },
+      );
+    } finally {
+      await page.mouse.up();
+    }
+  };
   await tool('batter');
-  for (const i of [0, 1, 2]) await holdOn(page, i, 900);
-  await page.waitForFunction(
-    () =>
-      globalThis.mochochoDebug.sim.cavity(0).state >= 1 &&
-      globalThis.mochochoDebug.sim.cavity(1).state >= 1 &&
-      globalThis.mochochoDebug.sim.cavity(2).state >= 1,
-    { timeout: 30_000 },
-  );
-
-  await tool('filling');
-  for (const i of [0, 1, 2]) await tapAt(page, i);
-  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(0).state === 2, {
-    timeout: 15_000,
-  });
+  for (const i of [0, 1, 2]) {
+    await pourUntil(i, 42);
+    await tool('filling');
+    await tapAt(page, i);
+    try {
+      await page.waitForFunction((idx) => globalThis.mochochoDebug.sim.cavity(idx).state === 2, i, {
+        timeout: 15_000,
+      });
+    } catch (error) {
+      const dump = await page.evaluate(() => ({
+        tool: globalThis.mochochoDebug.tool,
+        states: [0, 1, 2].map((k) => globalThis.mochochoDebug.sim.cavity(k).state),
+        mls: [0, 1, 2].map((k) => Math.round(globalThis.mochochoDebug.sim.cavity(k).batterMl)),
+        toast: document.querySelector('#toast')?.textContent ?? '',
+      }));
+      console.log('fill wait failed:', JSON.stringify(dump));
+      throw error;
+    }
+    await tool('batter');
+  }
+  // start_flip requires >=25ml in BOTH halves of a pair; pour the bottoms too.
+  for (const i of [3, 4, 5]) await pourUntil(i, 48);
 
   // Let the tops set before flipping.
   await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(0).topSetMean >= 0.45, {
     timeout: 60_000,
   });
 
+  // Bottom halves leak during the set wait — top any back up to 30+ ml.
+  await tool('batter');
+  for (const i of [3, 4, 5]) {
+    const ml = await page.evaluate((k) => globalThis.mochochoDebug.sim.cavity(k).batterMl, i);
+    if (ml < 30) await pourUntil(i, 40);
+  }
+
   await tool('flip');
   for (const i of [0, 1, 2]) await tapAt(page, i);
-  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(3).state >= 3, {
+  // State 4 = the flipped half landed in the lower cavity.
+  await page.waitForFunction(() => globalThis.mochochoDebug.sim.cavity(3).state === 4, {
     timeout: 30_000,
   });
 

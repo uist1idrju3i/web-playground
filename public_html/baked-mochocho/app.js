@@ -44,6 +44,8 @@ const state = {
   cavityObjs: [0, 1, 2, 3, 4, 5].map(() => ({})),
   audioObj: {},
   flipAngles: [0, 0, 0],
+  combo: 0,
+  bestCombo: 0,
   fillingKinds: [0, 0, 0, 0, 0, 0],
   frameSkip: false,
   cursor: { x: 0, y: 0, radius: 0, active: false },
@@ -165,6 +167,8 @@ function pointAt(event) {
 
 function errorFeedback(key) {
   state.audio.cue('error');
+  state.combo = 0;
+  updateCombo();
   caption('cap.error');
   toast(t(key));
   haptic([20, 40, 20]);
@@ -179,6 +183,8 @@ function onPointerDown(event) {
   const cavity = cavityAt(p);
   if (state.tool === 'batter') {
     state.sim.setNozzle(p.x, p.y, POUR_RATE);
+    state.pointer.poured = new Set();
+    if (cavity >= 0) state.pointer.poured.add(cavity);
     caption('cap.pour');
   } else if (state.tool === 'oil') {
     state.sim.grease(p.x, p.y, 20, 0.8);
@@ -191,8 +197,10 @@ function onPointerDown(event) {
     } else errorFeedback(`err.fill.${code}`);
   } else if (state.tool === 'flip') {
     if (cavity < 0) return;
+    const ready = state.sim.cavity(cavity % 3).topSetMean;
     const code = state.sim.startFlip(cavity % 3);
     if (code !== 0) errorFeedback(`err.flip.${code}`);
+    else judgeCavity(cavity % 3, ready >= 0.45 && ready <= 0.85 ? 'perfect' : 'good');
   } else if (state.tool === 'serve') {
     if (cavity < 0) return;
     serve(cavity % 3);
@@ -206,7 +214,11 @@ function onPointerMove(event) {
   if (!p) return;
   updateCursor(p, true);
   if (!state.pointer || state.pointer.id !== event.pointerId) return;
-  if (state.tool === 'batter') state.sim.setNozzle(p.x, p.y, POUR_RATE);
+  if (state.tool === 'batter') {
+    state.sim.setNozzle(p.x, p.y, POUR_RATE);
+    const pouredCavity = cavityAt(p);
+    if (pouredCavity >= 0 && state.pointer.poured) state.pointer.poured.add(pouredCavity);
+  }
   if (state.tool === 'oil') {
     const steps = Math.ceil(Math.hypot(p.x - state.pointer.last.x, p.y - state.pointer.last.y) / 4);
     for (let i = 1; i <= steps; i += 1) {
@@ -224,7 +236,15 @@ function onPointerMove(event) {
 
 function onPointerUp(event) {
   if (!state.pointer || state.pointer.id !== event.pointerId) return;
-  if (state.tool === 'batter') state.sim.setNozzle(0, 0, 0);
+  if (state.tool === 'batter') {
+    state.sim.setNozzle(0, 0, 0);
+    // Judge each cavity the gesture poured into: 40-55 ml is the goal band.
+    for (const i of state.pointer.poured ?? []) {
+      if (i >= 3) continue;
+      const ml = state.sim.cavity(i).batterMl;
+      judgeCavity(i, ml >= 40 && ml <= 55 ? 'perfect' : ml >= 25 && ml <= 68 ? 'good' : 'miss');
+    }
+  }
   const start = state.pointer.start;
   const swipe = event.clientY - state.pointer.startY;
   const cavity = cavityAt(start);
@@ -235,8 +255,10 @@ function onPointerUp(event) {
     cavity < 3 &&
     state.sim.cavity(cavity).state >= 1
   ) {
+    const ready = state.sim.cavity(cavity).topSetMean;
     const code = state.sim.startFlip(cavity);
     if (code !== 0) errorFeedback(`err.flip.${code}`);
+    else judgeCavity(cavity, ready >= 0.45 && ready <= 0.85 ? 'perfect' : 'good');
   }
   state.pointer = null;
   if (event.pointerType !== 'mouse') state.cursor.active = false;
@@ -266,14 +288,83 @@ function renderFillingTool() {
   $('filling-icon').style.setProperty('--filling-color', FILLINGS[state.filling].color);
 }
 
+// Action judgement: pop a PERFECT/GOOD/MISS label over the cavity and keep
+// the combo counter. Perfect extends the combo, miss resets it.
+function judgeCavity(cavity, rating) {
+  const c = state.sim.cavities[cavity];
+  const pos = toScreen(state.camera, c.x, c.y, 26, stage().clientWidth, stage().clientHeight);
+  const el = document.createElement('div');
+  el.className = `judge judge-${rating}`;
+  el.textContent = t(`judge.${rating}`);
+  el.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)`;
+  $('judges').append(el);
+  setTimeout(() => el.remove(), 950);
+  if (rating === 'perfect') {
+    state.combo += 1;
+    state.bestCombo = Math.max(state.bestCombo, state.combo);
+    state.audio.cue('perfect');
+  } else if (rating === 'miss') {
+    state.combo = 0;
+  }
+  updateCombo();
+}
+
+function updateCombo() {
+  $('combo-stat').hidden = state.combo < 2;
+  $('combo-count').textContent = `x${state.combo}`;
+}
+
+// IEEE-754 half-float decode for the Uint16 field arrays.
+function f16(h) {
+  const sign = h & 0x8000 ? -1 : 1;
+  const e = (h >> 10) & 0x1f;
+  const f = h & 0x3ff;
+  if (e === 0) return sign * f * 2 ** -24;
+  if (e === 0x1f) return sign * Infinity;
+  return sign * (1 + f / 1024) * 2 ** (e - 15);
+}
+
+// Capture the real bake field around the finished cake so the result view
+// shows THIS cake's actual browning instead of averaged statistics.
+// Returns { top, bottom, thickness } RGBA-free grayscale maps (64x64).
+function snapshotCake(pair) {
+  const N = 64;
+  const cavity = state.sim.cavities[pair + 3];
+  const radius = state.sim.radius;
+  const { w, h } = state.sim.grid;
+  const { fieldA } = state.sim;
+  const out = {
+    top: new Float32Array(N * N),
+    bottom: new Float32Array(N * N),
+    rim: new Float32Array(N * N),
+    size: N,
+  };
+  for (let j = 0; j < N; j += 1) {
+    for (let i = 0; i < N; i += 1) {
+      const lx = (i / (N - 1) - 0.5) * 2 * radius;
+      const ly = (j / (N - 1) - 0.5) * 2 * radius;
+      const gx = Math.round((cavity.x + lx) / state.sim.grid.cell);
+      const gy = Math.round((cavity.y + ly) / state.sim.grid.cell);
+      if (gx < 0 || gy < 0 || gx >= w || gy >= h) continue;
+      const base = (gy * w + gx) * 4;
+      out.top[j * N + i] = f16(fieldA[base + 1]);
+      out.bottom[j * N + i] = f16(fieldA[base + 2]);
+      out.rim[j * N + i] = Math.min(1, f16(fieldA[base]) / 14);
+    }
+  }
+  return out;
+}
+
 async function serve(pair) {
+  const cakeTex = snapshotCake(pair);
   const stats = state.sim.takeOut(pair);
   if (stats.ok === false) {
     errorFeedback(`err.serve.${stats.code}`);
     return;
   }
   const score = scoreCake(stats, state.order);
-  const price = priceFor(score);
+  judgeCavity(pair + 3, score.stars >= 4 ? 'perfect' : score.stars >= 3 ? 'good' : 'miss');
+  const price = priceFor(score) + Math.min(20, state.combo * 2);
   state.save.coins += price;
   state.save.best = Math.max(state.save.best, score.total);
   state.save.served += 1;
@@ -281,13 +372,13 @@ async function serve(pair) {
   state.audio.cue(score.stars >= 4 ? 'completion' : score.stars >= 3 ? 'success' : 'notification');
   caption('cap.success');
   haptic([15, 30, 15]);
-  showResult(stats, score, price);
+  showResult(stats, score, price, cakeTex);
   state.order = makeOrder(state.rng, state.save.round);
   updateHud();
   await persist();
 }
 
-function showResult(stats, score, price) {
+function showResult(stats, score, price, cakeTex) {
   $('result-heading').textContent = t(`rank.${score.stars}`);
   $('result-stars').textContent = '★'.repeat(score.stars) + '☆'.repeat(5 - score.stars);
   $('result-score').textContent = `${score.total} / 100 · +${price}`;
@@ -303,7 +394,7 @@ function showResult(stats, score, price) {
   $('result-comment').textContent = t(score.comment);
   try {
     state.cakeView?.dispose();
-    state.cakeView = makeCakeView($('result-preview'), stats);
+    state.cakeView = makeCakeView($('result-preview'), stats, { tex: cakeTex });
   } catch {
     state.cakeView = null;
     drawPreview($('result-preview'), stats);

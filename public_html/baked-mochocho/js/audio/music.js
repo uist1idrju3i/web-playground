@@ -114,6 +114,15 @@ export const CUES = {
       [86, 420],
     ],
   },
+  perfect: {
+    purpose: 'success',
+    wave: 'bell',
+    notes: [
+      [86, 70],
+      [91, 80],
+      [98, 160],
+    ],
+  },
   warning: {
     purpose: 'warning',
     wave: 'square',

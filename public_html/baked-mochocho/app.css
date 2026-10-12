@@ -662,3 +662,62 @@ a {
     margin: 6px 0;
   }
 }
+
+/* Action judgement labels float over the griddle and must never intercept
+   pointer input — everything is anchored to the stage overlay. */
+.judges {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+.judge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+  pointer-events: none;
+  animation: judge-pop 0.9s ease-out forwards;
+}
+.judge-perfect {
+  color: var(--bm-gold);
+  background: rgb(46 30 6 / 72%);
+  box-shadow: 0 0 16px rgb(255 200 90 / 60%);
+}
+.judge-good {
+  color: var(--bm-cream);
+  background: rgb(30 24 14 / 70%);
+  font-size: 1rem;
+}
+.judge-miss {
+  color: #ff9a7a;
+  background: rgb(40 14 6 / 72%);
+  font-size: 1rem;
+}
+@keyframes judge-pop {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  18% {
+    opacity: 1;
+    scale: 1.25;
+  }
+  30% {
+    scale: 1;
+  }
+  75% {
+    opacity: 1;
+    translate: 0 -18px;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -42px;
+  }
+}
