@@ -9,5 +9,8 @@ This project includes generated data from the following projects:
 - **Rust standard library** — portions may be embedded in the generated Rust WebAssembly modules. Licensed under MIT or Apache License 2.0.
 - **Playwright 1.64.0** — development and browser-test tooling. Licensed under Apache License 2.0.
 - **parse5 8.0.1**, **Acorn 8.19.0**, and **acorn-walk 8.3.5** — development-time parser tooling. Licensed under the MIT License.
+- **@ruby/wasm-wasi 2.10.1** — vendored as `public_html/ruby-wasm/vendor/browser.umd.js`. Copyright (c) 2022 Yuta Saito. Licensed under the MIT License.
+- **@ruby/3.4-wasm-wasi 2.10.1** — CRuby 3.4.1 with stdlib compiled to WebAssembly, shipped compressed as `public_html/ruby-wasm/ruby+stdlib.wasm.gz`. Ruby itself is distributed under the Ruby License or the 2-clause BSDL; bundled stdlib and extension libraries carry their own permissive licenses (see the upstream `LEGAL` file in the ruby source).
+- **CodeMirror 6.65.7** — editor component loaded from cdnjs with SRI (core, `mode/ruby`, `closebrackets`, `matchbrackets`). Copyright (c) Marijn Haverbeke and others. Licensed under the MIT License.
 
 The generated feature data is distributed under the corresponding upstream terms. Source and license details are also recorded in the generated JSON metadata.
