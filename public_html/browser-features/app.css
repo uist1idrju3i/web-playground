@@ -161,6 +161,32 @@
   font-size: 0.94rem;
 }
 
+.capability-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.capability-group > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 2px 10px;
+  cursor: pointer;
+}
+
+.capability-group > summary h3 {
+  display: inline;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.capability-group-count {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 .capability-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -202,7 +228,7 @@
   min-width: 0;
 }
 
-.capability-copy h3 {
+.capability-copy h4 {
   margin: 2px 0 4px;
   font-size: 0.98rem;
 }

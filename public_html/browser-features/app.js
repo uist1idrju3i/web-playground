@@ -139,31 +139,61 @@ function chip(status) {
   return badge;
 }
 
+const requestedCapabilityCount = 10;
+
+function capabilityItem({ capability, result }, index) {
+  const item = document.createElement('li');
+  item.className = 'capability-item';
+  item.id = capability.id;
+  item.dataset.capabilityId = capability.id;
+  const number = document.createElement('span');
+  number.className = 'capability-number';
+  number.textContent = String(index + 1).padStart(2, '0');
+  const copy = document.createElement('div');
+  copy.className = 'capability-copy';
+  const title = document.createElement('h4');
+  title.textContent = capability.name;
+  const detail = document.createElement('p');
+  detail.textContent = result.detail;
+  const category = document.createElement('span');
+  category.className = 'capability-category';
+  category.textContent = capability.category;
+  copy.append(title, detail, category);
+  item.append(number, copy, chip(result.status));
+  return item;
+}
+
 function renderCapabilities() {
-  const list = document.querySelector('#capability-list');
-  list.replaceChildren();
-  capabilityResults.forEach(({ capability, result }, index) => {
-    const item = document.createElement('li');
-    item.className = 'capability-item';
-    item.id = capability.id;
-    item.dataset.capabilityId = capability.id;
-    const number = document.createElement('span');
-    number.className = 'capability-number';
-    number.textContent = String(index + 1).padStart(2, '0');
-    const copy = document.createElement('div');
-    copy.className = 'capability-copy';
-    const title = document.createElement('h3');
-    title.textContent = capability.name;
-    const detail = document.createElement('p');
-    detail.textContent = result.detail;
-    const category = document.createElement('span');
-    category.className = 'capability-category';
-    category.textContent = capability.category;
-    copy.append(title, detail, category);
-    item.append(number, copy, chip(result.status));
-    list.append(item);
+  const container = document.querySelector('#capability-list');
+  // WebAssembly probes are shown with their execution details in the WebAssembly section.
+  const shown = capabilityResults.filter(({ capability }) => !capability.id.startsWith('wasm-'));
+  const groups = new Map([['Requested capabilities', shown.slice(0, requestedCapabilityCount)]]);
+  for (const entry of shown.slice(requestedCapabilityCount)) {
+    const name = entry.capability.category;
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(entry);
+  }
+  let index = 0;
+  const sections = [...groups].map(([name, entries]) => {
+    const group = document.createElement('details');
+    group.className = 'capability-group';
+    group.open = true;
+    const summary = document.createElement('summary');
+    const heading = document.createElement('h3');
+    heading.textContent = name;
+    const supported = entries.filter(({ result }) => result.status === 'supported').length;
+    const count = document.createElement('span');
+    count.className = 'capability-group-count';
+    count.textContent = `${supported} of ${entries.length} supported`;
+    summary.append(heading, count);
+    const list = document.createElement('ol');
+    list.className = 'capability-list';
+    for (const entry of entries) list.append(capabilityItem(entry, index++));
+    group.append(summary, list);
+    return group;
   });
-  text(document.querySelector('#capability-count'), `${capabilities.length} read-only checks`);
+  container.replaceChildren(...sections);
+  text(document.querySelector('#capability-count'), `${shown.length} read-only checks`);
 }
 
 function renderWasmProbes() {
