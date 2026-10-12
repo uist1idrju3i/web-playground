@@ -1,4 +1,5 @@
 import { checkRequirements } from '/library/js/requirements.js';
+import { transition } from './js/statechart.js';
 import { createSignedStore } from '/library/js/signed-storage.js';
 import { createSimulation } from './js/sim.js';
 import { AudioEngine } from './js/audio/engine.js';
@@ -37,6 +38,7 @@ const state = {
   filling: 1,
   heat: 0.6,
   pointer: null,
+  phase: 'boot',
   // Preallocated per-frame read targets (no per-frame object allocation).
   cavityObjs: [0, 1, 2, 3, 4, 5].map(() => ({})),
   audioObj: {},
@@ -366,6 +368,17 @@ function updateGuide(cavities) {
   if (key !== state.guideKey) {
     state.guideKey = key;
     $('guide').textContent = t(key);
+    // Light up the tool the guide asks for next.
+    const next = {
+      'guide.oil': 'oil',
+      'guide.batter': 'batter',
+      'guide.filling': 'filling',
+      'guide.flip': 'flip',
+      'guide.serve': 'serve',
+    }[key];
+    document
+      .querySelectorAll('.tool[data-tool]')
+      .forEach((b) => b.classList.toggle('is-next', b.dataset.tool === next));
   }
 }
 
@@ -470,6 +483,7 @@ function frame(now) {
     height: canvas.height,
     reducedMotion: reducedMotion.matches,
     heat: state.heat,
+    burning: audio.burning ?? 0,
   };
   state.renderer.render(state.camera, state.lastFrame);
   if (state.running) {
@@ -518,12 +532,18 @@ function start() {
   state.paused = false;
   state.order = makeOrder(state.rng, state.save.round);
   updateHud();
-  document.body.dataset.phase = 'playing';
+  setPhase('start');
   if (isAppleTouch && !state.save.hintShown) {
     toast(t('soundNote'), 4000);
     state.save.hintShown = true;
     persist();
   }
+}
+
+// All phase changes go through the statechart; illegal moves throw.
+function setPhase(event) {
+  state.phase = transition(state.phase, event);
+  document.body.dataset.phase = state.phase;
 }
 
 function bindUi() {
@@ -606,7 +626,7 @@ async function main() {
     container: $('requirements'),
   });
   if (!ok) {
-    document.body.dataset.phase = 'unsupported';
+    setPhase('unsupported');
     return;
   }
   bindUi();
@@ -624,7 +644,7 @@ async function main() {
   $('menu-engine').textContent = engine;
   bindCanvas();
   $('start-button').disabled = false;
-  document.body.dataset.phase = 'title';
+  setPhase('ready');
   state.lastTime = performance.now();
   requestAnimationFrame(frame);
 }
@@ -644,6 +664,6 @@ main().catch((error) => {
   const node = $('load-error');
   node.hidden = false;
   node.textContent = `${error.name}: ${error.message}`;
-  document.body.dataset.phase = 'error';
+  setPhase('error');
   console.error(error);
 });

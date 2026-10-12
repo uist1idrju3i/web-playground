@@ -7,6 +7,7 @@ struct Frame {
   cursor: vec4f,
   filling: array<vec4f, 6>,
   screen: vec4f,
+  extra: vec4f,
 };
 struct Particle { pos: vec4f, info: vec4f };
 @group(0) @binding(0) var<uniform> u: Frame;
@@ -222,8 +223,16 @@ fn surf(c: vec2i, side: i32) -> f32 {
     }
   }
   let edge = smoothstep(0.12, 1.2, v.h);
-  var col = shade(albedo, normalize(v.normal), v.world, rough, 0.0, 0.45, mix(0.65, 1.0, edge));
+  let nrm = normalize(v.normal);
+  let aoMix = mix(0.65, 1.0, edge);
+  var col = shade(albedo, nrm, v.world, rough, 0.0, 0.45, aoMix);
+  // Angel's ring: the pale band on the cake's side between the browned faces.
+  let band = (1.0 - abs(nrm.y)) * smoothstep(0.18, 0.42, brown) * (1.0 - smoothstep(0.42, 0.8, brown));
+  col = mix(col, vec3f(0.98, 0.94, 0.8) * aoMix, band * 0.6);
   col += albedo * vec3f(0.35, 0.18, 0.06) * wet * 0.25;
+  // Fake subsurface: warm light bleeding through the thin edges.
+  let vv = normalize(u.eyeTime.xyz - v.world);
+  col += albedo * KEY * 0.05 * pow(max(dot(nrm, KEY_DIR), 0.0), 2.0) * pow(1.0 - max(dot(nrm, vv), 0.0), 3.0);
   return vec4f(outColor(col, vec2f(v.pos.x, u.screen.y - v.pos.y)), 1.0);
 }
 
@@ -246,8 +255,11 @@ struct PartOut { @builtin(position) pos: vec4f, @location(0) uv: vec2f, @locatio
   if (v.info.y < 0.5) {
     let soft = (1.0 - r) * (1.0 - r);
     let n = 0.7 + 0.3 * vnoise(v.uv * 2.0 + v.info.w * 40.0 + u.eyeTime.w * 0.4);
-    let alpha = soft * v.info.z * n * 0.28 * smoothstep(0.0, 0.25, v.info.x);
-    return vec4f(vec3f(0.95, 0.92, 0.88) * alpha, alpha);
+    // Steam brightens to smoke when the batch is burning (u.extra.x).
+    let burn = clamp(u.extra.x, 0.0, 1.0);
+    let steamCol = mix(vec3f(0.95, 0.92, 0.88), vec3f(0.2, 0.16, 0.14), burn);
+    let alpha = soft * v.info.z * n * (0.28 + 0.22 * burn) * smoothstep(0.0, 0.25, v.info.x);
+    return vec4f(steamCol * alpha, alpha);
   }
   let n = vec3f(v.uv, sqrt(1.0 - r));
   let l = max(dot(n, normalize(vec3f(-0.4, 0.6, 0.7))), 0.0);

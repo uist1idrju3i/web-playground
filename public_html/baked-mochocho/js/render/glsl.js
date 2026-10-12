@@ -9,6 +9,7 @@ layout(std140) uniform Frame {
   vec4 uCursor;
   vec4 uFilling[6];
   vec4 uScreen;
+  vec4 uExtra;
 };
 const int W = 176;
 const int H = 112;
@@ -252,8 +253,15 @@ void main() {
   }
   float edge = smoothstep(0.12, 1.2, vH);
   vec3 n = normalize(vNormal);
-  vec3 col = shade(albedo, n, vWorld, rough, 0.0, 0.45, mix(0.65, 1.0, edge));
+  float aoMix = mix(0.65, 1.0, edge);
+  vec3 col = shade(albedo, n, vWorld, rough, 0.0, 0.45, aoMix);
+  // Angel's ring: the pale band on the cake's side between the browned faces.
+  float band = (1.0 - abs(n.y)) * smoothstep(0.18, 0.42, brown) * (1.0 - smoothstep(0.42, 0.8, brown));
+  col = mix(col, vec3(0.98, 0.94, 0.8) * aoMix, band * 0.6);
   col += albedo * vec3(0.35, 0.18, 0.06) * wet * 0.25;
+  // Fake subsurface: warm light bleeding through the thin edges.
+  vec3 vv = normalize(uEyeTime.xyz - vWorld);
+  col += albedo * KEY * 0.05 * pow(max(dot(n, KEY_DIR), 0.0), 2.0) * pow(1.0 - max(dot(n, vv), 0.0), 3.0);
   frag = vec4(outColor(col, gl_FragCoord.xy), 1.0);
 }`;
 
@@ -286,8 +294,11 @@ void main() {
   if (vInfo.y < 0.5) {
     float soft = (1.0 - r) * (1.0 - r);
     float n = 0.7 + 0.3 * vnoise(vUv * 2.0 + vInfo.w * 40.0 + uEyeTime.w * 0.4);
-    float alpha = soft * vInfo.z * n * 0.28 * smoothstep(0.0, 0.25, vInfo.x);
-    frag = vec4(vec3(0.95, 0.92, 0.88) * alpha, alpha);
+    // Steam brightens to smoke when the batch is burning (uExtra.x).
+    float burn = clamp(uExtra.x, 0.0, 1.0);
+    vec3 steamCol = mix(vec3(0.95, 0.92, 0.88), vec3(0.2, 0.16, 0.14), burn);
+    float alpha = soft * vInfo.z * n * (0.28 + 0.22 * burn) * smoothstep(0.0, 0.25, vInfo.x);
+    frag = vec4(steamCol * alpha, alpha);
   } else {
     vec3 n = vec3(vUv, sqrt(1.0 - r));
     float l = max(dot(n, normalize(vec3(-0.4, 0.6, 0.7))), 0.0);

@@ -40,6 +40,7 @@ export class AudioEngine {
     this.makeSteam();
     if (ctx.state !== 'running') await ctx.resume();
     this.nextLoop = ctx.currentTime + 0.1;
+    this.ready = true;
     return true;
   }
 
@@ -160,7 +161,9 @@ export class AudioEngine {
 
   // Called every frame with the simulation's audio block.
   update(audio) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    // `ready` flips only after every node exists; a mid-unlock frame must
+    // not touch sizzleGain/pourGain/steamGain before they are built.
+    if (!this.ctx || this.ctx.state !== 'running' || !this.ready) return;
     const now = this.ctx.currentTime;
     const sizzle = Math.min(1, audio.sizzle + audio.contactBurst * 0.6);
     if (this.sizzleParam) this.sizzleParam.setTargetAtTime(sizzle, now, 0.05);
@@ -237,7 +240,7 @@ export class AudioEngine {
   }
 
   cue(name) {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.ctx || this.ctx.state !== 'running' || !this.ready) return;
     const cue = CUES[name];
     let when = this.ctx.currentTime + 0.01;
     for (const [midi, ms] of cue.notes) {

@@ -232,5 +232,6 @@ export function packUniforms(out, camera, frame) {
   out[53] = frame.height;
   out[54] = frame.reducedMotion ? 1 : 0;
   out[55] = frame.heat;
+  out[56] = frame.burning ?? 0;
   return out;
 }
