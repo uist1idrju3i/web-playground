@@ -1,0 +1,405 @@
+import { expect, test } from '@playwright/test';
+import { attachConsoleWarnings, filterWebKitUaStyleDiagnostics } from './csp-violations.js';
+
+function trackExternalRequests(page, baseURL) {
+  const sameOrigin = new URL(baseURL).origin;
+  const externalRequests = [];
+  const listener = (request) => {
+    if (new URL(request.url()).origin !== sameOrigin) externalRequests.push(request.url());
+  };
+  page.context().on('request', listener);
+  return { externalRequests, stop: () => page.context().off('request', listener) };
+}
+
+test('the portal links to Browser Features without third-party requests', async ({
+  page,
+  baseURL,
+}) => {
+  const requestTracker = trackExternalRequests(page, baseURL);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'See what your browser can do.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Browser Features/ })).toHaveAttribute(
+    'href',
+    '/browser-features/',
+  );
+  expect(requestTracker.externalRequests).toEqual([]);
+  requestTracker.stop();
+});
+
+test('Browser Features loads without console errors or third-party requests', async ({
+  page,
+  baseURL,
+  browserName,
+}, testInfo) => {
+  const consoleErrors = [];
+  const consoleWarnings = [];
+  const pageErrors = [];
+  const requestTracker = trackExternalRequests(page, baseURL);
+  let collecting = true;
+  await page.addInitScript(() => {
+    window.__securityPolicyViolations = [];
+    window.__securityPolicyListener = (event) => {
+      window.__securityPolicyViolations.push({
+        directive: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        sample: event.sample,
+        sourceFile: event.sourceFile,
+        line: event.lineNumber,
+      });
+    };
+    document.addEventListener('securitypolicyviolation', window.__securityPolicyListener);
+  });
+  const consoleListener = (message) => {
+    if (!collecting) return;
+    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'warning') consoleWarnings.push(message.text());
+  };
+  const pageErrorListener = (error) => {
+    if (collecting) pageErrors.push(error.message);
+  };
+  page.on('console', consoleListener);
+  page.on('pageerror', pageErrorListener);
+  await page.goto('/browser-features/');
+  await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
+  await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const diagnostics = filterWebKitUaStyleDiagnostics(
+    await page.evaluate(() => window.__securityPolicyViolations),
+    consoleErrors,
+    browserName,
+  );
+  await attachConsoleWarnings(testInfo, consoleWarnings);
+  expect({
+    consoleErrors: diagnostics.consoleErrors,
+    pageErrors,
+    violations: diagnostics.violations,
+    externalRequests: requestTracker.externalRequests,
+  }).toEqual({ consoleErrors: [], pageErrors: [], violations: [], externalRequests: [] });
+  // Playwright's WebKit screenshotter injects body {}, triggering an expected post-assertion CSP violation.
+  await page.screenshot();
+  collecting = false;
+  page.off('console', consoleListener);
+  page.off('pageerror', pageErrorListener);
+  requestTracker.stop();
+  await page.evaluate(() =>
+    document.removeEventListener('securitypolicyviolation', window.__securityPolicyListener),
+  );
+});
+
+test('Permissions Policy features are disclosed as wrapped chips', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const disclosure = page.locator('.permissions-policy-details');
+  const summary = await disclosure.locator('summary').textContent();
+  const count = Number(summary?.match(/^\d+/)?.[0] ?? 0);
+  expect(summary).toMatch(/allowed features|No feature list exposed/);
+  await disclosure.locator('summary').click();
+  await expect(disclosure).toHaveAttribute('open', '');
+  const chips = disclosure.locator('.permissions-policy-features li');
+  await expect(chips).toHaveCount(count);
+  if (count) {
+    await expect(page.locator('.permissions-policy-item')).toHaveClass(/is-expanded/);
+    const widths = await page.evaluate(() => ({
+      card: document.querySelector('.permissions-policy-item').getBoundingClientRect().width,
+      grid: document.querySelector('#environment-grid').getBoundingClientRect().width,
+      list: getComputedStyle(document.querySelector('.permissions-policy-features')).flexWrap,
+    }));
+    expect(Math.abs(widths.card - widths.grid)).toBeLessThan(1);
+    expect(widths.list).toBe('wrap');
+  }
+});
+
+test('WebRTC details list each audio and video codec mimeType once', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const detail = await page
+    .locator('[data-capability-id="webrtc"] .capability-copy p')
+    .textContent();
+  for (const kind of ['audio', 'video']) {
+    const match = detail?.match(new RegExp(`${kind} codecs: ([^;]+)`));
+    if (!match) continue;
+    const codecs = match[1].split(', ');
+    expect(new Set(codecs).size).toBe(codecs.length);
+  }
+});
+
+test('the app fits a mobile-width viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/browser-features/');
+  await expect(page.getByRole('heading', { name: 'Browser Features' })).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    viewport: window.innerWidth,
+  }));
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+});
+
+test('Baseline-widely features do not produce false unsupported results', async ({
+  page,
+  browserName,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const results = await page.evaluate(async () => {
+    const data = await fetch('/library/data/web-features.json').then((response) => response.json());
+    const { probeFeature } = await import('/library/js/feature-probe.js');
+    const counts = { supported: 0, partial: 0, unsupported: 0, untestable: 0 };
+    const widelyUnsupported = [];
+    for (const feature of data.features) {
+      const status = probeFeature(feature).status;
+      const category = status.startsWith('partial(') ? 'partial' : status;
+      counts[category] += 1;
+      if (feature.baseline.status === 'widely' && status === 'unsupported') {
+        widelyUnsupported.push(feature.id);
+      }
+    }
+    return { counts, widelyUnsupported };
+  });
+
+  const unsupportedAllowlist = new Map([
+    // This bundled WebKit build omits the credential-management interfaces.
+    [
+      'credential-management',
+      'The bundled WebKit runtime does not expose Credential or CredentialsContainer.',
+    ],
+    // The desktop WebKit test context cannot exercise device sensor interfaces.
+    [
+      'device-orientation-events',
+      'This desktop WebKit context exposes no device-motion or device-orientation interfaces.',
+    ],
+    // The bundled WebKit media stack omits Encrypted Media Extensions.
+    [
+      'encrypted-media-extensions',
+      'The bundled WebKit media stack exposes no MediaKeys or MediaKeySystemAccess interfaces.',
+    ],
+    // Its HTMLElement implementation does not reflect enterkeyhint in this build.
+    [
+      'enterkeyhint',
+      'HTMLElement.prototype in the bundled WebKit runtime lacks the enterKeyHint reflection.',
+    ],
+    // forced-color-adjust is not implemented by this WebKit build.
+    [
+      'forced-colors',
+      'The bundled WebKit runtime does not recognize the forced-color-adjust CSS property.',
+    ],
+    // This bundled WebKit build omits MediaRecorder and BlobEvent.
+    [
+      'mediastream-recording',
+      'The bundled WebKit runtime exposes neither MediaRecorder nor BlobEvent.',
+    ],
+    // The bundled WebKit build does not expose Origin Private File System handles.
+    [
+      'origin-private-file-system',
+      'The bundled WebKit runtime does not expose the OPFS FileSystemHandle interfaces.',
+    ],
+    // This WebKit build does not expose the StorageManager interface.
+    [
+      'storage-manager',
+      'The bundled WebKit runtime exposes neither Navigator.storage nor StorageManager.',
+    ],
+  ]);
+  expect(
+    results.widelyUnsupported.filter((id) => !unsupportedAllowlist.has(id)),
+    `${browserName} Baseline-widely unsupported features: ${results.widelyUnsupported.join(', ')}`,
+  ).toEqual([]);
+  expect([...unsupportedAllowlist.values()].every(Boolean)).toBe(true);
+});
+
+test('the ten requested highlight capabilities sit in their own categories', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
+  const requested = [
+    'webmcp',
+    'web-bluetooth',
+    'web-serial',
+    'webusb',
+    'websocket',
+    'webtransport',
+    'webgl',
+    'webrtc',
+    'web-audio',
+    'web-crypto',
+  ];
+  const placement = await page.evaluate((ids) => {
+    const headings = [...document.querySelectorAll('#capability-list .capability-group h3')].map(
+      (heading) => heading.textContent,
+    );
+    return {
+      headings,
+      items: ids.map((id) => {
+        const item = document.querySelector(`[data-capability-id="${id}"]`);
+        return {
+          id,
+          category: item?.querySelector('.capability-category')?.textContent,
+          group: item?.closest('.capability-group')?.querySelector('h3')?.textContent,
+        };
+      }),
+    };
+  }, requested);
+  expect(new Set(placement.headings).size).toBe(placement.headings.length);
+  expect(placement.headings).not.toContain('Requested capabilities');
+  for (const { id, category, group } of placement.items) {
+    expect(category, id).toBeTruthy();
+    expect(group, id).toBe(category);
+  }
+});
+
+test('search and group filters narrow the feature results', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
+  const initial = await page.locator('#filter-summary').textContent();
+  await page.locator('#feature-search').fill('Web Bluetooth');
+  await expect(page.locator('#filter-summary')).toContainText('1 matching feature');
+  await page.locator('#feature-search').fill('');
+  const group = await page.locator('#group-filter option').nth(1).getAttribute('value');
+  await page.locator('#group-filter').selectOption(group);
+  const filtered = await page.locator('#filter-summary').textContent();
+  expect(filtered).not.toEqual(initial);
+});
+
+test('the JSON export is valid and reports cross-origin isolation', async ({
+  page,
+  browserName,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
+  await page.locator('#copy-json').click();
+  await expect(page.locator('#export-output')).not.toBeEmpty();
+  const result = await page
+    .locator('#export-output')
+    .evaluate((element) => JSON.parse(element.value));
+  expect(result.features.length).toBeGreaterThan(1000);
+  const isolated = await page.evaluate(() => crossOriginIsolated);
+  if (browserName === 'chromium') expect(isolated).toBe(true);
+  expect(result.environment.crossOriginIsolated).toBe(isolated);
+});
+
+test('local and session storage complete write/read/remove round-trips', async ({ page }) => {
+  await page.goto('/browser-features/');
+  const storageIds = [
+    'local-storage',
+    'session-storage',
+    'indexeddb',
+    'cookies',
+    'cache-storage',
+    'opfs',
+    'storage-estimate',
+    'storage-persisted',
+  ];
+  for (const id of storageIds) {
+    await expect(page.locator(`[data-capability-id="${id}"] .capability-category`)).toHaveText(
+      'Storage',
+    );
+  }
+  for (const id of ['local-storage', 'session-storage']) {
+    const capability = page.locator(`[data-capability-id="${id}"]`);
+    await expect(capability.locator('.status-chip')).toHaveText('Supported');
+    await expect(capability.locator('.capability-copy p')).toContainText(
+      'set/get/remove round-trip',
+    );
+  }
+  expect(await page.localStorage.items()).toEqual([]);
+  expect(await page.sessionStorage.items()).toEqual([]);
+});
+
+test('WebAssembly compiles and instantiates under the served CSP', async ({ page }) => {
+  const response = await page.goto('/browser-features/');
+  const contentSecurityPolicy = response?.headers()['content-security-policy'] ?? '';
+  expect(contentSecurityPolicy).toContain(
+    "script-src 'self' 'wasm-unsafe-eval' 'report-sample' https://cdnjs.cloudflare.com",
+  );
+  expect(contentSecurityPolicy).toContain(
+    "style-src 'self' 'report-sample' https://cdnjs.cloudflare.com",
+  );
+  expect(contentSecurityPolicy).toContain("connect-src 'self'");
+  expect(contentSecurityPolicy).toContain("font-src 'self'");
+  const wasmResponse = await page.request.get('/library/wasm/probes/wasm-simd.wasm');
+  expect(wasmResponse.headers()['content-type']).toContain('application/wasm');
+  const result = await page.evaluate(async () => {
+    const bytes = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]);
+    const { module, instance } = await WebAssembly.instantiate(bytes);
+    const { capabilities, detectCapability } = await import('/library/js/capabilities.js');
+    const capability = capabilities.find((item) => item.id === 'webassembly');
+    return {
+      compiled: module instanceof WebAssembly.Module,
+      instantiated: instance instanceof WebAssembly.Instance,
+      capability: await detectCapability(capability),
+    };
+  });
+  expect(result.compiled).toBe(true);
+  expect(result.instantiated).toBe(true);
+  expect(result.capability.status).toBe('supported');
+});
+
+test('WebAssembly proposal probes match the engine compatibility table', async ({
+  page,
+  browserName,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const results = await page.evaluate(async () => {
+    const { capabilities, detectCapability } = await import('/library/js/capabilities.js');
+    return Promise.all(
+      capabilities
+        .filter((capability) => capability.id.startsWith('wasm-'))
+        .map(async (capability) => ({
+          id: capability.id,
+          ...(await detectCapability(capability)),
+        })),
+    );
+  });
+  // Measured with Playwright 1.64: Chromium 156, Firefox 157, and WebKit 27.2.
+  const expectedUnsupported = { chromium: [], firefox: [], webkit: [] };
+  const unsupported = results
+    .filter((result) => result.status !== 'supported')
+    .map((result) => result.id)
+    .sort();
+  expect(unsupported, `${browserName} WebAssembly results: ${JSON.stringify(results)}`).toEqual(
+    expectedUnsupported[browserName].sort(),
+  );
+  const validReasons = new Set([
+    'compile-failed',
+    'instantiate-failed',
+    'wrong-result',
+    'blocked-by-csp',
+    'needs-cross-origin-isolation',
+    'timeout',
+  ]);
+  expect(
+    results
+      .filter((result) => result.status !== 'supported')
+      .every((result) => validReasons.has(result.reason)),
+  ).toBe(true);
+  await expect(page.locator('#wasm-probe-list [data-wasm-probe-id]')).toHaveCount(17);
+});
+
+test('WebAssembly toolchain profiles run or explain their missing requirements', async ({
+  page,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const rows = page.locator('#wasm-toolchain-list [data-wasm-toolchain-id]');
+  await expect(rows).toHaveCount(10);
+  const profiles = await rows.evaluateAll((items) =>
+    items.map((item) => ({
+      id: item.dataset.wasmToolchainId,
+      status: item.querySelector('.status-chip')?.getAttribute('aria-label'),
+      detail: item.querySelector('.capability-copy p')?.textContent ?? '',
+    })),
+  );
+  for (const profile of profiles) {
+    expect(profile.status, `${profile.id}: ${profile.detail}`).toBe(
+      profile.detail.startsWith('Requires ') ? 'Profile failed' : 'Profile passed',
+    );
+  }
+});
+
+test('the requirements helper announces missing required features', async ({ page }) => {
+  await page.goto('/__tests__/requirements.html');
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('Required browser features are missing');
+  await expect(alert.getByRole('link', { name: 'missing-required' })).toHaveAttribute(
+    'href',
+    '/browser-features/#missing-required',
+  );
+});

@@ -1,0 +1,20 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'report-sample' https://cdnjs.cloudflare.com; style-src 'self' 'report-sample' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+
+/*.wasm
+  Content-Type: application/wasm
+
+/library/js/wasm-probe-worker.js
+  Cross-Origin-Embedder-Policy: require-corp
+
+/library/wasm/toolchains/*
+  Cross-Origin-Embedder-Policy: require-corp
+
+/browser-features/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+# Origin-Trial: add an approved WebMCP trial token here when configured.

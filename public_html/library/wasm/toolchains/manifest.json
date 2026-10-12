@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "toolchains": {
+    "emscripten": "6.0.12",
+    "rust": "1.99.0",
+    "wasmBindgen": "0.2.129"
+  },
+  "profiles": [
+    {
+      "id": "emscripten-default",
+      "entry": "emscripten-default.js",
+      "wasm": "emscripten-default.wasm",
+      "requires": [],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [],
+      "sha256": {
+        "entry": "11f2a4000fb3534ef173b9cb63a204544ca0231564ccbb7e21b88ea3e973749f",
+        "wasm": "307d7b271002f6703256a3997484ecfc343120f7270a68d9d6c1c7f29416348b"
+      }
+    },
+    {
+      "id": "emscripten-cxx-eh-legacy",
+      "entry": "emscripten-cxx-eh-legacy.js",
+      "wasm": "emscripten-cxx-eh-legacy.wasm",
+      "requires": [],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-fexceptions"
+      ],
+      "sha256": {
+        "entry": "b9664f207c6348ab7b9266af2ebfbee5a43a7ce633167c5b8ec2f678e7a96c18",
+        "wasm": "d47572ff39357a9f068f406c6eddaaa015c26172aef97176b639c281a49ddf65"
+      }
+    },
+    {
+      "id": "emscripten-cxx-eh-exnref",
+      "entry": "emscripten-cxx-eh-exnref.js",
+      "wasm": "emscripten-cxx-eh-exnref.wasm",
+      "requires": [
+        "wasm-exnref"
+      ],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-fwasm-exceptions",
+        "-sWASM_LEGACY_EXCEPTIONS=0"
+      ],
+      "sha256": {
+        "entry": "da35d65de92b494a8b5160254bfa90e55fd37ef7319576846ded8f3a1265ce6e",
+        "wasm": "dbfacea82eebdd7ec0ede959ae80255bb291cebdc61bddbb508ed35d069780de"
+      }
+    },
+    {
+      "id": "emscripten-pthreads",
+      "entry": "emscripten-pthreads.js",
+      "wasm": "emscripten-pthreads.wasm",
+      "requires": [
+        "wasm-threads"
+      ],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-pthread",
+        "-sPTHREAD_POOL_SIZE=2"
+      ],
+      "sha256": {
+        "entry": "1ff7af9c0f0a0b2a0e6940702804d0ab170ba950b60a612ce638cf08f256a5bb",
+        "wasm": "3725d3ef194c8852095a8ffdd115131d163c87b1e48dc28f32bcdeed6136b198"
+      }
+    },
+    {
+      "id": "emscripten-simd",
+      "entry": "emscripten-simd.js",
+      "wasm": "emscripten-simd.wasm",
+      "requires": [
+        "wasm-simd"
+      ],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-msimd128"
+      ],
+      "sha256": {
+        "entry": "b7966759ec396545a9fd9ac54989362968d94a9a7386a6ab8aa113dbe3dd5048",
+        "wasm": "307d7b271002f6703256a3997484ecfc343120f7270a68d9d6c1c7f29416348b"
+      }
+    },
+    {
+      "id": "emscripten-jspi",
+      "entry": "emscripten-jspi.js",
+      "wasm": "emscripten-jspi.wasm",
+      "requires": [
+        "wasm-jspi"
+      ],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-sJSPI=1"
+      ],
+      "sha256": {
+        "entry": "68b244c977de7fa36739cd30f992e6c688ee579950303494cd46d01ba949c278",
+        "wasm": "d9aab67b6d6ae4373c0f793763576e971d34b4dfdcc7ec35547f4712fd61a418"
+      }
+    },
+    {
+      "id": "emscripten-wasm64",
+      "entry": "emscripten-wasm64.js",
+      "wasm": "emscripten-wasm64.wasm",
+      "requires": [
+        "wasm-memory64"
+      ],
+      "runtime": "emscripten",
+      "expected": 42,
+      "flags": [
+        "-sMEMORY64=1"
+      ],
+      "sha256": {
+        "entry": "f12f850aae558fc45a415acab77811880221e0fe8d1342400b0f23935e31df17",
+        "wasm": "f9169b911deb6cba341ab332ce5ff5e2543979ff008793dbdcbbb652fc09fad0"
+      }
+    },
+    {
+      "id": "rust-bindgen",
+      "entry": "rust-bindgen.js",
+      "wasm": "rust-bindgen_bg.wasm",
+      "requires": [],
+      "runtime": "wasm-bindgen",
+      "expected": 42,
+      "flags": [],
+      "sha256": {
+        "entry": "803ba9b54abb54ddb90247a9712e66d29640a44ecbc3140305ebbe8afa42eac1",
+        "wasm": "5c61f8cffc3f136b533116042f2c3f7bf8801304580820d99b72423d6c59f267"
+      }
+    },
+    {
+      "id": "rust-bindgen-simd",
+      "entry": "rust-bindgen-simd.js",
+      "wasm": "rust-bindgen-simd_bg.wasm",
+      "requires": [
+        "wasm-simd"
+      ],
+      "runtime": "wasm-bindgen",
+      "expected": 42,
+      "flags": [],
+      "sha256": {
+        "entry": "0183d24a38abd81dba441f127afe81c156c6f806cb8ec03335e1e03c10e7f4f8",
+        "wasm": "72c60535f4a4c0db356227277eb631c7022543e28fd61b08f17ca261abf17b87"
+      }
+    },
+    {
+      "id": "rust-wasip1",
+      "entry": null,
+      "wasm": "rust-wasi.wasm",
+      "requires": [],
+      "runtime": "wasi",
+      "expected": 2,
+      "flags": [],
+      "sha256": {
+        "wasm": "eb866a6e02746131fed0ac22d597224645e992186447fbb8ec3740c013939c72"
+      }
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "emscripten-cxx-eh-exnref.js",
+      "sha256": "da35d65de92b494a8b5160254bfa90e55fd37ef7319576846ded8f3a1265ce6e"
+    },
+    {
+      "file": "emscripten-cxx-eh-exnref.wasm",
+      "sha256": "dbfacea82eebdd7ec0ede959ae80255bb291cebdc61bddbb508ed35d069780de"
+    },
+    {
+      "file": "emscripten-cxx-eh-legacy.js",
+      "sha256": "b9664f207c6348ab7b9266af2ebfbee5a43a7ce633167c5b8ec2f678e7a96c18"
+    },
+    {
+      "file": "emscripten-cxx-eh-legacy.wasm",
+      "sha256": "d47572ff39357a9f068f406c6eddaaa015c26172aef97176b639c281a49ddf65"
+    },
+    {
+      "file": "emscripten-default.js",
+      "sha256": "11f2a4000fb3534ef173b9cb63a204544ca0231564ccbb7e21b88ea3e973749f"
+    },
+    {
+      "file": "emscripten-default.wasm",
+      "sha256": "307d7b271002f6703256a3997484ecfc343120f7270a68d9d6c1c7f29416348b"
+    },
+    {
+      "file": "emscripten-jspi.js",
+      "sha256": "68b244c977de7fa36739cd30f992e6c688ee579950303494cd46d01ba949c278"
+    },
+    {
+      "file": "emscripten-jspi.wasm",
+      "sha256": "d9aab67b6d6ae4373c0f793763576e971d34b4dfdcc7ec35547f4712fd61a418"
+    },
+    {
+      "file": "emscripten-pthreads.js",
+      "sha256": "1ff7af9c0f0a0b2a0e6940702804d0ab170ba950b60a612ce638cf08f256a5bb"
+    },
+    {
+      "file": "emscripten-pthreads.wasm",
+      "sha256": "3725d3ef194c8852095a8ffdd115131d163c87b1e48dc28f32bcdeed6136b198"
+    },
+    {
+      "file": "emscripten-simd.js",
+      "sha256": "b7966759ec396545a9fd9ac54989362968d94a9a7386a6ab8aa113dbe3dd5048"
+    },
+    {
+      "file": "emscripten-simd.wasm",
+      "sha256": "307d7b271002f6703256a3997484ecfc343120f7270a68d9d6c1c7f29416348b"
+    },
+    {
+      "file": "emscripten-wasm64.js",
+      "sha256": "f12f850aae558fc45a415acab77811880221e0fe8d1342400b0f23935e31df17"
+    },
+    {
+      "file": "emscripten-wasm64.wasm",
+      "sha256": "f9169b911deb6cba341ab332ce5ff5e2543979ff008793dbdcbbb652fc09fad0"
+    },
+    {
+      "file": "rust-bindgen-simd.d.ts",
+      "sha256": "914715a63a891c9f1882286b822050989a4cf665f62a0e74d079e657a24485d6"
+    },
+    {
+      "file": "rust-bindgen-simd.js",
+      "sha256": "0183d24a38abd81dba441f127afe81c156c6f806cb8ec03335e1e03c10e7f4f8"
+    },
+    {
+      "file": "rust-bindgen-simd_bg.wasm",
+      "sha256": "72c60535f4a4c0db356227277eb631c7022543e28fd61b08f17ca261abf17b87"
+    },
+    {
+      "file": "rust-bindgen-simd_bg.wasm.d.ts",
+      "sha256": "ca763c451c7647e6af1174a16fa775fb89931ce81f79b5cea12f0c2e3bc13e51"
+    },
+    {
+      "file": "rust-bindgen.d.ts",
+      "sha256": "914715a63a891c9f1882286b822050989a4cf665f62a0e74d079e657a24485d6"
+    },
+    {
+      "file": "rust-bindgen.js",
+      "sha256": "803ba9b54abb54ddb90247a9712e66d29640a44ecbc3140305ebbe8afa42eac1"
+    },
+    {
+      "file": "rust-bindgen_bg.wasm",
+      "sha256": "5c61f8cffc3f136b533116042f2c3f7bf8801304580820d99b72423d6c59f267"
+    },
+    {
+      "file": "rust-bindgen_bg.wasm.d.ts",
+      "sha256": "ca763c451c7647e6af1174a16fa775fb89931ce81f79b5cea12f0c2e3bc13e51"
+    },
+    {
+      "file": "rust-wasi.wasm",
+      "sha256": "eb866a6e02746131fed0ac22d597224645e992186447fbb8ec3740c013939c72"
+    },
+    {
+      "file": "wasi-shim.js",
+      "sha256": "78cc7188f270415f33bd21048291b2fde043ded5191399bd2e298242fd12089f"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+@import url('/library/css/base.css');
+
+.good {
+  background-image: url('/assets/icon.svg');
+}

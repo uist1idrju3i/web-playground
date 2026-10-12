@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Explore your browser environment and web-platform feature support."
+    />
+    <title>Browser Features · Web Playground</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/browser-features/app.css" />
+    <script type="module" src="/browser-features/app.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <a class="back-link" href="/">← All apps</a>
+    </header>
+    <main class="app-shell">
+      <section class="app-hero">
+        <p class="eyebrow">BROWSER ENVIRONMENT</p>
+        <div class="hero-title-row">
+          <div>
+            <h1>Browser Features</h1>
+            <p>Explore this browser's environment and the capabilities it brings to the web.</p>
+          </div>
+          <div class="read-only-pill"><span aria-hidden="true">●</span> Read-only checks</div>
+        </div>
+      </section>
+
+      <div id="requirements" aria-live="polite"></div>
+      <p id="load-error" class="load-error" role="alert" hidden></p>
+
+      <section class="panel environment-panel" aria-labelledby="environment-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">01 · THIS DEVICE</p>
+            <h2 id="environment-title">Environment</h2>
+          </div>
+          <span class="live-indicator"><span></span> Detected locally</span>
+        </div>
+        <dl id="environment-grid" class="environment-grid">
+          <div class="loading-state">Reading your browser environment…</div>
+        </dl>
+      </section>
+
+      <section class="panel" aria-labelledby="capabilities-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">02 · AT A GLANCE</p>
+            <h2 id="capabilities-title">Highlight capabilities</h2>
+          </div>
+          <span id="capability-count" class="section-meta"></span>
+        </div>
+        <p class="section-intro">
+          API presence checks only. No device is opened, no permission prompt is triggered, and no
+          data is sent anywhere.
+        </p>
+        <div id="capability-list" class="capability-groups">
+          <p class="loading-state">Checking browser APIs…</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="wasm-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">03 · EXECUTABLE MODULES</p>
+            <h2 id="wasm-title">WebAssembly</h2>
+          </div>
+          <span id="wasm-count" class="section-meta"></span>
+        </div>
+        <p class="section-intro">
+          Feature-specific modules run on the main thread and in a time-limited Worker. Results
+          include the reason when a module cannot execute.
+        </p>
+        <ul id="wasm-probe-list" class="capability-list"></ul>
+        <div class="section-title wasm-toolchain-heading">
+          <div>
+            <p class="eyebrow">COMPILED TOOLCHAINS</p>
+            <h3>Layer 2 profiles</h3>
+          </div>
+        </div>
+        <p class="section-intro">
+          Each profile computes the same value; profiles requiring unsupported Layer 1 features are
+          marked with the missing requirements.
+        </p>
+        <ul id="wasm-toolchain-list" class="capability-list"></ul>
+      </section>
+
+      <section class="panel features-panel" aria-labelledby="features-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">04 · THE WEB PLATFORM</p>
+            <h2 id="features-title">All web features</h2>
+          </div>
+          <span id="feature-count" class="section-meta"></span>
+        </div>
+        <p class="section-intro">
+          A browsable view of the WebDX feature dataset. Probes are best-effort checks, not a
+          substitute for testing an app's real use case.
+        </p>
+        <form id="feature-filters" class="filters" role="search">
+          <label class="search-field">
+            <span>Search features</span>
+            <input
+              id="feature-search"
+              type="search"
+              placeholder="Try “Web Bluetooth”"
+              autocomplete="off"
+            />
+          </label>
+          <label>
+            <span>Runtime status</span>
+            <select id="status-filter">
+              <option value="">All statuses</option>
+              <option value="supported">Supported</option>
+              <option value="partial">Partial</option>
+              <option value="unsupported">Unsupported</option>
+              <option value="untestable">Untestable</option>
+            </select>
+          </label>
+          <label>
+            <span>Group</span>
+            <select id="group-filter">
+              <option value="">All groups</option>
+            </select>
+          </label>
+          <label>
+            <span>Baseline</span>
+            <select id="baseline-filter">
+              <option value="">All Baseline statuses</option>
+              <option value="widely">Widely available</option>
+              <option value="newly">Newly available</option>
+              <option value="limited">Limited availability</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </label>
+        </form>
+        <p id="filter-summary" class="filter-summary" aria-live="polite"></p>
+        <div id="feature-list" class="feature-list"></div>
+        <button id="load-more" class="load-more" type="button" hidden>Show more features</button>
+      </section>
+
+      <section class="panel export-panel" aria-labelledby="export-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">04 · TAKE IT WITH YOU</p>
+            <h2 id="export-title">Export your results</h2>
+          </div>
+        </div>
+        <p class="section-intro">
+          Copy a JSON snapshot or a compact Markdown summary for comparison.
+        </p>
+        <div class="export-actions">
+          <button id="copy-json" type="button">Copy JSON</button>
+          <button id="download-json" type="button">Download JSON</button>
+          <button id="copy-markdown" type="button">Copy Markdown summary</button>
+        </div>
+        <label class="export-output-label" for="export-output">Export preview</label>
+        <textarea id="export-output" rows="8" readonly></textarea>
+        <p id="export-status" class="export-status" aria-live="polite"></p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span>Feature source: web-features and MDN browser-compat-data.</span>
+      <a href="/">Back to Web Playground</a>
+    </footer>
+  </body>
+</html>
