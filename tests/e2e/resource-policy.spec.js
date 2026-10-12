@@ -66,6 +66,17 @@ for (const path of pages) {
     try {
       await page.goto(path, { waitUntil: 'load' });
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+      // Violation events and their mirrored console errors are delivered
+      // asynchronously after load; a synchronous read here can race them and
+      // leave WebKit's user-agent style diagnostics unpaired. Wait briefly for
+      // the batch, then give stragglers a moment to land. Pages that emit no
+      // violations exit the first wait via its timeout.
+      await page
+        .waitForFunction(() => window.__resourcePolicyViolations.length > 0, null, {
+          timeout: 2000,
+        })
+        .catch(() => {});
+      await page.waitForTimeout(250);
       const diagnostics = filterWebKitUaStyleDiagnostics(
         await page.evaluate(() => window.__resourcePolicyViolations),
         consoleErrors,
