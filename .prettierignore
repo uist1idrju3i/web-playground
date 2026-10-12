@@ -4,6 +4,10 @@ docs/web-platform-features.md
 docs/capability-reference.md
 public_html/ruby-wasm/vendor/**
 
+public_html/tsumiki/vendor/**
+public_html/tsumiki/data/prefectures.json
+scripts/geo/**
+
 # Native desktop shells (toolchain-managed / generated)
 native/**/package-lock.json
 native/tauri/src-tauri/target/

@@ -2,6 +2,8 @@
 
 This project includes generated data from the following projects:
 
+- **Rapier 0.21.0 (@dimforge/rapier2d-compat)** — vendored WASM rigid-body physics used by the tsumiki game (`public_html/tsumiki/vendor/`). Licensed under the Apache License 2.0; copyright Dimforge (see `rapier.LICENSE.txt`).
+- **Natural Earth 10m admin-1 (Japan)** — prefecture polygons distilled into `public_html/tsumiki/data/prefectures.json` by `scripts/generate-prefecture-data.mjs`. Public domain.
 - **web-features 3.42.0** — Web Platform Baseline feature metadata. Licensed under the Apache License 2.0.
 - **@mdn/browser-compat-data 8.1.5** — browser compatibility data. Dedicated to the public domain under CC0 1.0 Universal.
 - **Binaryen 132.0.0** — used to assemble the generated WebAssembly feature probes. Licensed under the Apache License 2.0.
