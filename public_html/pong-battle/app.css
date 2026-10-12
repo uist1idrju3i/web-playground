@@ -280,6 +280,9 @@ meter::-moz-meter-bar {
   background: rgba(5, 8, 14, 0.45);
   border-radius: 14px;
 }
+#phase-overlay[hidden] {
+  display: none;
+}
 #overlay-title {
   font-size: clamp(34px, 7vw, 72px);
   margin: 0;

@@ -159,6 +159,7 @@ function startMatch() {
   lowStamWarned = { left: false, right: false };
   lastWindSign = 0;
   countdownT = 2.6; // "3・2・1" + serve delay
+  els.rematchBtn.hidden = true;
   fire('deploy');
   audio.cue('deploy');
 }
@@ -226,6 +227,7 @@ function endMatch() {
   els.overlayTitle.textContent = won ? t(lang, 'win') : t(lang, 'lose');
   els.overlaySub.textContent =
     won && currentEnemy.level < 3 ? t(lang, 'levelClear') : won ? t(lang, 'allClear') : '';
+  els.rematchBtn.hidden = false;
   els.overlay.hidden = false;
   buildPickers();
 }
