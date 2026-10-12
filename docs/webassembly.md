@@ -44,7 +44,7 @@ The emsdk manager is pinned to commit `35ff8a6d150541276abbc6bae512ca90bcfbe220`
 
 ## Verification
 
-`npm test` covers all three Playwright engines and asserts their expected Layer 1 proposal results. Chromium is expected to support the stable probes. Firefox's expected gaps are relaxed SIMD and JSPI for the pinned Playwright engine. WebKit's expected gaps include relaxed SIMD, memory64, multi-memory, and features newer than its bundled WebKit build, including JSPI and JS string builtins. A mismatch is a test failure to investigate; do not change the expectation merely to make the test pass.
+`npm test` covers all three Playwright engines and asserts their expected Layer 1 proposal results. Chromium is expected to support the stable probes. Firefox's expected gaps are relaxed SIMD and JSPI for the pinned Playwright engine. WebKit's expected gaps are relaxed SIMD, memory64, multi-memory, and JSPI; the bundled WebKit build does support JavaScript string builtins. A mismatch is a test failure to investigate; do not change the expectation merely to make the test pass.
 
 Two consecutive builds with the pinned toolchains produced an identical manifest SHA-256, including every profile's generated-file hashes. The `WebAssembly Toolchains` workflow therefore rebuilds the profiles and checks the generated files byte-for-byte against the committed outputs. Reassess this only after comparing clean builds with the same pinned toolchains and documenting any reproducibility change.
 
