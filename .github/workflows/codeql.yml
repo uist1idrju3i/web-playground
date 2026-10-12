@@ -33,9 +33,9 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
-      - uses: github/codeql-action/init@3c5d589711f8f55c5dff573fa0c6c9192f593205 # v2.27.2
+      - uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           languages: actions, javascript-typescript, c-cpp, rust
           build-mode: none
           config-file: ./.github/codeql/codeql-config.yml
-      - uses: github/codeql-action/analyze@3c5d589711f8f55c5dff573fa0c6c9192f593205 # v2.27.2
+      - uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
