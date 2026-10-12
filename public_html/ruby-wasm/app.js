@@ -8,7 +8,9 @@ const els = {
   bootStatus: document.querySelector('#boot-status'),
   bootSteps: [...document.querySelectorAll('#boot-steps li')],
   bootMetrics: document.querySelector('#boot-metrics'),
-  gallery: document.querySelector('#snippet-gallery'),
+  bootPanel: document.querySelector('#boot-panel'),
+  snippetSelect: document.querySelector('#snippet-select'),
+  snippetNote: document.querySelector('#snippet-note'),
   editor: document.querySelector('#code-editor'),
   runButton: document.querySelector('#run-button'),
   killButton: document.querySelector('#kill-button'),
@@ -155,8 +157,13 @@ async function boot() {
     setVmState('ready');
     els.irbLog.replaceChildren();
     refreshFs();
-    // Load the demo snippet so the first click already paints something.
-    if (!code().trim()) loadSnippet('rainbow');
+    // Boot detail collapses into a one-line summary once the VM is ready.
+    if (els.bootPanel?.tagName === 'DETAILS') els.bootPanel.open = false;
+    // Load + run the demo so the first paint lands on the stage by itself.
+    if (!code().trim()) {
+      loadSnippet('rainbow');
+      runCurrent();
+    }
   } catch (error) {
     els.bootStatus.textContent = 'failed';
     els.bootStatus.className = 'status-chip status-dead';
@@ -259,40 +266,27 @@ function selectedMode() {
 const snippetsById = new Map();
 
 function renderGallery() {
-  const groups = snippetGroups.map((group, groupIndex) => {
-    const details = document.createElement('details');
-    details.className = 'snippet-group';
-    if (groupIndex === 0) details.open = true;
-    const summary = document.createElement('summary');
-    const title = document.createElement('span');
-    title.textContent = group.title;
-    const count = document.createElement('span');
-    count.className = 'group-count';
-    count.textContent = `${group.items.length} snippets`;
-    summary.append(title, count);
-    const items = document.createElement('div');
-    items.className = 'snippet-items';
+  const groups = snippetGroups.map((group) => {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = group.title;
     for (const item of group.items) {
       snippetsById.set(item.id, item);
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'snippet-item';
-      button.dataset.snippet = item.id;
-      button.title = item.note ?? item.title;
-      button.textContent = item.title;
-      if (item.needsAsync) {
-        const badge = document.createElement('span');
-        badge.className = 'needs-async';
-        badge.textContent = 'async';
-        button.append(badge);
-      }
-      button.addEventListener('click', () => loadSnippet(item.id));
-      items.append(button);
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.dataset.snippet = item.id;
+      option.textContent = item.needsAsync ? `${item.title} (async)` : item.title;
+      optgroup.append(option);
     }
-    details.append(summary, items);
-    return details;
+    return optgroup;
   });
-  els.gallery.replaceChildren(...groups);
+  els.snippetSelect.append(...groups);
+  els.snippetSelect.addEventListener('change', () => {
+    const id = els.snippetSelect.value;
+    if (!id) return;
+    loadSnippet(id);
+    // Picking a snippet runs it immediately — the gallery is the playground.
+    if (state === 'ready') runCurrent();
+  });
 }
 
 function loadSnippet(id) {
@@ -304,6 +298,8 @@ function loadSnippet(id) {
   }
   setCode(item.code);
   setCursorEnd();
+  if (els.snippetSelect.value !== id) els.snippetSelect.value = id;
+  els.snippetNote.textContent = item.note ?? '';
 }
 
 /* ---------- IRB session log ---------- */
@@ -380,7 +376,8 @@ async function runCurrent() {
     els.vmState.textContent = `running ${((performance.now() - runStartedAt) / 1000).toFixed(1)}s`;
   }, 100);
   bridge.prewarmAudio();
-  const stdinText = els.stdinBox.value;
+  // The single-line stdin field treats literal \n sequences as line breaks.
+  const stdinText = els.stdinBox.value.replaceAll('\\n', '\n');
   let outcome;
   try {
     if (stdinText) await send('stdin', { text: stdinText });
@@ -451,7 +448,7 @@ els.shareButton.addEventListener('click', async () => {
   } catch {
     els.shareButton.textContent = 'URL updated in bar';
   }
-  setTimeout(() => (els.shareButton.textContent = 'Copy share URL'), 1600);
+  setTimeout(() => (els.shareButton.textContent = 'Share'), 1600);
 });
 
 function loadFromHash() {
