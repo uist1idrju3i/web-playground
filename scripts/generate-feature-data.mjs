@@ -53,13 +53,12 @@ function featureGroup(feature) {
 }
 
 function isExcluded(feature) {
-  return Boolean(
-    feature.discouraged ||
-      feature.moved ||
-      feature.split ||
-      feature.status?.discouraged ||
-      feature.status?.moved ||
-      feature.status?.split,
+  return exclusionReasons(feature).length > 0;
+}
+
+function exclusionReasons(feature) {
+  return ['discouraged', 'moved', 'split'].filter(
+    (reason) => feature[reason] || feature.status?.[reason],
   );
 }
 
@@ -105,16 +104,17 @@ const allFeatureRecords = Object.entries(features)
         .sort(),
       ...(feature.caniuse ? { caniuse: feature.caniuse } : {}),
       excluded: isExcluded(feature),
+      exclusionReasons: exclusionReasons(feature),
     };
   })
   .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
 const sourceFeatures = allFeatureRecords
   .filter((feature) => !feature.excluded)
+  .map(({ excluded: _excluded, exclusionReasons: _reasons, ...feature }) => feature);
+const excludedFeatures = allFeatureRecords
+  .filter((feature) => feature.excluded)
   .map(({ excluded: _excluded, ...feature }) => feature);
-const documentationFeatures = allFeatureRecords.map(
-  ({ excluded: _excluded, ...feature }) => feature,
-);
 
 const groups = {
   'Chrome + Safari': [],
@@ -122,7 +122,7 @@ const groups = {
   'Safari only': [],
   Neither: [],
 };
-for (const feature of documentationFeatures) {
+for (const feature of sourceFeatures) {
   const chrome = Boolean(feature.support.chrome);
   const safari = Boolean(feature.support.safari);
   groups[
@@ -141,9 +141,9 @@ const lines = [
   '',
   `Generated from web-features ${webFeaturesPackage.version} and @mdn/browser-compat-data ${bcdPackage.version}.`,
   '',
-  `Total features: **${documentationFeatures.length}** — Chrome and Safari: **${groups['Chrome + Safari'].length}**, Chrome only: **${groups['Chrome only'].length}**, Safari only: **${groups['Safari only'].length}**, neither: **${groups.Neither.length}**.`,
+  `Total features: **${sourceFeatures.length}** — Chrome and Safari: **${groups['Chrome + Safari'].length}**, Chrome only: **${groups['Chrome only'].length}**, Safari only: **${groups['Safari only'].length}**, neither: **${groups.Neither.length}**.`,
   '',
-  'Chrome and Safari versions and support groups come from the WebDX feature dataset, which incorporates browser-compat-data. Where a feature has no specific version, the generator checks BCD compatibility keys; “Yes” means support is recorded without a version.',
+  'Chrome and Safari versions and support groups come from the WebDX feature dataset, which incorporates browser-compat-data. Where a feature has no specific version, the generator checks BCD compatibility keys; “Yes” means support is recorded without a version. Discouraged, moved, and split features are excluded from these totals and listed separately.',
   '',
 ];
 for (const [group, entries] of Object.entries(groups)) {
@@ -160,6 +160,20 @@ for (const [group, entries] of Object.entries(groups)) {
     );
   }
   lines.push('');
+}
+lines.push(
+  `## Discouraged or superseded (${excludedFeatures.length})`,
+  '',
+  'These features are excluded from the JSON dataset and headline counts because the source dataset marks them as discouraged, moved, or split.',
+  '',
+  '| Feature | Reason | Chrome | Safari | Baseline | Summary |',
+  '| --- | --- | --- | --- | --- | --- |',
+);
+for (const item of excludedFeatures) {
+  const summary = item.description.replace(/\|/g, '\\|').replace(/\s+/g, ' ').trim();
+  lines.push(
+    `| ${item.name.replace(/\|/g, '\\|')} | ${item.exclusionReasons.join(', ')} | ${item.support.chrome ?? '—'} | ${item.support.safari ?? '—'} | ${item.baseline.status} | ${summary} |`,
+  );
 }
 
 const data = {
