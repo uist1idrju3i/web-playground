@@ -205,13 +205,10 @@ test('Baseline-widely features do not produce false unsupported results', async 
   expect([...unsupportedAllowlist.values()].every(Boolean)).toBe(true);
 });
 
-test('the ten requested highlight capabilities remain in order', async ({ page }) => {
+test('the ten requested highlight capabilities sit in their own categories', async ({ page }) => {
   await page.goto('/browser-features/');
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
-  const ids = await page
-    .locator('[data-capability-id]')
-    .evaluateAll((items) => items.slice(0, 10).map((item) => item.dataset.capabilityId));
-  expect(ids).toEqual([
+  const requested = [
     'webmcp',
     'web-bluetooth',
     'web-serial',
@@ -222,7 +219,29 @@ test('the ten requested highlight capabilities remain in order', async ({ page }
     'webrtc',
     'web-audio',
     'web-crypto',
-  ]);
+  ];
+  const placement = await page.evaluate((ids) => {
+    const headings = [...document.querySelectorAll('#capability-list .capability-group h3')].map(
+      (heading) => heading.textContent,
+    );
+    return {
+      headings,
+      items: ids.map((id) => {
+        const item = document.querySelector(`[data-capability-id="${id}"]`);
+        return {
+          id,
+          category: item?.querySelector('.capability-category')?.textContent,
+          group: item?.closest('.capability-group')?.querySelector('h3')?.textContent,
+        };
+      }),
+    };
+  }, requested);
+  expect(new Set(placement.headings).size).toBe(placement.headings.length);
+  expect(placement.headings).not.toContain('Requested capabilities');
+  for (const { id, category, group } of placement.items) {
+    expect(category, id).toBeTruthy();
+    expect(group, id).toBe(category);
+  }
 });
 
 test('search and group filters narrow the feature results', async ({ page }) => {

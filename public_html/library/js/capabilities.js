@@ -312,7 +312,7 @@ export const capabilities = [
   capability(
     'web-bluetooth',
     'Web Bluetooth',
-    'Devices',
+    'Devices and sensors',
     async () => {
       if (!navigator.bluetooth) return available(false);
       if (navigator.bluetooth.getAvailability) {
@@ -326,14 +326,14 @@ export const capabilities = [
   capability(
     'web-serial',
     'Web Serial',
-    'Devices',
+    'Devices and sensors',
     () => available('serial' in navigator, 'navigator.serial is available.'),
     { chromiumOnly: true, requiresSecureContext: true, web_features_id: 'web-serial' },
   ),
   capability(
     'webusb',
     'WebUSB',
-    'Devices',
+    'Devices and sensors',
     () => available('usb' in navigator, 'navigator.usb is available.'),
     { chromiumOnly: true, requiresSecureContext: true, web_features_id: 'webusb' },
   ),
@@ -444,7 +444,7 @@ export const capabilities = [
   capability(
     'webhid',
     'WebHID',
-    'Devices',
+    'Devices and sensors',
     () => available('hid' in navigator, 'navigator.hid is available.'),
     {
       chromiumOnly: true,
@@ -455,7 +455,7 @@ export const capabilities = [
   capability(
     'web-nfc',
     'Web NFC',
-    'Devices',
+    'Devices and sensors',
     () =>
       available('NDEFReader' in globalThis, 'NDEFReader is available; no NFC scan was started.'),
     {
@@ -584,7 +584,7 @@ export const capabilities = [
   capability(
     'web-share',
     'Web Share',
-    'Files and storage',
+    'Files and sharing',
     () =>
       available('share' in navigator, 'navigator.share is available; no share sheet was opened.'),
     { requiresSecureContext: true, web_features_id: 'web-share' },
@@ -592,7 +592,7 @@ export const capabilities = [
   capability(
     'file-system-access',
     'File System Access',
-    'Files and storage',
+    'Files and sharing',
     () =>
       available(
         'showOpenFilePicker' in globalThis || 'showSaveFilePicker' in globalThis,
@@ -654,7 +654,7 @@ export const capabilities = [
   capability(
     'wake-lock',
     'Wake Lock',
-    'Device and sensors',
+    'Devices and sensors',
     () =>
       available('wakeLock' in navigator, 'navigator.wakeLock is available; no lock was requested.'),
     { requiresSecureContext: true },
@@ -682,7 +682,7 @@ export const capabilities = [
   capability(
     'compute-pressure',
     'Compute Pressure',
-    'Device and sensors',
+    'Devices and sensors',
     () =>
       available(
         'PressureObserver' in globalThis,
@@ -693,7 +693,7 @@ export const capabilities = [
   capability(
     'idle-detection',
     'Idle Detection',
-    'Device and sensors',
+    'Devices and sensors',
     () =>
       available(
         'IdleDetector' in globalThis,
@@ -704,7 +704,7 @@ export const capabilities = [
   capability(
     'gamepad',
     'Gamepad',
-    'Device and sensors',
+    'Devices and sensors',
     () =>
       available(
         'getGamepads' in navigator,
@@ -715,7 +715,7 @@ export const capabilities = [
   capability(
     'geolocation',
     'Geolocation',
-    'Device and sensors',
+    'Devices and sensors',
     () =>
       available(
         'geolocation' in navigator,
@@ -744,7 +744,7 @@ export const capabilities = [
   capability(
     'clipboard-api',
     'Clipboard API',
-    'Files and storage',
+    'Files and sharing',
     () =>
       available(
         Boolean(navigator.clipboard),
@@ -752,7 +752,7 @@ export const capabilities = [
       ),
     { requiresSecureContext: true },
   ),
-  capability('file-api', 'File API', 'Files and storage', () =>
+  capability('file-api', 'File API', 'Files and sharing', () =>
     available(
       'File' in globalThis && 'FileReader' in globalThis,
       'File and FileReader APIs are available.',

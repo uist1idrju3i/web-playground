@@ -7,9 +7,9 @@ A dash means the capability metadata does not specify that constraint. Permissio
 | ID | Name | Category | Secure context | Engine limit | Permissions Policy feature |
 | --- | --- | --- | --- | --- | --- |
 | `webmcp` | WebMCP | AI and agents | — | — | — |
-| `web-bluetooth` | Web Bluetooth | Devices | Yes | Chromium only | — |
-| `web-serial` | Web Serial | Devices | Yes | Chromium only | — |
-| `webusb` | WebUSB | Devices | Yes | Chromium only | — |
+| `web-bluetooth` | Web Bluetooth | Devices and sensors | Yes | Chromium only | — |
+| `web-serial` | Web Serial | Devices and sensors | Yes | Chromium only | — |
+| `webusb` | WebUSB | Devices and sensors | Yes | Chromium only | — |
 | `websocket` | WebSocket | Networking | — | — | — |
 | `webtransport` | WebTransport | Networking | Yes | — | — |
 | `webgl` | WebGL | Graphics | — | — | — |
@@ -17,8 +17,8 @@ A dash means the capability metadata does not specify that constraint. Permissio
 | `web-audio` | Web Audio | Media | — | — | — |
 | `web-crypto` | Web Crypto | Security | Yes | — | — |
 | `webgpu` | WebGPU | Graphics | Yes | — | — |
-| `webhid` | WebHID | Devices | Yes | Chromium only | — |
-| `web-nfc` | Web NFC | Devices | Yes | Chromium only | — |
+| `webhid` | WebHID | Devices and sensors | Yes | Chromium only | — |
+| `web-nfc` | Web NFC | Devices and sensors | Yes | Chromium only | — |
 | `webcodecs` | WebCodecs | Media | — | — | — |
 | `webxr` | WebXR | Immersive | Yes | — | — |
 | `webauthn` | WebAuthn and passkeys | Security | Yes | — | — |
@@ -43,23 +43,23 @@ A dash means the capability metadata does not specify that constraint. Permissio
 | `wasm-jspi` | WebAssembly JSPI | WebAssembly | — | — | — |
 | `wasm-js-string-builtins` | WebAssembly JS string builtins | WebAssembly | — | — | — |
 | `wasm-streaming` | WebAssembly streaming compilation | WebAssembly | — | — | — |
-| `web-share` | Web Share | Files and storage | Yes | — | — |
-| `file-system-access` | File System Access | Files and storage | Yes | Chromium only | — |
+| `web-share` | Web Share | Files and sharing | Yes | — | — |
+| `file-system-access` | File System Access | Files and sharing | Yes | Chromium only | — |
 | `opfs` | Origin Private File System | Storage | — | — | — |
 | `storage-estimate` | Storage estimate | Storage | — | — | — |
 | `storage-persisted` | Storage persistence | Storage | — | — | — |
 | `service-worker` | Service Worker | Offline and background | — | — | — |
 | `push-api` | Push API | Offline and background | Yes | — | — |
 | `notifications` | Notifications | Offline and background | Yes | — | — |
-| `wake-lock` | Wake Lock | Device and sensors | Yes | — | — |
+| `wake-lock` | Wake Lock | Devices and sensors | Yes | — | — |
 | `screen-capture` | Screen Capture | Media | Yes | — | — |
 | `web-locks` | Web Locks | Offline and background | — | — | — |
 | `view-transitions` | View Transitions | Rendering and input | — | — | — |
 | `popover` | Popover API | Rendering and input | — | — | — |
-| `compute-pressure` | Compute Pressure | Device and sensors | Yes | — | — |
-| `idle-detection` | Idle Detection | Device and sensors | Yes | Chromium only | — |
-| `gamepad` | Gamepad | Device and sensors | — | — | — |
-| `geolocation` | Geolocation | Device and sensors | Yes | — | — |
+| `compute-pressure` | Compute Pressure | Devices and sensors | Yes | — | — |
+| `idle-detection` | Idle Detection | Devices and sensors | Yes | Chromium only | — |
+| `gamepad` | Gamepad | Devices and sensors | — | — | — |
+| `geolocation` | Geolocation | Devices and sensors | Yes | — | — |
 | `web-workers` | Web Workers | JavaScript | — | — | — |
 | `shared-workers` | Shared Workers | JavaScript | — | — | — |
 | `broadcast-channel` | Broadcast Channel | Networking | — | — | — |
@@ -68,8 +68,8 @@ A dash means the capability metadata does not specify that constraint. Permissio
 | `local-storage` | Local Storage | Storage | — | — | — |
 | `session-storage` | Session Storage | Storage | — | — | — |
 | `cookies` | Cookies | Storage | — | — | — |
-| `clipboard-api` | Clipboard API | Files and storage | Yes | — | — |
-| `file-api` | File API | Files and storage | — | — | — |
+| `clipboard-api` | Clipboard API | Files and sharing | Yes | — | — |
+| `file-api` | File API | Files and sharing | — | — | — |
 | `drag-and-drop` | Drag and Drop | Rendering and input | — | — | — |
 | `pointer-events` | Pointer Events | Rendering and input | — | — | — |
 | `custom-elements` | Custom Elements | Rendering and input | — | — | — |

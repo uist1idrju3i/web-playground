@@ -139,8 +139,6 @@ function chip(status) {
   return badge;
 }
 
-const requestedCapabilityCount = 10;
-
 function capabilityItem({ capability, result }, index) {
   const item = document.createElement('li');
   item.className = 'capability-item';
@@ -167,8 +165,8 @@ function renderCapabilities() {
   const container = document.querySelector('#capability-list');
   // WebAssembly probes are shown with their execution details in the WebAssembly section.
   const shown = capabilityResults.filter(({ capability }) => !capability.id.startsWith('wasm-'));
-  const groups = new Map([['Requested capabilities', shown.slice(0, requestedCapabilityCount)]]);
-  for (const entry of shown.slice(requestedCapabilityCount)) {
+  const groups = new Map();
+  for (const entry of shown) {
     const name = entry.capability.category;
     if (!groups.has(name)) groups.set(name, []);
     groups.get(name).push(entry);
