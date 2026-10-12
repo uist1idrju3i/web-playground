@@ -33,4 +33,16 @@ export default [
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
+  {
+    files: ['public_html/**/*-worklet.js'],
+    languageOptions: {
+      globals: {
+        // AudioWorkletGlobalScope names. Declared per-file because `globals`
+        // v17 moved them out of `browser` into `audioWorklet`, and globals
+        // v16 has no `audioWorklet` key to spread.
+        AudioWorkletProcessor: 'readonly',
+        registerProcessor: 'readonly',
+      },
+    },
+  },
 ];

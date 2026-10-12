@@ -239,7 +239,7 @@ export async function createSignedStore({
     }
 
     const { mac, ...unsigned } = envelope;
-    let verified = false;
+    let verified;
     try {
       verified = await subtle.verify(
         { name: 'HMAC' },
