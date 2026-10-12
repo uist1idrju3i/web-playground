@@ -114,7 +114,7 @@
       "runtime": "emscripten",
       "expected": 42,
       "flags": [
-        "-sMEMORY64=1"
+        "-m64"
       ],
       "sha256": {
         "entry": "f12f850aae558fc45a415acab77811880221e0fe8d1342400b0f23935e31df17",
