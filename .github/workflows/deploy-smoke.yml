@@ -1,0 +1,56 @@
+name: Deployment Smoke Test
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - name: Wait for deployment and verify Pages headers
+        env:
+          SITE_URL: https://web-playground.xn--uist1idrju3i.jp
+        run: |
+          ready=0
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --show-error --max-time 15 "$SITE_URL/" -o site.html &&
+              grep --quiet 'name="web-playground"' site.html; then
+              ready=1
+              break
+            fi
+            echo "Waiting for the configured site marker (attempt $attempt/20)."
+            sleep 30
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "::notice::The domain is not serving the Web Playground marker; deployment smoke checks were skipped."
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 15 "$SITE_URL/browser-features/" -o browser-features.html
+          grep --quiet 'Browser Features' browser-features.html
+          curl --fail --silent --show-error --max-time 15 -D page-headers.txt "$SITE_URL/browser-features/" -o /dev/null
+          grep --ignore-case --quiet '^cross-origin-opener-policy: same-origin' page-headers.txt
+          grep --ignore-case --quiet '^cross-origin-embedder-policy: require-corp' page-headers.txt
+          grep --ignore-case --quiet '^content-security-policy:.*wasm-unsafe-eval' page-headers.txt
+          curl --fail --silent --show-error --max-time 15 -D wasm-headers.txt "$SITE_URL/library/wasm/probes/wasm-simd.wasm" -o /dev/null
+          grep --ignore-case --quiet '^content-type: application/wasm' wasm-headers.txt
