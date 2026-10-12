@@ -2,7 +2,8 @@
 // Covers physics invariants, the disturbance/stamina model, side symmetry
 // of brain snapshots, and — via real Ruby.wasm VMs — that the enemy brains
 // produce the intended skill ordering.
-import { describe, test, expect } from 'vitest';
+import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
@@ -51,9 +52,9 @@ describe('pong sim invariants', () => {
     const game = createGame({ seed: 7 });
     for (let i = 0; i < 30000 && game.status !== 'over'; i++) {
       stepGame(game, { left: trackerMove(game, 'left'), right: trackerMove(game, 'right') });
-      expect(game.ball.y).toBeGreaterThanOrEqual(BALL.R - 1e-6);
-      expect(game.ball.y).toBeLessThanOrEqual(COURT.H - BALL.R + 1e-6);
-      expect(game.ball.speed).toBeLessThanOrEqual(160 + 1e-9);
+      assert.ok(game.ball.y >= BALL.R - 1e-6);
+      assert.ok(game.ball.y <= COURT.H - BALL.R + 1e-6);
+      assert.ok(game.ball.speed <= 160 + 1e-9);
     }
   });
 
@@ -64,14 +65,14 @@ describe('pong sim invariants', () => {
       stepGame(a, { left: 0.3, right: -0.2 });
       stepGame(b, { left: 0.3, right: -0.2 });
     }
-    expect(a.ball).toEqual(b.ball);
-    expect(a.wind.ay).toBe(b.wind.ay);
-    expect(a.stamina).toEqual(b.stamina);
+    assert.deepEqual(a.ball, b.ball);
+    assert.equal(a.wind.ay, b.wind.ay);
+    assert.deepEqual(a.stamina, b.stamina);
   });
 
   test('conceder receives the next serve', () => {
     const game = createGame({ seed: 3, pointsToWin: 5 });
-    // Park both paddles far from the ball: right concedes the serve.
+    // Park both paddles far from the ball: one side concedes the serve.
     game.paddles.left.y = COURT.H - PADDLE.H / 2;
     game.paddles.right.y = PADDLE.H / 2;
     let scored = null;
@@ -80,11 +81,11 @@ describe('pong sim invariants', () => {
         if (e.type === 'score') scored = e;
       }
     }
-    expect(scored).not.toBeNull();
+    assert.notEqual(scored, null);
     // Whoever was scored on gets the ball served toward them.
     const conceder = scored.side === 'left' ? 'right' : 'left';
     const expectedDir = conceder === 'right' ? 1 : -1;
-    expect(game.serveDir).toBe(expectedDir);
+    assert.equal(game.serveDir, expectedDir);
   });
 
   test('long rallies escalate: wind wakes after START_HITS and stamina drains', () => {
@@ -96,8 +97,8 @@ describe('pong sim invariants', () => {
       if (game.rally >= GUST.START_HITS && game.wind.ay !== 0) windSeen = true;
       if (game.stamina.left < 1 || game.stamina.right < 1) drained = true;
     }
-    expect(windSeen).toBe(true);
-    expect(drained).toBe(true);
+    assert.equal(windSeen, true);
+    assert.equal(drained, true);
   });
 
   test('brainState is side-symmetric for a symmetric game', () => {
@@ -105,19 +106,19 @@ describe('pong sim invariants', () => {
     for (let i = 0; i < 2000; i++) stepGame(game, { left: 0, right: 0 });
     const l = brainState(game, SIDES.LEFT);
     const r = brainState(game, SIDES.RIGHT);
-    expect(l.me.face_x).toBe(r.me.face_x === 95 ? 5 : r.me.face_x);
-    expect(l.me.dir).toBe(-1);
-    expect(r.me.dir).toBe(1);
-    expect(l.enemy.dir).toBe(1);
-    expect(r.enemy.dir).toBe(-1);
-    expect(l.court.center_y).toBe(r.court.center_y);
-    expect(l.rules).toEqual(r.rules);
+    assert.equal(l.me.face_x, r.me.face_x === 95 ? 5 : r.me.face_x);
+    assert.equal(l.me.dir, -1);
+    assert.equal(r.me.dir, 1);
+    assert.equal(l.enemy.dir, 1);
+    assert.equal(r.enemy.dir, -1);
+    assert.equal(l.court.center_y, r.court.center_y);
+    assert.deepEqual(l.rules, r.rules);
   });
 });
 
 // Real-Ruby headless matches: the vendored UMD boots under Node so the
-// actual enemy/sample brains play each other. Kept small (5 matches) —
-// these VMs cost ~70MB each and a match runs thousands of ticks.
+// actual enemy/sample brains play each other. Kept small — these VMs cost
+// ~70MB each and a match runs thousands of ticks.
 describe('ruby brains (real ruby.wasm)', () => {
   const require = createRequire(import.meta.url);
   let factory, mod, kit;
@@ -155,43 +156,38 @@ describe('ruby brains (real ruby.wasm)', () => {
     return { winner: game.winner, ticks };
   }
 
-  test('skill ordering: rookie loses to both samples and enemies; ace beats rookie', async () => {
-    const umd = join(
-      dirname(fileURLToPath(import.meta.url)),
-      '../../public_html/ruby-wasm/vendor/browser.umd.js',
-    );
-    const { mkdtempSync, cpSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
-    cpSync(umd, cjs);
-    factory = require(cjs);
-    const wasmBytes = gunzipSync(
-      readFileSync(
-        join(
-          dirname(fileURLToPath(import.meta.url)),
-          '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz',
-        ),
-      ),
-    );
-    mod = await WebAssembly.compile(wasmBytes);
-    kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
-    for (const [name, path] of [
-      ['rookie', 'ruby/enemy/rookie.rb'],
-      ['club', 'ruby/enemy/club.rb'],
-      ['ace', 'ruby/enemy/ace.rb'],
-      ['chaser', 'ruby/samples/chaser.rb'],
-    ])
-      brains[name] = readFileSync(join(APP, path), 'utf8');
+  test(
+    'skill ordering: rookie loses to samples and enemies',
+    { timeout: 180_000 },
+    async () => {
+      const umd = join(dirname(fileURLToPath(import.meta.url)), '../../public_html/ruby-wasm/vendor/browser.umd.js');
+      const { mkdtempSync, cpSync } = await import('node:fs');
+      const { tmpdir } = await import('node:os');
+      const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
+      cpSync(umd, cjs);
+      factory = require(cjs);
+      const wasmBytes = gunzipSync(
+        readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz')),
+      );
+      mod = await WebAssembly.compile(wasmBytes);
+      kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
+      for (const [name, path] of [
+        ['rookie', 'ruby/enemy/rookie.rb'],
+        ['club', 'ruby/enemy/club.rb'],
+        ['ace', 'ruby/enemy/ace.rb'],
+        ['chaser', 'ruby/samples/chaser.rb'],
+      ]) brains[name] = readFileSync(join(APP, path), 'utf8');
 
-    // Every serious brain should beat the rookie decisively.
-    const [r1, r2, r3] = await Promise.all([
-      playMatch(brains.chaser, brains.rookie, { points: 2, seed: 701 }),
-      playMatch(brains.club, brains.rookie, { points: 2, seed: 702 }),
-      playMatch(brains.ace, brains.rookie, { points: 2, seed: 703 }),
-    ]);
-    expect(r1.winner).toBe('left');
-    expect(r2.winner).toBe('left');
-    expect(r3.winner).toBe('left');
-    expect(Math.max(r1.ticks, r2.ticks, r3.ticks)).toBeLessThan(90000);
-  }, 180_000);
+      // Every serious brain should beat the rookie decisively.
+      const [r1, r2, r3] = await Promise.all([
+        playMatch(brains.chaser, brains.rookie, { points: 2, seed: 701 }),
+        playMatch(brains.club, brains.rookie, { points: 2, seed: 702 }),
+        playMatch(brains.ace, brains.rookie, { points: 2, seed: 703 }),
+      ]);
+      assert.equal(r1.winner, 'left');
+      assert.equal(r2.winner, 'left');
+      assert.equal(r3.winner, 'left');
+      assert.ok(Math.max(r1.ticks, r2.ticks, r3.ticks) < 90000);
+    },
+  );
 });
