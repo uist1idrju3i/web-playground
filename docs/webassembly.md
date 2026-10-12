@@ -20,6 +20,8 @@ All 17 probes passed on the Playwright 1.64 browser engines measured here: Chrom
 
 `wasm/apps/baked-mochocho/` is a dependency-free `no_std` Rust crate for the [Baked Mochocho](baked-mochocho.md) physics simulation. `scripts/build-app-wasm.sh` builds a baseline and a SIMD module into `public_html/baked-mochocho/wasm/` with the pinned Rust toolchain and remapped paths, and the `wasm-toolchains` workflow rebuilds them and fails on any difference. The app detects SIMD support and loads the matching module.
 
+`wasm/apps/star-hopper/` is a second `no_std` crate driving the [ほしがりホッパー](../public_html/star-hopper/) game: it owns world generation, 240 Hz substepped platforming physics, pickup/combo scoring, and the run-state event ring. The same build script emits its baseline and SIMD modules into `public_html/star-hopper/wasm/`.
+
 ## Layer 2 toolchains
 
 `wasm/` contains WAT and native source profiles. `scripts/build-wasm-toolchains.sh` uses pinned Emscripten and Rust toolchains, records flags and SHA-256 hashes in `public_html/library/wasm/toolchains/manifest.json`, and emits small static test modules. The `wasm-toolchains` workflow rebuilds and compares committed artifacts.
