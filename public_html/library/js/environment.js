@@ -68,7 +68,7 @@ export async function getBrowserEnvironment() {
   const platform = highEntropy.platform || uaData?.platform || nav.platform || '';
   const isIOS = detectIOS(platform, userAgent, nav.maxTouchPoints ?? 0);
   const browser = inferBrowser(brands, userAgent);
-  let storage = null;
+  let storage;
   try {
     storage = (await nav.storage?.estimate?.()) ?? null;
   } catch {
