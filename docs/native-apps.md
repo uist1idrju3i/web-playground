@@ -1,6 +1,6 @@
 # Native desktop apps
 
-The repository ships three native shells under [`native/`](../native/) that run
+The repository ships three native shells under [`native/`](../native/README.md) that run
 the unmodified `public_html/` BrowserFeatures app:
 
 - **Electron** (`native/electron`) — bundles Chromium 152, serves the site over a

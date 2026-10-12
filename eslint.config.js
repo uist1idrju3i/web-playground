@@ -5,6 +5,11 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      'native/**/node_modules/**',
+      'native/tauri/src-tauri/target/**',
+      'native/tauri/src-tauri/gen/**',
+      'native/electron/dist/**',
+      'native/wails/build/**',
       'playwright-report/**',
       'test-results/**',
       'public_html/library/wasm/toolchains/**',
