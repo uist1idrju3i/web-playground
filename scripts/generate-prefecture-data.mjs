@@ -236,14 +236,13 @@ for (const feature of source.features) {
 
 pieces.sort((a, b) => a.code.localeCompare(b.code));
 
-// Playable scale: piece bounding diagonal in world units grows with the
-// square-root-ish of the real area, clamped so every piece stays stackable.
-const maxArea = Math.max(...pieces.map((p) => p.realArea));
+// Real scale: 1 world unit = 1 km. Longitudes are projected at 36°N so block
+// sizes match the prefectures' true dimensions — stacking all 47 reaches
+// thousands of km, well past the Kármán line (100 km) and the ISS (400 km).
+const KM_LAT = 111.32;
+const KM_LON = 111.32 * Math.cos((36 * Math.PI) / 180);
 for (const piece of pieces) {
-  const ratio = piece.realArea / maxArea;
-  const targetDiagonal = 0.55 + 1.35 * Math.pow(ratio, 0.28);
-  piece.scale = round3(targetDiagonal / piece.diagonal);
-  piece.poly = piece.poly.map(([x, y]) => [round3(x * piece.scale), round3(y * piece.scale)]);
+  piece.poly = piece.poly.map(([x, y]) => [round3(x * KM_LON), round3(y * KM_LAT)]);
   const xs = piece.poly.map((p) => p[0]);
   const ys = piece.poly.map((p) => p[1]);
   piece.bbox = [
@@ -251,6 +250,10 @@ for (const piece of pieces) {
     round3(Math.min(...ys)),
     round3(Math.max(...xs)),
     round3(Math.max(...ys)),
+  ];
+  piece.kmSize = [
+    round3(Math.max(...xs) - Math.min(...xs)),
+    round3(Math.max(...ys) - Math.min(...ys)),
   ];
   delete piece.diagonal;
 }

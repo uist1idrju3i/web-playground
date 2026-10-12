@@ -40,7 +40,9 @@ test('prefecture data contains 47 well-formed pieces', () => {
     assert.ok(piece.nameJa.length > 0, `${piece.code} missing nameJa`);
     assert.ok(REGIONS.has(piece.region), `${piece.code} bad region ${piece.region}`);
     assert.ok(piece.realArea > 0);
-    assert.ok(piece.scale > 0);
+    // real prefecture dimensions in km (1 world unit = 1 km)
+    assert.ok(piece.kmSize[0] > 30 && piece.kmSize[0] < 700);
+    assert.ok(piece.kmSize[1] > 30 && piece.kmSize[1] < 600);
     assert.ok(Array.isArray(piece.map) && piece.map.length === 2);
     assert.ok(piece.poly.length >= 6, `${piece.code} poly too small (${piece.poly.length})`);
     // polygon must be counter-clockwise for the renderer/physics convention

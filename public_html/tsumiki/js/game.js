@@ -88,7 +88,7 @@ export class Game {
     this.ui.el.resultScore.textContent = String(this.score);
     this.ui.el.resultBest.textContent = String(s.bestScore);
     this.ui.el.resultNew.hidden = !isBest;
-    this.ui.el.resultHeight.textContent = `${this.heightM.toFixed(1)} m`;
+    this.ui.el.resultHeight.textContent = `${Math.round(this.heightM)} km`;
     this.ui.el.resultPieces.textContent = `${this.collected.size} / 47`;
     this.ui.el.resultCount.textContent = String(this.drops);
     this.ui.show('result');
@@ -135,8 +135,20 @@ export class Game {
   }
 
   _clampAim(x) {
-    const lim = WORLD.platformHalfW + 1.6;
+    const lim = WORLD.platformHalfW + 60;
     return Math.max(-lim, Math.min(lim, x));
+  }
+
+  // Height milestones (km): unlocked against the taller of the current
+  // stack and the saved best, so a previous run's record counts too.
+  _checkHeight() {
+    const h = Math.max(this.heightM, this.save.data.bestHeight);
+    for (const t of this.groupDefs.height) {
+      if (this.achievements.has(t.id) || h < t.km) continue;
+      this.achievements.add(t.id);
+      this.ui.toast(`${t.name}に とうたつ！`, 'じっせきを とった！');
+      this.audio.playCue('completion');
+    }
   }
 
   // Collection + achievement progress persists the moment it changes, not
@@ -152,11 +164,10 @@ export class Game {
     for (const groups of Object.values(this.groupDefs)) {
       for (const g of groups) {
         if (this.achievements.has(g.id)) continue;
-        if (g.codes.every((c) => this.collected.has(c))) {
-          this.achievements.add(g.id);
-          this.ui.toast(`${g.name}を コンプリート！`, 'じっせきを とった！');
-          this.audio.playCue('completion');
-        }
+        if (!g.codes || !g.codes.every((c) => this.collected.has(c))) continue;
+        this.achievements.add(g.id);
+        this.ui.toast(`${g.name}を コンプリート！`, 'じっせきを とった！');
+        this.audio.playCue('completion');
       }
     }
   }
@@ -164,7 +175,7 @@ export class Game {
   // Pieces appear just under the top edge of the current view so the player
   // always sees the piece while aiming.
   _spawnY() {
-    return this.renderer.cam.y + this.renderer.cam.h / 2 - 1.2;
+    return this.renderer.cam.y + this.renderer.cam.h * 0.55;
   }
 
   setAimDelta(deltaPx, phase) {
@@ -186,13 +197,14 @@ export class Game {
     // not count toward height)
     const topY = this.physics.topSettledY();
     const altitude = Math.max(0, topY - WORLD.platformY);
-    this.heightM = altitude * 2.2;
-    if (this.heightM > 9) {
+    this.heightM = altitude; // 1 world unit = 1 km
+    this._checkHeight();
+    if (this.heightM > 60) {
       this.wind.t += dt;
       if (this.wind.t > this.wind.next) {
         this.wind.t = 0;
         this.wind.next = 2.5 + Math.random() * 4;
-        const strength = Math.min(3.4, (this.heightM - 9) * 0.16);
+        const strength = Math.min(34, (this.heightM - 60) * 0.08);
         this.wind.x = (Math.random() - 0.5) * 2 * strength;
       }
       this.physics.setWind(this.wind.x, 0);
@@ -201,7 +213,7 @@ export class Game {
       this.wind.x *= Math.pow(0.1, dt);
     }
     this.ui.setWind(this.wind.x);
-    this.audio.setIntensity(Math.min(3, Math.floor(this.heightM / 12)));
+    this.audio.setIntensity(Math.min(3, Math.floor(this.heightM / 500)));
 
     this.acc += dt;
     let events = [];
@@ -221,7 +233,7 @@ export class Game {
       this.collected.add(p.code);
       this._checkAchievements();
       this._persistProgress();
-      const gain = Math.round(90 * this.combo + this.heightM * 6);
+      const gain = Math.round(90 * this.combo + this.heightM * 0.4);
       this.score += gain;
       this.combo = Math.min(9, this.combo + 0.5);
       this.dropsCounted = this.drops;
@@ -231,19 +243,22 @@ export class Game {
         r: 1,
         g: 0.85,
         b: 0.5,
-        speed: 2,
-        scale: 0.1,
+        speed: 140,
+        scale: 12,
+        spread: 40,
         ttl: 1.2,
       });
-      this.renderer.emit(1, ev.rec.body.translation().x, WORLD.platformY + 0.2, 10, {
+      this.renderer.emit(1, ev.rec.body.translation().x, WORLD.platformY + 20, 10, {
         r: 0.9,
         g: 0.85,
         b: 0.8,
-        speed: 1,
-        up: 0.8,
+        speed: 70,
+        scale: 10,
+        spread: 30,
+        up: 60,
         ttl: 0.9,
       });
-      this.renderer.shake(0.06);
+      this.renderer.shake(7);
       this.ui.toast(firstTime ? `${p.nameJa}を あつめた！` : `${p.nameJa}`, `+${gain} pt`);
       if (this.drops % 10 === 0) {
         this.audio.playCue('completion');
@@ -252,9 +267,10 @@ export class Game {
           r: 1,
           g: 0.7,
           b: 0.8,
-          speed: 2.5,
+          speed: 170,
           ttl: 3,
-          scale: 0.12,
+          scale: 13,
+          spread: 60,
         });
       }
       this.current = null;
@@ -264,7 +280,7 @@ export class Game {
       this.lives += 1;
       this.combo = 1;
       this.audio.playCue('error');
-      this.renderer.shake(0.15);
+      this.renderer.shake(14);
       this.ui.toast('おちた！', `のこり ${Math.max(0, ESCAPE_LIMIT - this.lives)} かい`);
       this.current = null;
       this.pending = false;
@@ -286,6 +302,14 @@ export class Game {
     });
   }
 
+  // Camera view height: enough to see the current piece at spawn and a
+  // slice of sky above the tower, growing as the stack climbs.
+  _camH() {
+    const piece = this.current?.piece;
+    const diag = piece ? Math.hypot(...piece.kmSize) : 0;
+    return Math.max(520, diag * 1.9, this.physics.topSettledY() + 320);
+  }
+
   _renderOnly(dt) {
     const bodies = this.physics.poses();
     const ghost =
@@ -302,6 +326,7 @@ export class Game {
       bodies,
       ghost,
       camTarget: this.physics.topSettledY(),
+      camH: this._camH(),
       reduceMotion: this.reduceMotion,
     });
   }

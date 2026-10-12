@@ -1,14 +1,16 @@
 // Rapier (WASM) physics wrapper for the tsumiki game.
 import RAPIER from '../vendor/rapier.js';
 
+// 1 world unit = 1 km (pieces carry real prefecture dimensions). The pedestal
+// is 600 km wide — wide enough for Hokkaido (~546 km) with a little margin.
 export const WORLD = {
-  gravity: -9.8,
+  gravity: -98,
   platformY: 0,
-  platformHalfW: 2.75,
-  platformHalfH: 0.28,
-  killY: -6.5, // below this a body escaped
-  escapeX: 5.2, // beyond this horizontally a body escaped
-  spawnMargin: 0.25,
+  platformHalfW: 300,
+  platformHalfH: 24,
+  killY: -400, // below this a body escaped
+  escapeX: 780, // beyond this horizontally a body escaped
+  spawnMargin: 40,
   fixedDt: 1 / 60,
 };
 
@@ -50,10 +52,10 @@ export class Physics {
       .setCcdEnabled(true);
     const body = this.world.createRigidBody(desc);
     const poly = piece.poly;
-    // Rapier rejects convex hulls thinner than ~1e-3; ear-clipping produces
-    // many hairline ears along smooth boundaries. Skip ears whose minimum
-    // altitude falls below a safe margin — they carry negligible area.
-    const MIN_ALT = 0.006;
+    // Skip hairline ears: below ~2% aspect or ~350 m altitude they carry
+    // negligible area and degenerate Rapier's convex hull builder.
+    const MIN_ALT = 0.35;
+    const MIN_ASPECT = 0.02;
     for (let i = 0; i < piece.tris.length; i += 3) {
       const a = poly[piece.tris[i]];
       const b = poly[piece.tris[i + 1]];
@@ -62,14 +64,21 @@ export class Physics {
       const e1 = Math.hypot(b[0] - a[0], b[1] - a[1]);
       const e2 = Math.hypot(c[0] - b[0], c[1] - b[1]);
       const e3 = Math.hypot(a[0] - c[0], a[1] - c[1]);
-      const alt = area2 / Math.max(e1, e2, e3);
-      if (alt < MIN_ALT) continue;
+      const maxE = Math.max(e1, e2, e3);
+      const alt = area2 / maxE;
+      if (alt < MIN_ALT || alt / maxE < MIN_ASPECT) continue;
       const points = new Float32Array([a[0], a[1], b[0], b[1], c[0], c[1]]);
       const colliderDesc = RAPIER.ColliderDesc.convexHull(points)
-        .setFriction(0.85)
+        ?.setFriction(0.85)
         .setRestitution(0.02)
         .setDensity(1.6);
-      if (colliderDesc) this.world.createCollider(colliderDesc, body);
+      if (!colliderDesc) continue;
+      try {
+        this.world.createCollider(colliderDesc, body);
+      } catch {
+        // Rare slivers still slip through the filters; dropping one ear is
+        // invisible at km scale — keep the piece spawning.
+      }
     }
     const id = this.nextId++;
     const record = { id, body, piece, still: 0, settled: false, escaped: false, maxY: y };
@@ -96,26 +105,26 @@ export class Physics {
     const events = [];
     for (const rec of this.bodies.values()) {
       const t = rec.body.translation();
-      const lv = rec.body.linvel();
-      const speed = Math.hypot(lv.x, lv.y);
-      const av = Math.abs(rec.body.angvel());
+      const ang = rec.body.rotation();
       if (t.y > rec.maxY) rec.maxY = t.y;
       if (!rec.settled) {
-        if (speed < 0.24 && av < 0.6 && rec.body.isSleeping()) {
+        // Position-delta settle test: a piece counts as still when it moved
+        // under ~50 m and turned under ~0.6 deg in one step. Scale-robust —
+        // Rapier's own sleep thresholds are meaningless at km scale.
+        const moved = rec.px === undefined ? 1e9 : Math.hypot(t.x - rec.px, t.y - rec.py);
+        const turned = rec.pa === undefined ? 1e9 : Math.abs(ang - rec.pa);
+        if (moved < 0.05 && turned < 0.01) {
           rec.still += WORLD.fixedDt;
-          if (rec.still > 0.55) {
-            rec.settled = true;
-            events.push({ kind: 'settled', rec });
-          }
-        } else if (speed < 0.08 && av < 0.25) {
-          rec.still += WORLD.fixedDt;
-          if (rec.still > 1.4) {
+          if (rec.still > 0.5) {
             rec.settled = true;
             events.push({ kind: 'settled', rec });
           }
         } else {
           rec.still = 0;
         }
+        rec.px = t.x;
+        rec.py = t.y;
+        rec.pa = ang;
       }
       if (!rec.escaped && (t.y < WORLD.killY || Math.abs(t.x) > WORLD.escapeX)) {
         rec.escaped = true;

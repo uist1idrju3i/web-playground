@@ -52,8 +52,8 @@ export class Ui {
   setHud({ score, best, heightM, combo, lives }) {
     this.el.score.textContent = String(score);
     this.el.best.textContent = String(best);
-    this.el.heightNum.textContent = heightM.toFixed(1);
-    this.el.heightFill.style.height = `${Math.min(100, (heightM / 40) * 100)}%`;
+    this.el.heightNum.textContent = Math.round(heightM).toLocaleString('en-US');
+    this.el.heightFill.style.height = `${Math.min(100, (heightM / 4000) * 100)}%`;
     this.el.combo.textContent = combo > 1 ? `x${combo}` : '';
     const hearts = '♥'.repeat(Math.max(0, 3 - lives)) + '♡'.repeat(Math.min(3, lives));
     if (this.el.hearts.textContent !== hearts) this.el.hearts.textContent = hearts;
@@ -202,11 +202,16 @@ export class Ui {
       const row = document.createElement('div');
       row.className = 'ach-row';
       for (const g of groups) {
-        const have = g.codes.filter((c) => collected.has(c)).length;
-        const complete = done.has(g.id) || have === g.codes.length;
+        // Height milestones carry no prefecture codes — unlocked by record.
+        const have = g.codes ? g.codes.filter((c) => collected.has(c)).length : 0;
+        const complete = done.has(g.id) || (g.codes && have === g.codes.length);
         const chip = document.createElement('div');
         chip.className = `ach-chip${complete ? ' done' : ''}`;
-        chip.textContent = complete ? `★ ${g.name}` : `${g.name} ${have}/${g.codes.length}`;
+        chip.textContent = complete
+          ? `★ ${g.name}`
+          : g.codes
+            ? `${g.name} ${have}/${g.codes.length}`
+            : g.name;
         row.appendChild(chip);
       }
       wrap.appendChild(row);
