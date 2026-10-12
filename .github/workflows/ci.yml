@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   static:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -35,7 +35,7 @@ jobs:
       - run: npm run test:unit
 
   e2e:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -71,7 +71,7 @@ jobs:
   ci-ok:
     if: always()
     needs: [static, e2e]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
