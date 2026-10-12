@@ -23,6 +23,7 @@ Site URL: <https://web-playground.xn--uist1idrju3i.jp> (custom-domain DNS and Pa
 ## Apps
 
 - **Browser Features** (`/browser-features/`) — measured capability support, permission-policy information, and WebAssembly probes.
+- **Baked Mochocho** (`/baked-mochocho/`) — a griddle-cake game with a Rust/WebAssembly physics simulation, WebGPU rendering with a WebGL2 fallback, synthesized Web Audio, and HMAC-signed saves. See [the app guide](docs/baked-mochocho.md).
 - **たのしい都道府県つみき** (`/tsumiki/`) — a physics stacking toy: drop all 47 prefecture blocks (Natural Earth shapes, public domain) onto a torii pedestal with Rapier (WASM) physics, a WebGL2/WebGPU procedural scene, an adaptive WebAudio score, and WebCrypto HMAC-signed saves.
 
 ## Quick start

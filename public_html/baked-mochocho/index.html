@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1b130e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="モチョチョ焼き" />
+    <meta
+      name="description"
+      content="A physically simulated baked mochocho (imagawayaki) griddle game using WebGPU, WebGL2, WebAssembly, Web Audio and Web Crypto."
+    />
+    <title>ベイクドモチョチョ焼き · Web Playground</title>
+    <link rel="icon" href="/baked-mochocho/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/baked-mochocho/icon.svg" />
+    <link rel="manifest" href="/baked-mochocho/app.webmanifest" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/baked-mochocho/app.css" />
+    <script type="module" src="/baked-mochocho/app.js"></script>
+  </head>
+  <body class="game-body">
+    <canvas id="stage" class="stage" aria-label="鉄板" role="img"></canvas>
+
+    <header class="hud-top">
+      <a class="hud-back" href="/" data-i18n-aria="back" aria-label="Web Playground へ戻る">←</a>
+      <div class="order-card" id="order-card" aria-live="polite">
+        <span class="order-label" data-i18n="order">ご注文</span>
+        <span class="order-items" id="order-items">—</span>
+        <span class="order-count" id="order-count"></span>
+      </div>
+      <div class="hud-stats">
+        <span class="stat"
+          ><span class="stat-label" data-i18n="coins">売上</span>
+          <strong id="coins">0</strong></span
+        >
+        <span class="stat"
+          ><span class="stat-label" data-i18n="best">最高</span> <strong id="best">0</strong></span
+        >
+        <span class="stat combo-stat" id="combo-stat" hidden
+          ><span class="stat-label">COMBO</span> <strong id="combo-count">0</strong></span
+        >
+      </div>
+      <button
+        class="hud-icon"
+        id="menu-button"
+        type="button"
+        data-i18n-aria="menu"
+        aria-label="メニュー"
+      >
+        ≡
+      </button>
+    </header>
+
+    <div class="hud-side" aria-label="鉄板の状態">
+      <div
+        class="thermo"
+        id="thermo"
+        role="meter"
+        aria-valuemin="100"
+        aria-valuemax="340"
+        aria-valuenow="185"
+        aria-labelledby="thermo-label"
+      >
+        <span class="thermo-fill" id="thermo-fill"></span>
+      </div>
+      <span class="thermo-value" id="thermo-label">185℃</span>
+    </div>
+
+    <p class="guide" id="guide" aria-live="polite"></p>
+    <p class="caption" id="caption" aria-live="off"></p>
+    <ol class="pair-chips" id="pair-chips" aria-label="焼き具合"></ol>
+    <div class="judges" id="judges" aria-hidden="true"></div>
+
+    <footer class="hud-bottom">
+      <div class="heat-row">
+        <label class="heat-label" for="heat" data-i18n="heat">火加減</label>
+        <input id="heat" class="heat" type="range" min="0" max="100" value="60" />
+        <span class="heat-flame" id="heat-flame" aria-hidden="true"></span>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="道具">
+        <button class="tool" type="button" data-tool="oil" aria-pressed="false">
+          <span class="tool-icon tool-icon-oil" aria-hidden="true"></span
+          ><span data-i18n="tool.oil">油</span>
+        </button>
+        <button class="tool" type="button" data-tool="batter" aria-pressed="true">
+          <span class="tool-icon tool-icon-batter" aria-hidden="true"></span
+          ><span data-i18n="tool.batter">生地</span>
+        </button>
+        <button class="tool" type="button" data-tool="filling" aria-pressed="false">
+          <span class="tool-icon tool-icon-filling" id="filling-icon" aria-hidden="true"></span
+          ><span id="filling-name" data-i18n="filling.1">つぶあん</span>
+        </button>
+        <button class="tool" type="button" data-tool="flip" aria-pressed="false">
+          <span class="tool-icon tool-icon-flip" aria-hidden="true"></span
+          ><span data-i18n="tool.flip">返す</span>
+        </button>
+        <button class="tool" type="button" data-tool="serve" aria-pressed="false">
+          <span class="tool-icon tool-icon-serve" aria-hidden="true"></span
+          ><span data-i18n="tool.serve">取り出す</span>
+        </button>
+      </div>
+    </footer>
+
+    <section class="overlay" id="title-screen" aria-labelledby="title-heading">
+      <div class="overlay-card title-card">
+        <p class="eyebrow" data-i18n="kicker">超リアル屋台シミュレーション</p>
+        <h1 id="title-heading" class="title-logo">
+          <span class="title-small" data-i18n="titleSmall">ベイクド</span>
+          <span class="title-main" data-i18n="titleMain">モチョチョ焼き</span>
+        </h1>
+        <p class="title-copy" data-i18n="titleCopy">
+          熱い鉄板に生地を注ぎ、あんをのせて、ひっくり返す。焼き色・蒸気・音は物理シミュレーションで生まれます。
+        </p>
+        <div id="requirements" aria-live="polite"></div>
+        <p class="engine-line" id="engine-line" aria-live="polite"></p>
+        <button class="primary-button" id="start-button" type="button" disabled data-i18n="start">
+          焼きはじめる
+        </button>
+        <p class="save-line" id="save-line" aria-live="polite"></p>
+        <div class="title-links">
+          <button class="text-button" type="button" id="lang-button">English</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay" id="result-screen" hidden aria-labelledby="result-heading">
+      <div class="overlay-card result-card">
+        <p class="eyebrow" data-i18n="result">焼き上がり</p>
+        <h2 id="result-heading" class="result-title"></h2>
+        <p class="result-stars" id="result-stars" aria-hidden="true"></p>
+        <p class="result-score" id="result-score"></p>
+        <canvas
+          class="result-preview"
+          id="result-preview"
+          width="320"
+          height="200"
+          aria-hidden="true"
+        ></canvas>
+        <dl class="result-grid" id="result-grid"></dl>
+        <p class="result-comment" id="result-comment"></p>
+        <button class="primary-button" id="next-button" type="button" data-i18n="next">次へ</button>
+      </div>
+    </section>
+
+    <section class="overlay" id="day-screen" hidden aria-labelledby="day-heading">
+      <div class="overlay-card result-card">
+        <p class="eyebrow" data-i18n="day.close">営業終了</p>
+        <h2 id="day-heading" class="result-title"></h2>
+        <dl class="result-grid">
+          <dt data-i18n="day.coins">今日の売上</dt>
+          <dd id="day-coins">0</dd>
+          <dt data-i18n="day.best">今日のベスト</dt>
+          <dd id="day-best">0</dd>
+          <dt data-i18n="day.combo">ベストコンボ</dt>
+          <dd id="day-combo">0</dd>
+        </dl>
+        <button class="primary-button" id="day-next-button" type="button" data-i18n="day.next">
+          次の日へ
+        </button>
+      </div>
+    </section>
+
+    <section class="overlay" id="menu-screen" hidden aria-labelledby="menu-heading">
+      <div class="overlay-card menu-card">
+        <h2 id="menu-heading" data-i18n="menu">メニュー</h2>
+        <label class="switch-row"
+          ><input type="checkbox" id="sound-toggle" checked />
+          <span data-i18n="sound">サウンド</span></label
+        >
+        <label class="switch-row"
+          ><input type="checkbox" id="bgm-toggle" checked /> <span data-i18n="bgm">BGM</span></label
+        >
+        <label class="switch-row"
+          ><input type="checkbox" id="quality-toggle" checked />
+          <span data-i18n="quality">高画質（自動調整）</span></label
+        >
+        <p class="menu-note" id="menu-engine"></p>
+        <p class="menu-note" data-i18n="timeNote">焼成は実時間の約5倍速で進みます。</p>
+        <p class="menu-note" data-i18n="soundNote">
+          iPhone は消音モード中だと音が鳴らないことがあります。
+        </p>
+        <div class="menu-actions">
+          <button class="secondary-button" id="reset-save" type="button" data-i18n="resetSave">
+            セーブを消す
+          </button>
+          <button class="primary-button" id="close-menu" type="button" data-i18n="resume">
+            再開
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <p class="toast" id="toast" role="status" hidden></p>
+    <p id="load-error" class="load-error" role="alert" hidden></p>
+  </body>
+</html>

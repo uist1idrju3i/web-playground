@@ -5,7 +5,9 @@ on:
     paths:
       - wasm/**
       - scripts/build-wasm-toolchains.sh
+      - scripts/build-app-wasm.sh
       - scripts/write-wasm-toolchain-manifest.mjs
+      - public_html/baked-mochocho/wasm/**
       - rust-toolchain.toml
       - .github/workflows/wasm-toolchains.yml
   push:
@@ -13,7 +15,9 @@ on:
     paths:
       - wasm/**
       - scripts/build-wasm-toolchains.sh
+      - scripts/build-app-wasm.sh
       - scripts/write-wasm-toolchain-manifest.mjs
+      - public_html/baked-mochocho/wasm/**
       - rust-toolchain.toml
       - .github/workflows/wasm-toolchains.yml
 
@@ -60,3 +64,7 @@ jobs:
           export EMSDK="$RUNNER_TEMP/emsdk"
           scripts/build-wasm-toolchains.sh
           git diff --exit-code -- public_html/library/wasm/toolchains/
+      - name: Rebuild baked Mochocho simulation
+        run: |
+          scripts/build-app-wasm.sh
+          git diff --exit-code -- public_html/baked-mochocho/wasm/

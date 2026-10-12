@@ -4,6 +4,7 @@ test-results/
 tests/servo/bin/
 coverage/
 .DS_Store
+wasm/**/target/
 
 # Native desktop shells
 native/**/node_modules/

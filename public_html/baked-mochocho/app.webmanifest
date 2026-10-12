@@ -1,0 +1,11 @@
+{
+  "name": "ベイクドモチョチョ焼き",
+  "short_name": "モチョチョ焼き",
+  "start_url": "/baked-mochocho/",
+  "scope": "/baked-mochocho/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b130e",
+  "theme_color": "#1b130e",
+  "icons": [{ "src": "/baked-mochocho/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
