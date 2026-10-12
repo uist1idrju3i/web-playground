@@ -2,17 +2,19 @@
 
 ## Workflow map
 
-| Workflow                | Trigger and responsibility                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| `ci.yml`                | Static checks and Chromium/WebKit/Firefox E2E; `ci-ok` aggregates required jobs                      |
-| `codeql.yml`            | Advanced CodeQL for Actions and JavaScript/TypeScript, PRs, main pushes, weekly                      |
-| `workflow-lint.yml`     | zizmor and actionlint                                                                                |
-| `dependency-review.yml` | Dependency changes on pull requests                                                                  |
-| `scorecard.yml`         | Scorecard publishing on main and weekly                                                              |
-| `wasm-toolchains.yml`   | Rebuilds and byte-compares WASM outputs when sources/build script change                             |
-| `deploy-smoke.yml`      | Main-branch deployment smoke check; skips with notice until the custom domain serves the site marker |
+| Workflow                | Trigger and responsibility                                                                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ci.yml`                | Static checks and Chromium/WebKit/Firefox E2E; `ci-ok` aggregates required jobs                                                                                                                        |
+| `codeql.yml`            | Advanced CodeQL for Actions and JavaScript/TypeScript, PRs, main pushes, weekly                                                                                                                        |
+| `workflow-lint.yml`     | zizmor and actionlint                                                                                                                                                                                  |
+| `dependency-review.yml` | Dependency changes on pull requests                                                                                                                                                                    |
+| `scorecard.yml`         | Scorecard publishing on main and weekly                                                                                                                                                                |
+| `wasm-toolchains.yml`   | Rebuilds and byte-compares WASM outputs when sources/build script change                                                                                                                               |
+| `deploy-smoke.yml`      | Main pushes, daily schedule, and manual dispatch; waits for deployed non-HTML assets to match the commit, checks Pages headers, then tests production resource policy in Chromium, WebKit, and Firefox |
 
 Actions are pinned to full commit SHAs with version comments. Jobs use minimal permissions, `persist-credentials: false`, and `step-security/harden-runner`. Node is pinned to 24.21.0. Ubuntu 26.04 is currently a public runner-image preview; see [maintenance](maintenance.md) for the fallback policy.
+
+The `browser-policy` job fails if the Cloudflare zone rewrites application HTML (for example with Rocket Loader) or injects third-party scripts such as the Web Analytics beacon. It runs the per-page resource-policy checks against the production custom domain; the scheduled run also catches dashboard changes that do not create a repository push.
 
 For branch protection, require the `ci-ok` aggregator and the CodeQL code-scanning check. CodeQL advanced setup analyzes Actions and JavaScript/TypeScript; C/C++ and Rust use `build-mode: none` when their sources are present.
 

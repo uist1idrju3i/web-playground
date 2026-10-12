@@ -3,6 +3,9 @@ name: Deployment Smoke Test
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '41 6 * * *'
+  workflow_dispatch:
 
 permissions: {}
 
@@ -13,7 +16,7 @@ concurrency:
 jobs:
   smoke:
     runs-on: ubuntu-26.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -28,23 +31,50 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
-      - name: Wait for deployment and verify Pages headers
+      - name: Wait for deployed assets and verify Pages headers
         env:
           SITE_URL: https://web-playground.xn--uist1idrju3i.jp
         run: |
+          set -euo pipefail
           ready=0
+          download="$(mktemp)"
+          trap 'rm -f "$download"' EXIT
           for attempt in $(seq 1 20); do
-            if curl --fail --silent --show-error --max-time 15 "$SITE_URL/" -o site.html &&
-              grep --quiet 'name="web-playground"' site.html; then
+            matches=1
+            while IFS= read -r -d '' file; do
+              relative="${file#public_html/}"
+              case "$relative" in
+                *.html|*.htm|_headers|_redirects|*/_headers|*/_redirects) continue ;;
+              esac
+              expected_hash="$(sha256sum "$file" | cut -d ' ' -f 1)"
+              if ! curl --fail --silent --show-error --max-time 15 "$SITE_URL/$relative" -o "$download"; then
+                echo "Deployment is not ready: $relative is unavailable (attempt $attempt/20)."
+                matches=0
+                break
+              fi
+              actual_hash="$(sha256sum "$download" | cut -d ' ' -f 1)"
+              if [[ "$actual_hash" != "$expected_hash" ]]; then
+                echo "Deployment is not ready: $relative does not match the checkout (attempt $attempt/20)."
+                matches=0
+                break
+              fi
+            done < <(find public_html -type f -print0)
+            if [[ "$matches" -eq 1 ]]; then
               ready=1
               break
             fi
-            echo "Waiting for the configured site marker (attempt $attempt/20)."
-            sleep 30
+            if [[ "$attempt" -lt 20 ]]; then
+              sleep 30
+            fi
           done
           if [ "$ready" -ne 1 ]; then
-            echo "::notice::The domain is not serving the Web Playground marker; deployment smoke checks were skipped."
-            exit 0
+            echo "::error::Production did not serve every non-HTML asset from this commit after 20 attempts."
+            exit 1
+          fi
+          if ! curl --fail --silent --show-error --max-time 15 "$SITE_URL/" -o site.html ||
+            ! grep --quiet 'name="web-playground"' site.html; then
+            echo "::error::Production root page is missing the Web Playground marker."
+            exit 1
           fi
           curl --fail --silent --show-error --max-time 15 "$SITE_URL/browser-features/" -o browser-features.html
           grep --quiet 'Browser Features' browser-features.html
@@ -54,3 +84,39 @@ jobs:
           grep --ignore-case --quiet '^content-security-policy:.*wasm-unsafe-eval' page-headers.txt
           curl --fail --silent --show-error --max-time 15 -D wasm-headers.txt "$SITE_URL/library/wasm/probes/wasm-simd.wasm" -o /dev/null
           grep --ignore-case --quiet '^content-type: application/wasm' wasm-headers.txt
+
+  browser-policy:
+    needs: smoke
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, firefox]
+    env:
+      PLAYWRIGHT_BASE_URL: https://web-playground.xn--uist1idrju3i.jp
+      PLAYWRIGHT_PROJECT: ${{ matrix.browser }}
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - run: npx playwright install --with-deps "$PLAYWRIGHT_PROJECT"
+      - run: npx playwright test tests/e2e/resource-policy.spec.js --project="$PLAYWRIGHT_PROJECT" --grep "static resource policy"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: production-policy-${{ matrix.browser }}-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

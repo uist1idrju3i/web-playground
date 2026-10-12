@@ -61,4 +61,5 @@
 - `untestable` is not the same as `unsupported`.
 - Playwright WebKit screenshotting injects a temporary inline stylesheet; assert CSP diagnostics before screenshotting.
 - The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
+- Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader or automatic Web Analytics injection.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.
