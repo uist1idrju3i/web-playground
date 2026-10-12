@@ -179,7 +179,7 @@ function safeJs(value) {
 }
 
 function describeResult(result) {
-  let className = null;
+  let className;
   try {
     className = result.call('class').call('to_s').toString();
   } catch {
@@ -243,7 +243,9 @@ async function compileRubyModule(progress) {
   try {
     decompressed = body.pipeThrough(new DecompressionStream('gzip'));
   } catch (error) {
-    throw new Error(`gzip decompression is unavailable: ${error?.message ?? error}`);
+    throw new Error(`gzip decompression is unavailable: ${error?.message ?? error}`, {
+      cause: error,
+    });
   }
   const fetchMs = performance.now() - fetchStart;
   progress('compile');

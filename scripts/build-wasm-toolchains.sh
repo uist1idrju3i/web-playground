@@ -50,7 +50,7 @@ build_emscripten emscripten-cxx-eh-exnref "$source_dir/exceptions.cpp" -fwasm-ex
 build_emscripten emscripten-pthreads "$source_dir/pthreads.c" -pthread -sPTHREAD_POOL_SIZE=2
 build_emscripten emscripten-simd "$source_dir/simd.c" -msimd128
 build_emscripten emscripten-jspi "$source_dir/probe.c" -sJSPI=1
-build_emscripten emscripten-wasm64 "$source_dir/probe.c" -sMEMORY64=1
+build_emscripten emscripten-wasm64 "$source_dir/probe.c" -m64
 
 rust_manifest="$repository_root/wasm/toolchains/rust-bindgen/Cargo.toml"
 cargo build --locked --release --manifest-path "$rust_manifest" --target wasm32-unknown-unknown --target-dir "$build_root/rust"

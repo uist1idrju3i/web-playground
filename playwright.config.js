@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Every e2e test must stay under 30 seconds; cover long flows in unit tests.
+  timeout: 30_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,

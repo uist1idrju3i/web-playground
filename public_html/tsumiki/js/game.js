@@ -224,7 +224,7 @@ export class Game {
     this.audio.setIntensity(Math.min(3, Math.floor(this.heightM / 500)));
 
     this.acc += dt;
-    let events = [];
+    let events;
     while (this.acc >= WORLD.fixedDt) {
       events = this.physics.step();
       this.acc -= WORLD.fixedDt;

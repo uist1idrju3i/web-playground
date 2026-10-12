@@ -114,8 +114,15 @@ test('WebKit user-agent style CSP canary remains exact-match', async ({
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
   await page.goto(new URL('/__tests__/webkit-select-csp.html', baseURL).href);
+  // Violation events are delivered asynchronously after load; wait for them.
+  // If WebKit stops emitting this violation the poll times out and the canary
+  // still fails, which is the signal this test exists to detect.
+  await expect
+    .poll(() => page.evaluate(() => window.__resourcePolicyViolations.length), {
+      timeout: 8000,
+    })
+    .toBeGreaterThan(0);
   const violations = await page.evaluate(() => window.__resourcePolicyViolations);
-  expect(violations.length).toBeGreaterThan(0);
   expect(
     violations.every(
       ({ directive, blockedURI }) => directive === 'style-src-attr' && blockedURI === 'inline',
@@ -124,6 +131,7 @@ test('WebKit user-agent style CSP canary remains exact-match', async ({
   expect([...new Set(violations.map(({ sample }) => sample))].sort()).toEqual(
     [...WEBKIT_UA_STYLE_SAMPLES].sort(),
   );
+  await expect.poll(() => consoleErrors.length, { timeout: 8000 }).toBe(violations.length);
   expect(consoleErrors).toEqual(Array(violations.length).fill(WEBKIT_UA_STYLE_CONSOLE_ERROR));
 });
 
