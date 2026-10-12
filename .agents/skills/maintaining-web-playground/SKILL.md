@@ -39,8 +39,8 @@ description: Procedures for repository maintenance in web-playground - adding a 
 
 - `npm ci --ignore-scripts && npm audit signatures`, then `npx playwright install` for the
   pinned browsers and `node scripts/fetch-servo.mjs` for servoshell.
-- Fast loop: `npm run lint`, `npm run format:check`, `npm run test:unit`, then a focused
-  `npx playwright test tests/e2e/<app>.spec.js --project=webkit`. Finish with `npm test`.
+- Run the local tier from the `AGENTS.md` definition of done; the full `npm test` is for
+  headers, CSP, resource gates, capabilities, and test tooling. CI always runs everything.
 - The E2E server on port 4173 is reused locally; a stale server from an earlier run serves old
   headers and files. Kill it before trusting results.
 - `scripts/check-external-resources.mjs` parses all app JavaScript; unusual code shapes can

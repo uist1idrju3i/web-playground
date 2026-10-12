@@ -51,5 +51,5 @@ Use the required list only for features without which the app cannot work; put p
 - Call `checkRequirements` before using required browser APIs.
 - Keep JavaScript/CSS on the same origin or use a pinned, SRI-protected cdnjs resource.
 - Add a portal entry in `public_html/index.html`, then update relevant docs and generated references.
-- Run `npm run generate` and `npm test`. Inspect desktop and iPhone portrait/landscape renderings in Chromium and WebKit.
+- Run `npm run generate`, `npm run test:unit`, and the app's E2E plus `tests/e2e/resource-policy.spec.js` in Chromium and WebKit (CI runs the full `npm test`). Keep each E2E test under 30 seconds. Inspect desktop and iPhone portrait/landscape renderings in Chromium and WebKit.
 - Recheck licenses and `THIRD_PARTY_NOTICES.md` before each commit.
