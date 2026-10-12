@@ -81,9 +81,11 @@ async function boot() {
   if (mode === 'trng' && !trngSupported) mode = 'feel';
 
   // Renderer: WebGPU first, WebGL2 fallback (same scene model).
+  // ?gpu=webgl2 forces the fallback for diagnosing real-device issues.
+  const forceGL = params.get('gpu') === 'webgl2';
   let renderer;
   try {
-    renderer = await createWebGPU(canvas);
+    renderer = forceGL ? createWebGL2(canvas) : await createWebGPU(canvas);
   } catch {
     renderer = createWebGL2(canvas);
   }
@@ -310,7 +312,16 @@ async function boot() {
       audio.setHiss(Math.min(1, s[5] / 400) * (s[0] === PHASE.MATSUBA ? 1 : 0.4));
     }
     updateScene(scene, sim);
-    renderer.draw(scene, dt);
+    try {
+      renderer.draw(scene, dt);
+    } catch (error) {
+      if (renderer.kind !== 'webgpu') throw error;
+      // Device lost, validation fault, or pipeline error mid-run: drop to
+      // WebGL2 and keep going.
+      console.warn('WebGPU draw failed; falling back to WebGL2', error);
+      renderer = createWebGL2(canvas);
+      $('engine-tag').textContent = t('engine', { gpu: 'WebGL2', simd: sim.simd ? t('simd') : '' });
+    }
     requestAnimationFrame(frame);
   }
 
