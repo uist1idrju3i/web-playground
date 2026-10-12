@@ -3,7 +3,12 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['node_modules/**', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+      'public_html/library/wasm/toolchains/**',
+    ],
   },
   js.configs.recommended,
   {

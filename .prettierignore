@@ -1,2 +1,3 @@
 public_html/library/data/web-features.json
+public_html/library/wasm/toolchains/**
 docs/web-platform-features.md

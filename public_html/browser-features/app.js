@@ -2,12 +2,15 @@ import { capabilities, detectCapability } from '/library/js/capabilities.js';
 import { getBrowserEnvironment } from '/library/js/environment.js';
 import { probeFeature } from '/library/js/feature-probe.js';
 import { checkRequirements } from '/library/js/requirements.js';
+import { probeResizableMemoryBuffer } from '/library/js/wasm-probes.js';
+import { runWasmToolchains } from '/library/js/wasm-toolchains.js';
 import { registerTools } from '/library/js/webmcp.js';
 
 const featureDataResponse = await fetch('/library/data/web-features.json');
 if (!featureDataResponse.ok) throw new Error('Feature data could not be loaded.');
 const featureData = await featureDataResponse.json();
 const environment = await getBrowserEnvironment();
+const resizableMemoryBufferResult = probeResizableMemoryBuffer();
 const requirementState = await checkRequirements({
   required: ['fetch', 'es-modules'],
   optional: ['webmcp'],
@@ -19,6 +22,12 @@ const capabilityResults = await Promise.all(
     result: await detectCapability(capability),
   })),
 );
+const layerOneResults = new Map(
+  capabilityResults
+    .filter(({ capability }) => capability.id.startsWith('wasm-'))
+    .map(({ capability, result }) => [capability.id, result]),
+);
+const wasmToolchainResults = await runWasmToolchains(layerOneResults);
 const featureRows = featureData.features.map((feature) => ({
   feature,
   probe: probeFeature(feature),
@@ -155,6 +164,67 @@ function renderCapabilities() {
     list.append(item);
   });
   text(document.querySelector('#capability-count'), `${capabilities.length} read-only checks`);
+}
+
+function renderWasmProbes() {
+  const probes = [
+    ...capabilityResults.filter(({ capability }) => capability.id.startsWith('wasm-')),
+    {
+      capability: { id: 'wasm-resizable-buffer', name: 'Resizable WebAssembly memory buffer' },
+      result: resizableMemoryBufferResult,
+    },
+  ];
+  const list = document.querySelector('#wasm-probe-list');
+  list.replaceChildren(
+    ...probes.map(({ capability, result }) => {
+      const item = document.createElement('li');
+      item.className = 'capability-item';
+      item.dataset.wasmProbeId = capability.id;
+      const copy = document.createElement('div');
+      copy.className = 'capability-copy';
+      const title = document.createElement('h3');
+      title.textContent = capability.name;
+      const detail = document.createElement('p');
+      detail.textContent = result.detail;
+      copy.append(title, detail);
+      item.append(copy, chip(result.status));
+      return item;
+    }),
+  );
+  text(document.querySelector('#wasm-count'), `${probes.length} executable probes`);
+}
+
+function renderWasmToolchains() {
+  const list = document.querySelector('#wasm-toolchain-list');
+  list.replaceChildren();
+  if (wasmToolchainResults.error) {
+    const item = document.createElement('li');
+    item.className = 'loading-state';
+    item.textContent = wasmToolchainResults.error;
+    list.append(item);
+    return;
+  }
+  for (const profile of wasmToolchainResults.profiles) {
+    const item = document.createElement('li');
+    item.className = 'capability-item';
+    item.dataset.wasmToolchainId = profile.id;
+    const copy = document.createElement('div');
+    copy.className = 'capability-copy';
+    const title = document.createElement('h3');
+    title.textContent = profile.id;
+    const detail = document.createElement('p');
+    detail.textContent = profile.detail;
+    copy.append(title, detail);
+    const mark = document.createElement('span');
+    mark.className = `status-chip ${statusClass(profile.status)}`;
+    mark.textContent = profile.status === 'supported' ? '○' : '×';
+    mark.setAttribute(
+      'aria-label',
+      profile.status === 'supported' ? 'Profile passed' : 'Profile failed',
+    );
+    item.append(copy, mark);
+    list.append(item);
+  }
 }
 
 function mdnUrl(compatKey) {
@@ -324,6 +394,8 @@ async function copyToClipboard(value) {
 async function initialize() {
   renderEnvironment();
   renderCapabilities();
+  renderWasmProbes();
+  renderWasmToolchains();
   populateGroups();
   renderFeatures();
   document

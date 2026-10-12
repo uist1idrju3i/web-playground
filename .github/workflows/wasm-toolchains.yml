@@ -1,0 +1,62 @@
+name: WebAssembly Toolchains
+
+on:
+  pull_request:
+    paths:
+      - wasm/**
+      - scripts/build-wasm-toolchains.sh
+      - scripts/write-wasm-toolchain-manifest.mjs
+      - rust-toolchain.toml
+      - .github/workflows/wasm-toolchains.yml
+  push:
+    branches: [main]
+    paths:
+      - wasm/**
+      - scripts/build-wasm-toolchains.sh
+      - scripts/write-wasm-toolchain-manifest.mjs
+      - rust-toolchain.toml
+      - .github/workflows/wasm-toolchains.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - name: Install checksum-verified Emscripten SDK
+        run: |
+          emsdk_root="$RUNNER_TEMP/emsdk"
+          emsdk_commit=35ff8a6d150541276abbc6bae512ca90bcfbe220
+          git init "$emsdk_root"
+          git -C "$emsdk_root" remote add origin https://github.com/emscripten-core/emsdk.git
+          git -C "$emsdk_root" fetch --depth=1 origin "$emsdk_commit"
+          git -C "$emsdk_root" checkout --detach "$emsdk_commit"
+          "$emsdk_root/emsdk" install 6.0.12
+          "$emsdk_root/emsdk" activate 6.0.12
+      - name: Install pinned Rust targets and wasm-bindgen
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal --target wasm32-unknown-unknown --target wasm32-wasip1
+          cargo +1.99.0 install wasm-bindgen-cli --version 0.2.129 --locked
+      - name: Rebuild and compare generated artifacts
+        run: |
+          export EMSDK="$RUNNER_TEMP/emsdk"
+          scripts/build-wasm-toolchains.sh
+          git diff --exit-code -- public_html/library/wasm/toolchains/

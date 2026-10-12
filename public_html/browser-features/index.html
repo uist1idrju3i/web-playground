@@ -63,10 +63,36 @@
         </ol>
       </section>
 
+      <section class="panel" aria-labelledby="wasm-title">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">03 · EXECUTABLE MODULES</p>
+            <h2 id="wasm-title">WebAssembly</h2>
+          </div>
+          <span id="wasm-count" class="section-meta"></span>
+        </div>
+        <p class="section-intro">
+          Feature-specific modules run on the main thread and in a time-limited Worker. Results
+          include the reason when a module cannot execute.
+        </p>
+        <ul id="wasm-probe-list" class="capability-list"></ul>
+        <div class="section-title wasm-toolchain-heading">
+          <div>
+            <p class="eyebrow">COMPILED TOOLCHAINS</p>
+            <h3>Layer 2 profiles</h3>
+          </div>
+        </div>
+        <p class="section-intro">
+          Each profile computes the same value; profiles requiring unsupported Layer 1 features are
+          marked with the missing requirements.
+        </p>
+        <ul id="wasm-toolchain-list" class="capability-list"></ul>
+      </section>
+
       <section class="panel features-panel" aria-labelledby="features-title">
         <div class="section-title">
           <div>
-            <p class="eyebrow">03 · THE WEB PLATFORM</p>
+            <p class="eyebrow">04 · THE WEB PLATFORM</p>
             <h2 id="features-title">All web features</h2>
           </div>
           <span id="feature-count" class="section-meta"></span>

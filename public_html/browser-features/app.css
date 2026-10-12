@@ -72,6 +72,15 @@
   font-size: 0.66rem;
 }
 
+.wasm-toolchain-heading {
+  margin-top: 30px;
+}
+
+.wasm-toolchain-heading h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
 .section-title h2 {
   margin: 0;
   font-size: clamp(1.4rem, 4vw, 1.9rem);
@@ -171,6 +180,10 @@
   border: 1px solid var(--line);
   border-radius: 1rem;
   scroll-margin-top: 24px;
+}
+
+#wasm-probe-list .capability-item {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .capability-number {
