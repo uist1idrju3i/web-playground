@@ -1,0 +1,21 @@
+appId: jp.web-playground.browser-features
+productName: Browser Features
+directories:
+  output: dist
+files:
+  - main.js
+  - preload.js
+  - serve.mjs
+  - package.json
+extraResources:
+  - from: ../../public_html
+    to: public_html
+  - from: ../headers.json
+    to: native/headers.json
+linux:
+  category: Utility
+  target:
+    - AppImage
+    - deb
+electronLanguages:
+  - en-US
