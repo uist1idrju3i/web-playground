@@ -68,9 +68,43 @@ jobs:
             test-results/
           retention-days: 7
 
+  servo:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - name: Install servoshell runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libunwind8 libxkbcommon0 libxcursor1 libxrandr2 \
+            libxi6 libvulkan1 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+            libgstreamer-plugins-bad1.0-0 fonts-liberation
+      - run: node scripts/fetch-servo.mjs
+      - name: Check servoshell shared libraries
+        run: ldd tests/servo/bin/servo/servoshell | (! grep "not found")
+      - run: npm run test:servo
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: servo-report
+          path: test-results/servo/
+          retention-days: 7
+
   ci-ok:
     if: always()
-    needs: [static, e2e]
+    needs: [static, e2e, servo]
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
@@ -82,8 +116,9 @@ jobs:
         env:
           STATIC_RESULT: ${{ needs.static.result }}
           E2E_RESULT: ${{ needs.e2e.result }}
+          SERVO_RESULT: ${{ needs.servo.result }}
         run: |
-          if [[ "$STATIC_RESULT" != "success" || "$E2E_RESULT" != "success" ]]; then
-            printf 'static=%s e2e=%s\n' "$STATIC_RESULT" "$E2E_RESULT" >&2
+          if [[ "$STATIC_RESULT" != "success" || "$E2E_RESULT" != "success" || "$SERVO_RESULT" != "success" ]]; then
+            printf 'static=%s e2e=%s servo=%s\n' "$STATIC_RESULT" "$E2E_RESULT" "$SERVO_RESULT" >&2
             exit 1
           fi

@@ -1,0 +1,6 @@
+{
+  "tag": "2026-10-11",
+  "asset": "servo-x86_64-linux-gnu.tar.gz",
+  "sha256": "bae6588943720ee3517c10d6faeb7963845ce82facaa18f9fb233b7c3ad4713a",
+  "comment": "Pinned servoshell nightly from servo/servo-nightly-builds. Bump tag + sha256 together; record the update in docs/maintenance.md."
+}
