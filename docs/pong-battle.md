@@ -12,17 +12,17 @@ the first gesture.
 
 ## Architecture
 
-| Piece             | Path                                         | Notes                                                                                                                                             |
+| Piece | Path | Notes |
 | ----------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Deterministic sim | `js/sim.js`                                  | 120 Hz fixed-step physics; seeded; speed-cap, rally wind and stamina escalation systems                                                           |
-| Statechart        | `js/statechart.js`                           | Explicit phases mirrored to `body[data-phase]`                                                                                                    |
-| Brain workers     | `brain-worker.js`, `js/brain-host.js`        | Two workers, each booting a private Ruby.wasm VM (~70 MB). Brains are isolated: a crashed or hung brain is rebooted without touching the opponent |
-| Ruby SDK          | `ruby/pong_kit.rb`                           | `brain "name" do                                                                                                                                  | g   | … end`DSL +`Brain.register`objects;`g.ball.y_at`intercept prediction,`g.seek`, `g.wind_ay`, `g.me.stamina`, `brain_debug` overlay |
-| Brains            | `ruby/enemy/*.rb`, `ruby/samples/*.rb`       | Three enemy levels (Rookie/Club/Ace) and five readable player samples, all in Ruby                                                                |
-| Renderers         | `js/render-webgpu.js`, `js/render-webgl2.js` | Identical sprite-batch scene from `js/scene.js`; WebGPU first, WebGL2 fallback, `canvas[data-renderer]` reports which ran                         |
-| Audio             | `js/audio.js`                                | Synthesized cues + procedural 4-bar pop loop; every cue has a visual twin (banner/HUD)                                                            |
-| Saves             | `js/save.js`                                 | HMAC-signed via `library/js/signed-storage.js`: unlocked level, best scores, settings, your code                                                  |
-| i18n              | `js/i18n.js`                                 | ja/en dictionary, `[data-i18n]`                                                                                                                   |
+| Deterministic sim | `js/sim.js` | 120 Hz fixed-step physics; seeded; speed-cap, rally wind and stamina escalation systems |
+| Statechart | `js/statechart.js` | Explicit phases mirrored to `body[data-phase]` |
+| Brain workers | `brain-worker.js`, `js/brain-host.js` | Two workers, each booting a private Ruby.wasm VM (~70 MB). Brains are isolated: a crashed or hung brain is rebooted without touching the opponent |
+| Ruby SDK | `ruby/pong_kit.rb` | `brain "name" do                                                                                                                                  | g   | … end`DSL +`Brain.register`objects;`g.ball.y_at`intercept prediction,`g.seek`, `g.wind_ay`, `g.me.stamina`, `brain_debug` overlay |
+| Brains | `ruby/enemy/*.rb`, `ruby/samples/*.rb` | Three enemy levels (Rookie/Club/Ace) and five readable player samples, all in Ruby |
+| Renderers | `js/render-webgpu.js`, `js/render-webgl2.js` | Identical sprite-batch scene from `js/scene.js`; WebGPU first, WebGL2 fallback, `canvas[data-renderer]` reports which ran |
+| Audio | `js/audio.js` | Synthesized cues + procedural 4-bar pop loop; every cue has a visual twin (banner/HUD) |
+| Saves | `js/save.js` | HMAC-signed via `library/js/signed-storage.js`: unlocked level, best scores, settings, your code |
+| i18n | `js/i18n.js` | ja/en dictionary, `[data-i18n]` |
 
 ## Brain protocol
 
