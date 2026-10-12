@@ -3,7 +3,7 @@
 // of brain snapshots, and — via real Ruby.wasm VMs — that the enemy brains
 // produce the intended skill ordering.
 import assert from 'node:assert/strict';
-import { describe, test } from 'node:test';
+import { describe, test, before } from 'node:test';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
@@ -124,6 +124,28 @@ describe('ruby brains (real ruby.wasm)', () => {
   let factory, mod, kit;
   const brains = {};
 
+  before(async () => {
+    const umd = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../public_html/ruby-wasm/vendor/browser.umd.js',
+    );
+    const { mkdtempSync, cpSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
+    cpSync(umd, cjs);
+    factory = require(cjs);
+    const wasmBytes = gunzipSync(
+      readFileSync(
+        join(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz',
+        ),
+      ),
+    );
+    mod = await WebAssembly.compile(wasmBytes);
+    kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
+  });
+
   async function bootVm(source) {
     const inst = await factory.DefaultRubyVM(mod, { consolePrint: false });
     const vm = inst.vm;
@@ -156,26 +178,28 @@ describe('ruby brains (real ruby.wasm)', () => {
     return { winner: game.winner, ticks };
   }
 
+  // Regression: brain @ivars must reset on every deploy. Before the Runner
+  // wrapper, Proc brains ran on top-level `main`, so @think_at leaked across
+  // matches and the enemy parked for a whole second match.
+  test('brain @ivars reset on each deploy', { timeout: 120_000 }, async () => {
+    const src = `brain "counter" do |g|
+  @n = (@n || 0) + 1
+  brain_debug note: "n=#{@n}"
+  g.seek(g.center)
+end
+`;
+    const vm = await bootVm(src);
+    const game = createGame({ seed: 9 });
+    assert.equal(tick(vm, brainState(game, 'left')).debug?.note, 'n=1');
+    assert.equal(tick(vm, brainState(game, 'left')).debug?.note, 'n=2');
+    // Re-deploy the same source — the next match must start with fresh state.
+    const lit = `'${src.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    const res = JSON.parse(vm.eval(`Battle.load_brain(${lit})`).toString());
+    assert.equal(res.ok, true);
+    assert.equal(tick(vm, brainState(createGame({ seed: 10 }), 'left')).debug?.note, 'n=1');
+  });
+
   test('skill ordering: rookie loses to samples and enemies', { timeout: 180_000 }, async () => {
-    const umd = join(
-      dirname(fileURLToPath(import.meta.url)),
-      '../../public_html/ruby-wasm/vendor/browser.umd.js',
-    );
-    const { mkdtempSync, cpSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
-    const cjs = join(mkdtempSync(join(tmpdir(), 'pong-wasm-')), 'browser.umd.cjs');
-    cpSync(umd, cjs);
-    factory = require(cjs);
-    const wasmBytes = gunzipSync(
-      readFileSync(
-        join(
-          dirname(fileURLToPath(import.meta.url)),
-          '../../public_html/ruby-wasm/ruby+stdlib.wasm.gz',
-        ),
-      ),
-    );
-    mod = await WebAssembly.compile(wasmBytes);
-    kit = readFileSync(join(APP, 'ruby/pong_kit.rb'), 'utf8');
     for (const [name, path] of [
       ['rookie', 'ruby/enemy/rookie.rb'],
       ['club', 'ruby/enemy/club.rb'],

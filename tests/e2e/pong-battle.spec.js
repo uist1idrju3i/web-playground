@@ -7,7 +7,7 @@ import { expect, test } from '@playwright/test';
 test('pong-battle boots, deploys a sample brain and plays', async ({ page }, testInfo) => {
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(e.message));
-  await page.goto('/pong-battle/');
+  await page.goto('/pong-battle/?debug=1');
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
 
   // Requirements container exists (dedicated div per requirements.js).
@@ -55,6 +55,38 @@ test('pong-battle boots, deploys a sample brain and plays', async ({ page }, tes
   // HUD shows score + stamina meters.
   await expect(page.locator('#score-l')).toHaveText(/^[0-9]+$/);
   await expect(page.locator('#stam-l')).toBeAttached();
+
+  // Regression: the phase overlay must stay hidden during play — before the
+  // [hidden] display guard, the last-written title ('GO!') stayed on screen.
+  await expect(page.locator('#phase-overlay')).toBeHidden();
+
+  // Force match 1 to end: the overlay + rematch button must appear.
+  await page.evaluate(() => {
+    const g = globalThis.__pong.game;
+    g.score.left = 2;
+    g.ball.x = 120; // past the right goal — next tick scores for the player
+  });
+  await page.waitForFunction(() => document.body.dataset.phase === 'match-over', {
+    timeout: 8000,
+  });
+  await expect(page.locator('#phase-overlay')).toBeVisible();
+  await expect(page.locator('#rematch')).toBeVisible();
+
+  // Match 2 via rematch: the enemy brain must actually move — before the
+  // Runner wrapper, @ivars leaked across deploys and the paddle parked.
+  await page.locator('#rematch').click();
+  await page.waitForFunction(() => document.body.dataset.phase === 'playing', {
+    timeout: 15000,
+  });
+  await expect(page.locator('#phase-overlay')).toBeHidden();
+  const enemyY = () => page.evaluate(() => globalThis.__pong.game.paddles.right.y);
+  const y0 = await enemyY();
+  let moved = false;
+  for (let i = 0; i < 12 && !moved; i++) {
+    await page.waitForTimeout(500);
+    moved = Math.abs((await enemyY()) - y0) > 1;
+  }
+  expect(moved).toBe(true);
 
   expect(pageErrors).toEqual([]);
 });

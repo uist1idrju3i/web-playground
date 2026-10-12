@@ -192,6 +192,20 @@ module Pong
   # responds to call/update/tick, optionally named, optionally exposing
   # `debug_info(game)` for the thought-visualization overlay.
   module Brain
+    # Every Proc brain runs under its own runner: the block's `self` is the
+    # runner, not top-level `main`, so its @ivars reset on each deploy while
+    # still persisting across ticks within a match. (Ivars on `main` leaked
+    # across loads — a @think_at from the previous match parked the paddle.)
+    class Runner
+      def initialize(block)
+        @block = block
+      end
+
+      def call(game)
+        instance_exec(game, &@block)
+      end
+    end
+
     @impl = nil
     @name = nil
     @debug_impl = nil
@@ -204,7 +218,7 @@ module Pong
           raise ArgumentError, 'a brain must respond to call, update, or tick'
         end
 
-        @impl = impl
+        @impl = impl.is_a?(Proc) ? Runner.new(impl) : impl
         @name =
           name ||
           (impl.brain_name if impl.respond_to?(:brain_name)) ||
@@ -213,7 +227,7 @@ module Pong
       end
 
       def debug(&block)
-        @debug_impl = block
+        @debug_impl = Runner.new(block)
       end
 
       # Called from inside a brain block: stash this tick's thought snapshot.
