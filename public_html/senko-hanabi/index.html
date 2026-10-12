@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>超リアルな線香花火シミュレータ | web playground</title>
+    <meta
+      name="description"
+      content="A physics-grounded senkō-hanabi sparkler simulator — four spark stages rendered in WebGL2/WebGPU, with a true-random mode (Web Crypto) and a game-style perceived-random mode."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/senko-hanabi/app.css" />
+    <script type="module" src="/senko-hanabi/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#app">Skip to app</a>
+    <header class="site-header">
+      <nav aria-label="Breadcrumb">
+        <a href="/">web playground</a><span aria-hidden="true"> / </span
+        ><span data-i18n="title">超リアルな線香花火シミュレータ</span>
+      </nav>
+    </header>
+
+    <main id="app" class="app" data-phase="boot">
+      <canvas id="scene" class="scene" aria-label="senkō hanabi sparkler scene"></canvas>
+
+      <!-- Boot / capability gate -->
+      <section id="screen-boot" class="panel boot-panel" aria-live="polite">
+        <p id="boot-status">…</p>
+        <div id="requirements"></div>
+      </section>
+
+      <!-- Title -->
+      <section id="screen-title" class="panel title-panel" hidden>
+        <h1 data-i18n="title">超リアルな線香花火シミュレータ</h1>
+        <p class="lead" data-i18n="lead"></p>
+        <h2 class="mode-pick" data-i18n="modePick"></h2>
+        <div class="mode-row" role="radiogroup" aria-label="random mode">
+          <button id="mode-feel" class="mode-card" type="button" aria-pressed="true">
+            <strong data-i18n="modeFeel"></strong>
+            <span data-i18n="modeFeelDesc"></span>
+          </button>
+          <button id="mode-trng" class="mode-card" type="button" aria-pressed="false">
+            <strong data-i18n="modeTrng"></strong>
+            <span data-i18n="modeTrngDesc"></span>
+          </button>
+        </div>
+        <p id="trng-unsupported" class="warn" hidden data-i18n="modeTrngOff"></p>
+        <div class="actions">
+          <button id="btn-start" class="primary" type="button" data-i18n="start"></button>
+          <button id="btn-how" type="button" data-i18n="how"></button>
+          <button id="btn-stats" type="button" data-i18n="stats"></button>
+        </div>
+        <p class="hint" data-i18n="tiltHint"></p>
+      </section>
+
+      <!-- Burning HUD -->
+      <section id="hud" class="hud" hidden>
+        <div class="hud-chip" id="hud-phase">
+          <span data-i18n="phase"></span>: <b id="hud-phase-name">–</b>
+        </div>
+        <div class="hud-chip"><span data-i18n="elapsed"></span>: <b id="hud-time">0.0s</b></div>
+        <div class="hud-chip"><span data-i18n="sparks"></span>: <b id="hud-sparks">0</b></div>
+        <div class="hud-chip mode-chip" id="hud-mode">–</div>
+      </section>
+
+      <!-- Spent / result -->
+      <section id="screen-spent" class="panel result-panel" hidden>
+        <h2 data-i18n="spentTitle"></h2>
+        <dl class="result-grid">
+          <div>
+            <dt data-i18n="duration"></dt>
+            <dd id="res-duration">–</dd>
+          </div>
+          <div>
+            <dt data-i18n="record"></dt>
+            <dd id="res-record">–</dd>
+          </div>
+          <div>
+            <dt data-i18n="bursts"></dt>
+            <dd id="res-bursts">–</dd>
+          </div>
+          <div>
+            <dt data-i18n="seedLabel"></dt>
+            <dd id="res-seed">–</dd>
+          </div>
+        </dl>
+        <div class="mode-row" role="radiogroup" aria-label="random mode">
+          <button id="mode-feel2" class="mode-card small" type="button" aria-pressed="true">
+            <strong data-i18n="modeFeel"></strong>
+          </button>
+          <button id="mode-trng2" class="mode-card small" type="button" aria-pressed="false">
+            <strong data-i18n="modeTrng"></strong>
+          </button>
+        </div>
+        <div class="actions">
+          <button id="btn-again" class="primary" type="button" data-i18n="next"></button>
+          <button id="btn-home" type="button" data-i18n="toTitle"></button>
+          <button id="btn-stats2" type="button" data-i18n="stats"></button>
+        </div>
+      </section>
+
+      <!-- Stats drawer -->
+      <section id="drawer-stats" class="panel drawer" hidden>
+        <h2 data-i18n="statsTitle"></h2>
+        <p id="stats-empty" data-i18n="noData" hidden></p>
+        <div class="stats-cols">
+          <div class="stat-block" data-mode="feel">
+            <h3 id="stat-feel-name"></h3>
+            <p><span data-i18n="sticksLabel"></span>: <b id="stat-feel-sticks">0</b></p>
+            <p><span data-i18n="record"></span>: <b id="stat-feel-longest">–</b></p>
+            <h4 data-i18n="histTitle"></h4>
+            <div id="hist-feel" class="hist-box"></div>
+            <h4 data-i18n="intHistTitle"></h4>
+            <div id="hist-feel-int" class="hist-box"></div>
+          </div>
+          <div class="stat-block" data-mode="trng">
+            <h3 id="stat-trng-name"></h3>
+            <p><span data-i18n="sticksLabel"></span>: <b id="stat-trng-sticks">0</b></p>
+            <p><span data-i18n="record"></span>: <b id="stat-trng-longest">–</b></p>
+            <h4 data-i18n="histTitle"></h4>
+            <div id="hist-trng" class="hist-box"></div>
+            <h4 data-i18n="intHistTitle"></h4>
+            <div id="hist-trng-int" class="hist-box"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btn-stats-close" type="button" data-i18n="close"></button>
+        </div>
+      </section>
+
+      <!-- How to -->
+      <section id="drawer-how" class="panel drawer" hidden>
+        <h2 data-i18n="how"></h2>
+        <p data-i18n="howBody1"></p>
+        <p data-i18n="howBody2"></p>
+        <p data-i18n="howBody3"></p>
+        <div class="actions">
+          <button id="btn-how-close" type="button" data-i18n="close"></button>
+        </div>
+      </section>
+
+      <!-- OOBE -->
+      <section id="drawer-oobe" class="panel drawer" hidden>
+        <h2 data-i18n="oobeTitle"></h2>
+        <p data-i18n="oobeBody"></p>
+        <div class="actions">
+          <button id="btn-oobe" class="primary" type="button" data-i18n="oobeGo"></button>
+        </div>
+      </section>
+
+      <p id="save-warning" class="warn save-warn" hidden data-i18n="saveWarn"></p>
+
+      <!-- Controls (always reachable) -->
+      <nav id="controls" class="controls" aria-label="controls">
+        <label class="vol"
+          ><span data-i18n="sound"></span>
+          <input id="vol" type="range" min="0" max="1" step="0.05" value="0.8" />
+        </label>
+        <button id="btn-mute" type="button" data-i18n="mute"></button>
+        <button id="btn-bgm" type="button" data-i18n="bgm"></button>
+        <button id="btn-lang" type="button" data-i18n="language"></button>
+        <button id="btn-shot" type="button" data-i18n="screenshot"></button>
+      </nav>
+      <p id="engine-tag" class="engine-tag" aria-live="off"></p>
+    </main>
+  </body>
+</html>
