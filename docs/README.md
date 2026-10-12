@@ -13,6 +13,7 @@
 ## Reference
 
 - [Generated capability reference](capability-reference.md)
+- [Native desktop apps](native-apps.md)
 - [WebAssembly](webassembly.md)
 - [WebMCP](webmcp.md)
 - [Web platform feature dataset](web-platform-features.md)

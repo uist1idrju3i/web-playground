@@ -1,0 +1,114 @@
+name: Native builds
+
+on:
+  pull_request:
+    paths:
+      - native/**
+      - public_html/_headers
+      - tests/unit/native-headers.test.js
+      - .github/workflows/native-build.yml
+  push:
+    branches: [main]
+    paths:
+      - native/**
+      - public_html/_headers
+      - tests/unit/native-headers.test.js
+      - .github/workflows/native-build.yml
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  electron:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install Electron runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-0 libnss3 libxss1 libasound2t64 xvfb
+      - run: npm ci --ignore-scripts
+        working-directory: native/electron
+      - name: Smoke test — window stays up for 20s under Xvfb
+        working-directory: native/electron
+        run: |
+          set +e
+          timeout 20 xvfb-run -a npx electron . --no-sandbox
+          code=$?
+          set -e
+          # 124 = killed by timeout while the app was still running = success
+          if [ "$code" -ne 124 ]; then
+            echo "electron exited early with code $code"
+            exit 1
+          fi
+
+  tauri:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install Tauri Linux prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
+            librsvg2-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev \
+            pkg-config build-essential curl
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.99.0 --profile minimal
+      - run: npm ci --ignore-scripts
+        working-directory: native/tauri
+      - name: Build Tauri app (release, no bundle)
+        working-directory: native/tauri
+        run: npx tauri build --no-bundle --ci
+
+  wails:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: native/wails/go.mod
+      - name: Install GTK3/WebKitGTK prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config gcc
+      - run: go vet -tags gtk3 ./...
+        working-directory: native/wails
+      - name: Build Wails app (gtk3 backend)
+        working-directory: native/wails
+        run: go build -tags gtk3 -o browser-features .
