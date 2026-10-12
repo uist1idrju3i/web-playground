@@ -32,7 +32,7 @@ const gate = await checkRequirements({
     'local-storage',
     'indexeddb',
   ],
-  container: $('screen-boot'),
+  container: $('requirements'),
 });
 
 const appEl = $('app');

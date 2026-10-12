@@ -31,6 +31,7 @@ export function createWebGL2(canvas) {
     alpha: false,
     antialias: true,
     powerPreference: 'high-performance',
+    preserveDrawingBuffer: true,
   });
   if (!gl) throw new Error('WebGL2 unavailable');
 
@@ -115,8 +116,10 @@ export function createWebGL2(canvas) {
     gl.uniform2f(u.bg.cam, vt.cx, vt.cy);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    // Cord (pivot -> ball), opaque-ish
+    // Stick (top of frame -> ball), opaque-ish
     gl.useProgram(cordProg);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(u.co.scale, sx, sy);
     gl.uniform2f(u.co.cam, vt.cx, vt.cy);
     gl.uniform4f(u.co.line, 0, WORLD.stickTopY, scene.ball.x, scene.ball.y);
