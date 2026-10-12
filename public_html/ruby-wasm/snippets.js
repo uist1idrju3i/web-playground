@@ -91,7 +91,7 @@ Dir.glob("/*.txt") + [File.read("/hello_from_ruby.txt").strip]
       {
         id: 'stdin',
         title: 'gets / stdin',
-        note: 'fill the stdin box first, then run',
+        note: 'type stdin lines into the toolbar field (use \\n between lines), then run',
         code: `3.times do
   line = gets&.chomp
   puts "you said: #{line.inspect}"

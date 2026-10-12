@@ -62,14 +62,14 @@
       <div id="requirements" aria-live="polite"></div>
       <p id="load-error" class="load-error" role="alert" hidden></p>
 
-      <section class="panel" aria-labelledby="boot-title" id="boot-panel">
-        <div class="section-title">
+      <details class="panel boot-panel" id="boot-panel" open>
+        <summary class="section-title boot-summary">
           <div>
             <p class="eyebrow">00 · BOOT</p>
             <h2 id="boot-title">VM boot</h2>
           </div>
           <span id="boot-status" class="status-chip status-info">Waiting</span>
-        </div>
+        </summary>
         <ol id="boot-steps" class="boot-steps">
           <li data-stage="fetch"><span class="boot-dot"></span>Download runtime (gzip)</li>
           <li data-stage="compile"><span class="boot-dot"></span>Compile wasm module</li>
@@ -78,89 +78,81 @@
           <li data-stage="ready"><span class="boot-dot"></span>Ready</li>
         </ol>
         <dl id="boot-metrics" class="environment-grid" hidden></dl>
-      </section>
+      </details>
 
-      <div class="playground-grid">
-        <section class="panel" aria-labelledby="editor-title">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">01 · WRITE RUBY</p>
-              <h2 id="editor-title">Editor</h2>
-            </div>
-            <div class="editor-actions">
-              <button id="share-button" class="ghost-button" type="button" disabled>
-                Copy share URL
-              </button>
-            </div>
+      <div class="workbench">
+        <div class="workbench-toolbar">
+          <label class="snippet-pick">
+            <span class="snippet-pick-label">Snippet</span>
+            <select id="snippet-select" aria-label="Example snippets">
+              <option value="">— pick one —</option>
+            </select>
+          </label>
+          <button id="run-button" class="primary-button" type="button" disabled>
+            Run ▶ <kbd>Ctrl+Enter</kbd>
+          </button>
+          <div class="mode-seg" role="group" aria-label="Run mode" id="mode-picker">
+            <label><input type="radio" name="mode" value="eval" checked /><span>eval</span></label>
+            <label
+              ><input type="radio" name="mode" value="evalAsync" /><span
+                >evalAsync (.await)</span
+              ></label
+            >
           </div>
-          <div id="snippet-gallery" class="snippet-gallery" aria-label="Example snippets"></div>
-          <div class="editor-wrap">
-            <textarea
-              id="code-editor"
-              name="code"
-              spellcheck="false"
-              aria-label="Ruby source code"
-            ></textarea>
-          </div>
-          <div class="run-bar">
-            <fieldset class="mode-picker" id="mode-picker">
-              <legend>Run mode</legend>
-              <label
-                ><input type="radio" name="mode" value="eval" checked /> eval
-                <span class="mode-hint">(synchronous)</span></label
-              >
-              <label
-                ><input type="radio" name="mode" value="evalAsync" /> evalAsync
-                <span class="mode-hint">(Promise + JS .await)</span></label
-              >
-            </fieldset>
-            <div class="run-buttons">
-              <button id="run-button" class="primary-button" type="button" disabled>
-                Run ▶ <kbd>Ctrl+Enter</kbd>
-              </button>
-              <button id="kill-button" class="danger-button" type="button" disabled hidden>
-                Kill VM
-              </button>
-              <button id="restart-button" class="ghost-button" type="button" hidden>
-                Restart VM
-              </button>
-            </div>
-            <span id="vm-state" class="status-chip status-info">booting…</span>
-          </div>
-          <details class="stdin-row">
-            <summary>stdin for <code>gets</code> (optional)</summary>
-            <textarea
-              id="stdin-box"
-              rows="2"
-              placeholder="Lines fed to Ruby's STDIN before each run"
-            ></textarea>
-          </details>
-        </section>
+          <input
+            id="stdin-box"
+            type="text"
+            class="stdin-inline"
+            placeholder="stdin for gets (\n = new line)"
+            title="stdin fed to gets — type \n between lines"
+            aria-label="stdin lines fed to Ruby before each run"
+          />
+          <span class="toolbar-spacer"></span>
+          <span id="vm-state" class="status-chip status-info">booting…</span>
+          <button id="kill-button" class="danger-button" type="button" disabled hidden>
+            Kill VM
+          </button>
+          <button id="restart-button" class="ghost-button" type="button" hidden>Restart</button>
+          <button id="share-button" class="ghost-button" type="button" disabled>Share</button>
+        </div>
 
-        <section class="panel" aria-labelledby="session-title">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">02 · RUN</p>
+        <div class="workbench-body">
+          <section class="workbench-editor" aria-labelledby="editor-title">
+            <h2 id="editor-title" class="visually-hidden">Editor</h2>
+            <div class="editor-wrap">
+              <textarea
+                id="code-editor"
+                name="code"
+                spellcheck="false"
+                aria-label="Ruby source code"
+              ></textarea>
+            </div>
+            <p id="snippet-note" class="snippet-note" aria-live="polite"></p>
+          </section>
+
+          <section class="workbench-output" aria-labelledby="session-title">
+            <div class="stage">
+              <div class="stage-head">
+                <h2 class="visually-hidden">Ruby stage</h2>
+                <p class="stage-label">Stage — page toys draw & listen here</p>
+                <button id="reset-stage" class="ghost-button" type="button">Reset</button>
+              </div>
+              <canvas id="stage-canvas" width="480" height="200"></canvas>
+              <div class="stage-toys">
+                <button id="stage-btn" class="ghost-button" type="button">stage button</button>
+                <input id="stage-input" type="text" placeholder="type here (keydown events)" />
+              </div>
+              <div id="stage-out" class="stage-out" aria-live="polite"></div>
+            </div>
+            <div class="log-head">
               <h2 id="session-title">Session log</h2>
+              <button id="clear-log" class="ghost-button" type="button">Clear</button>
             </div>
-            <div class="editor-actions">
-              <button id="clear-log" class="ghost-button" type="button">Clear log</button>
-              <button id="reset-stage" class="ghost-button" type="button">Reset stage</button>
+            <div id="irb-log" class="irb-log" aria-live="polite">
+              <p class="loading-state">Boot the VM to start a session.</p>
             </div>
-          </div>
-          <div id="irb-log" class="irb-log" aria-live="polite">
-            <p class="loading-state">Boot the VM to start a session.</p>
-          </div>
-          <div class="stage">
-            <p class="stage-label">Ruby stage — DOM toys snippets can touch</p>
-            <canvas id="stage-canvas" width="480" height="200"></canvas>
-            <div class="stage-toys">
-              <button id="stage-btn" class="ghost-button" type="button">stage button</button>
-              <input id="stage-input" type="text" placeholder="type here (keydown events)" />
-            </div>
-            <div id="stage-out" class="stage-out" aria-live="polite"></div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
 
       <section class="panel" aria-labelledby="matrix-title">

@@ -52,14 +52,6 @@ async function assertClean(page, diagnostics, browserName) {
   expect(diagnostics.pageErrors).toEqual([]);
 }
 
-async function openSnippetGroup(page, snippetId) {
-  await page
-    .locator(`details.snippet-group:has(.snippet-item[data-snippet="${snippetId}"])`)
-    .evaluate((el) => {
-      el.open = true;
-    });
-}
-
 async function waitForBoot(page) {
   await expect(page.locator('#vm-state')).toContainText('ready', { timeout: 60_000 });
 }
@@ -70,6 +62,8 @@ test('Ruby.wasm app boots the VM and runs Ruby', async ({ page, baseURL, browser
   await page.goto('/ruby-wasm/');
   await expect(page.getByRole('heading', { name: 'Ruby.wasm Playground' })).toBeVisible();
   await waitForBoot(page);
+  // The boot panel auto-collapses once the VM is ready — expand it for metrics.
+  await page.locator('#boot-panel').evaluate((el) => (el.open = true));
   await expect(page.locator('#boot-metrics')).toContainText('ruby 3.4');
   await expect(page.locator('#boot-metrics')).toContainText('wasm32-wasi');
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
@@ -107,9 +101,8 @@ test('snippet gallery loads and runs the click counter on the stage', async ({
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
 
-  await openSnippetGroup(page, 'counter');
-  await page.locator('.snippet-item[data-snippet="counter"]').click();
-  await page.locator('#run-button').click();
+  // Picking a snippet auto-runs it in the workbench toolbar.
+  await page.locator('#snippet-select').selectOption('counter');
   await expect(page.locator('.irb-entry').last()).toContainText('listener armed', {
     timeout: 15_000,
   });
@@ -123,9 +116,7 @@ test('canvas snippet paints pixels through the DOM bridge', async ({ page, brows
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
 
-  await openSnippetGroup(page, 'rainbow');
-  await page.locator('.snippet-item[data-snippet="rainbow"]').click();
-  await page.locator('#run-button').click();
+  await page.locator('#snippet-select').selectOption('rainbow');
   await expect(page.locator('.irb-entry').last()).toContainText('=>', { timeout: 15_000 });
   const painted = await page.locator('#stage-canvas').evaluate((canvas) => {
     const ctx = canvas.getContext('2d');
