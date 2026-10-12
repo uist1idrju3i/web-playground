@@ -34,6 +34,20 @@ function storageFailure(error, label) {
   return { status: 'unsupported', reason, detail };
 }
 
+export function uniqueCodecMimeTypes(codecs = []) {
+  const seen = new Set();
+  const unique = [];
+  for (const codec of codecs) {
+    const mimeType = codec?.mimeType;
+    if (typeof mimeType !== 'string' || !mimeType.trim()) continue;
+    const normalized = mimeType.toLowerCase();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    unique.push(mimeType);
+  }
+  return unique;
+}
+
 function probeKeyValueStorage(storageName, label) {
   let storage;
   let key;
@@ -357,12 +371,17 @@ export const capabilities = [
     'Media',
     () => {
       const sender = globalThis.RTCRtpSender;
-      const codecs = sender?.getCapabilities?.('audio')?.codecs ?? [];
+      const audioCodecs = uniqueCodecMimeTypes(sender?.getCapabilities?.('audio')?.codecs ?? []);
+      const videoCodecs = uniqueCodecMimeTypes(sender?.getCapabilities?.('video')?.codecs ?? []);
+      const codecDetails = [
+        audioCodecs.length ? `audio codecs: ${audioCodecs.join(', ')}` : null,
+        videoCodecs.length ? `video codecs: ${videoCodecs.join(', ')}` : null,
+      ]
+        .filter(Boolean)
+        .join('; ');
       return available(
         'RTCPeerConnection' in globalThis,
-        codecs.length
-          ? `RTCPeerConnection available; audio codecs: ${codecs.map((codec) => codec.mimeType).join(', ')}.`
-          : 'RTCPeerConnection is available.',
+        `RTCPeerConnection is available${codecDetails ? `; ${codecDetails}` : '.'}`,
       );
     },
     { web_features_id: 'webrtc' },

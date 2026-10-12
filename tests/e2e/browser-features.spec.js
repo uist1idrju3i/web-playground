@@ -11,14 +11,70 @@ test('the portal links to Browser Features', async ({ page }) => {
 
 test('Browser Features loads without console errors', async ({ page }) => {
   const errors = [];
+  await page.addInitScript(() => {
+    window.__securityPolicyViolations = [];
+    document.addEventListener('securitypolicyviolation', (event) => {
+      window.__securityPolicyViolations.push({
+        directive: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        sourceFile: event.sourceFile,
+        line: event.lineNumber,
+      });
+    });
+  });
   page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+    const messageText = message.text();
+    if (
+      message.type() === 'error' ||
+      /content security policy|refused to apply|style-src/i.test(messageText)
+    ) {
+      errors.push(messageText);
+    }
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/browser-features/');
   await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
-  expect(errors).toEqual([]);
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const violations = await page.evaluate(() => window.__securityPolicyViolations);
+  expect({ errors, violations }).toEqual({ errors: [], violations: [] });
+});
+
+test('Permissions Policy features are disclosed as wrapped chips', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const disclosure = page.locator('.permissions-policy-details');
+  const summary = await disclosure.locator('summary').textContent();
+  const count = Number(summary?.match(/^\d+/)?.[0] ?? 0);
+  expect(summary).toMatch(/allowed features|No feature list exposed/);
+  await disclosure.locator('summary').click();
+  await expect(disclosure).toHaveAttribute('open', '');
+  const chips = disclosure.locator('.permissions-policy-features li');
+  await expect(chips).toHaveCount(count);
+  if (count) {
+    await expect(page.locator('.permissions-policy-item')).toHaveClass(/is-expanded/);
+    const widths = await page.evaluate(() => ({
+      card: document.querySelector('.permissions-policy-item').getBoundingClientRect().width,
+      grid: document.querySelector('#environment-grid').getBoundingClientRect().width,
+      list: getComputedStyle(document.querySelector('.permissions-policy-features')).flexWrap,
+    }));
+    expect(Math.abs(widths.card - widths.grid)).toBeLessThan(1);
+    expect(widths.list).toBe('wrap');
+  }
+});
+
+test('WebRTC details list each audio and video codec mimeType once', async ({ page }) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const detail = await page
+    .locator('[data-capability-id="webrtc"] .capability-copy p')
+    .textContent();
+  for (const kind of ['audio', 'video']) {
+    const match = detail?.match(new RegExp(`${kind} codecs: ([^;]+)`));
+    if (!match) continue;
+    const codecs = match[1].split(', ');
+    expect(new Set(codecs).size).toBe(codecs.length);
+  }
 });
 
 test('the app fits a mobile-width viewport', async ({ page }) => {
@@ -30,6 +86,77 @@ test('the app fits a mobile-width viewport', async ({ page }) => {
     viewport: window.innerWidth,
   }));
   expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+});
+
+test('Baseline-widely features do not produce false unsupported results', async ({
+  page,
+  browserName,
+}) => {
+  await page.goto('/browser-features/');
+  await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+  const results = await page.evaluate(async () => {
+    const data = await fetch('/library/data/web-features.json').then((response) => response.json());
+    const { probeFeature } = await import('/library/js/feature-probe.js');
+    const counts = { supported: 0, partial: 0, unsupported: 0, untestable: 0 };
+    const widelyUnsupported = [];
+    for (const feature of data.features) {
+      const status = probeFeature(feature).status;
+      const category = status.startsWith('partial(') ? 'partial' : status;
+      counts[category] += 1;
+      if (feature.baseline.status === 'widely' && status === 'unsupported') {
+        widelyUnsupported.push(feature.id);
+      }
+    }
+    return { counts, widelyUnsupported };
+  });
+
+  const unsupportedAllowlist = new Map([
+    // This bundled WebKit build omits the credential-management interfaces.
+    [
+      'credential-management',
+      'The bundled WebKit runtime does not expose Credential or CredentialsContainer.',
+    ],
+    // The desktop WebKit test context cannot exercise device sensor interfaces.
+    [
+      'device-orientation-events',
+      'This desktop WebKit context exposes no device-motion or device-orientation interfaces.',
+    ],
+    // The bundled WebKit media stack omits Encrypted Media Extensions.
+    [
+      'encrypted-media-extensions',
+      'The bundled WebKit media stack exposes no MediaKeys or MediaKeySystemAccess interfaces.',
+    ],
+    // Its HTMLElement implementation does not reflect enterkeyhint in this build.
+    [
+      'enterkeyhint',
+      'HTMLElement.prototype in the bundled WebKit runtime lacks the enterKeyHint reflection.',
+    ],
+    // forced-color-adjust is not implemented by this WebKit build.
+    [
+      'forced-colors',
+      'The bundled WebKit runtime does not recognize the forced-color-adjust CSS property.',
+    ],
+    // This bundled WebKit build omits MediaRecorder and BlobEvent.
+    [
+      'mediastream-recording',
+      'The bundled WebKit runtime exposes neither MediaRecorder nor BlobEvent.',
+    ],
+    // The bundled WebKit build does not expose Origin Private File System handles.
+    [
+      'origin-private-file-system',
+      'The bundled WebKit runtime does not expose the OPFS FileSystemHandle interfaces.',
+    ],
+    // This WebKit build does not expose the StorageManager interface.
+    [
+      'storage-manager',
+      'The bundled WebKit runtime exposes neither Navigator.storage nor StorageManager.',
+    ],
+  ]);
+  expect(
+    results.widelyUnsupported.filter((id) => !unsupportedAllowlist.has(id)),
+    `${browserName} Baseline-widely unsupported features: ${results.widelyUnsupported.join(', ')}`,
+  ).toEqual([]);
+  expect([...unsupportedAllowlist.values()].every(Boolean)).toBe(true);
 });
 
 test('the ten requested highlight capabilities remain in order', async ({ page }) => {

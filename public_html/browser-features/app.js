@@ -82,7 +82,29 @@ function renderEnvironment() {
       const term = document.createElement('dt');
       term.textContent = label;
       const description = document.createElement('dd');
-      description.textContent = value;
+      if (label === 'Permissions Policy') {
+        wrapper.classList.add('permissions-policy-item');
+        const details = document.createElement('details');
+        details.className = 'permissions-policy-details';
+        const summary = document.createElement('summary');
+        summary.textContent = environment.permissionsPolicy.length
+          ? `${environment.permissionsPolicy.length} allowed features`
+          : 'No feature list exposed';
+        const featureList = document.createElement('ul');
+        featureList.className = 'permissions-policy-features';
+        for (const feature of environment.permissionsPolicy) {
+          const item = document.createElement('li');
+          item.textContent = feature;
+          featureList.append(item);
+        }
+        details.append(summary, featureList);
+        details.addEventListener('toggle', () => {
+          wrapper.classList.toggle('is-expanded', details.open);
+        });
+        description.append(details);
+      } else {
+        description.textContent = value;
+      }
       wrapper.append(term, description);
       return wrapper;
     }),
@@ -150,9 +172,13 @@ function createFeatureCard({ feature, probe }) {
   details.id = feature.id;
   const summary = document.createElement('summary');
   const name = document.createElement('span');
-  name.innerHTML = `<span class="feature-name"></span><span class="feature-id"></span>`;
-  name.querySelector('.feature-name').textContent = feature.name;
-  name.querySelector('.feature-id').textContent = feature.id;
+  const featureName = document.createElement('span');
+  featureName.className = 'feature-name';
+  featureName.textContent = feature.name;
+  const featureId = document.createElement('span');
+  featureId.className = 'feature-id';
+  featureId.textContent = feature.id;
+  name.append(featureName, featureId);
   const chrome = document.createElement('span');
   chrome.className = 'feature-version';
   chrome.textContent = `Chrome ${feature.support.chrome ?? '—'}`;
@@ -400,6 +426,7 @@ async function initialize() {
       annotations: { readOnlyHint: true },
     },
   ]);
+  document.body.dataset.appReady = 'true';
 }
 
 try {
