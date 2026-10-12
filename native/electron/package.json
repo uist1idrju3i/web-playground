@@ -1,0 +1,17 @@
+{
+  "name": "browser-features-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron shell for the Web Playground Browser Features app",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  }
+}

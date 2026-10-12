@@ -6,3 +6,10 @@ docs/capability-reference.md
 public_html/tsumiki/vendor/**
 public_html/tsumiki/data/prefectures.json
 scripts/geo/**
+
+# Native desktop shells (toolchain-managed / generated)
+native/**/package-lock.json
+native/tauri/src-tauri/target/
+native/tauri/src-tauri/gen/
+native/tauri/src-tauri/Cargo.lock
+native/wails/go.sum
