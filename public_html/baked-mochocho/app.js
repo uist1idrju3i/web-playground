@@ -502,20 +502,17 @@ async function loadSave() {
   }
 }
 
-async function start() {
+function start() {
   const button = $('start-button');
   button.disabled = true;
-  try {
-    // Never let a stalled audio unlock (e.g. a suspended context) block the game.
-    const timeout = new Promise((resolve) => setTimeout(resolve, 1500, 'timeout'));
-    if ((await Promise.race([state.audio.unlock(), timeout])) === 'timeout') {
-      console.info('Audio unlock timed out; continuing without waiting.');
-    }
-  } catch (error) {
-    console.info('Audio unavailable:', error.message);
-  }
+  // Desired state first: engine reads these flags when the context finally exists.
   state.audio.setEnabled(state.save.sound);
   state.audio.setBgm(state.save.bgm);
+  // Unlock fully in the background — a stalled AudioContext (e.g. headless
+  // browsers without an audio device) must never hold the start click hostage.
+  void Promise.resolve()
+    .then(() => state.audio.unlock())
+    .catch((error) => console.info('Audio unavailable:', error.message));
   $('title-screen').hidden = true;
   state.running = true;
   state.paused = false;
