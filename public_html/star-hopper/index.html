@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#241a3a" />
+    <title>ほしがりホッパー · Web Playground</title>
+    <meta
+      name="description"
+      content="A first-person floating-island platformer: WebGL2 + WebGPU visuals, WebAssembly physics, original WebAudio score, HMAC-signed saves."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/star-hopper/app.css" />
+    <script type="module" src="/star-hopper/app.js"></script>
+  </head>
+  <body class="star-hopper">
+    <header class="site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <a class="back-link" href="/">← All apps</a>
+    </header>
+    <main class="app-shell">
+      <section class="app-hero">
+        <p class="eyebrow">BROWSER PLAY · FIRST-PERSON</p>
+        <div class="hero-title-row">
+          <div>
+            <h1>ほしがりホッパー</h1>
+            <p>Hop floating islands at sunset and collect all 21 star shards. iPhone-ready.</p>
+          </div>
+        </div>
+      </section>
+      <div id="requirements"></div>
+      <div id="app" class="stage">
+        <canvas id="gpu-canvas" hidden></canvas>
+        <canvas id="game-canvas" aria-label="star hopper game view"></canvas>
+        <div id="speed-vignette" aria-hidden="true"></div>
+        <div id="crosshair" aria-hidden="true">·</div>
+
+        <div id="hud">
+          <div class="hud-top">
+            <div class="hud-cell">
+              <span class="hud-k" data-i18n="score">スコア</span>
+              <strong id="hud-score">0</strong>
+            </div>
+            <div class="hud-cell">
+              <span class="hud-k" data-i18n="best">さいこう</span>
+              <strong id="hud-best">0</strong>
+            </div>
+            <div class="hud-cell hud-time-cell">
+              <span class="hud-k" data-i18n="time">のこり</span>
+              <strong id="hud-time">240</strong>
+            </div>
+            <div class="hud-cell">
+              <span class="hud-k" data-i18n="shards">かけら</span>
+              <strong id="hud-shards">0 / 21</strong>
+            </div>
+          </div>
+          <div id="combo-wrap" hidden>
+            <span id="hud-combo">x2</span>
+            <div class="combo-track"><div id="combo-fill"></div></div>
+          </div>
+          <div class="hud-actions">
+            <button
+              id="btn-pause"
+              class="icon-btn"
+              type="button"
+              data-i18n-aria="pause"
+              aria-label="Pause"
+            >
+              ⏸
+            </button>
+            <button
+              id="mute-btn"
+              class="icon-btn"
+              type="button"
+              data-i18n-aria="sound"
+              aria-label="Mute"
+            >
+              🔊
+            </button>
+            <button
+              id="bgm-btn"
+              class="icon-btn"
+              type="button"
+              data-i18n-aria="bgm"
+              aria-label="Music"
+            >
+              ♪
+            </button>
+          </div>
+        </div>
+
+        <div id="center-msg" hidden></div>
+        <div id="pop-layer" aria-hidden="true"></div>
+        <div id="toast" role="status" aria-live="polite">
+          <div class="toast-main"></div>
+          <div class="toast-sub"></div>
+        </div>
+        <div id="save-warning" role="status" hidden></div>
+        <div id="boot-error" role="alert" hidden></div>
+
+        <div id="touch-ui" aria-hidden="true">
+          <div id="stick" class="stick">
+            <div class="stick-base"></div>
+            <div class="stick-knob"></div>
+          </div>
+          <button id="jump-btn" type="button">JUMP</button>
+        </div>
+
+        <section id="screen-title" class="screen">
+          <div class="panel">
+            <div class="panel-logo" aria-hidden="true">★</div>
+            <h2>
+              <span data-i18n="titleSmall">ほしがり</span
+              ><span data-i18n="titleMain">ホッパー</span>
+            </h2>
+            <p class="lead" data-i18n="titleCopy"></p>
+            <button id="btn-start" class="primary" type="button" data-i18n="start">はじめる</button>
+            <div class="row">
+              <button id="btn-how" type="button" data-i18n="how">あそびかた</button>
+              <button id="btn-lang" type="button" data-i18n="language">English</button>
+            </div>
+            <div class="vol-row">
+              <label for="vol" data-i18n="sound">おとの おおきさ</label>
+              <input id="vol" type="range" min="0" max="1" step="0.05" value="0.8" />
+            </div>
+            <p class="hint" id="title-hint"></p>
+            <p class="hint engine-note" id="engine-note"></p>
+          </div>
+        </section>
+
+        <section id="screen-oobe" class="screen">
+          <div class="panel">
+            <h2 id="oobe-title"></h2>
+            <p id="oobe-body" class="lead"></p>
+            <div id="oobe-dots" aria-hidden="true"></div>
+            <button id="oobe-next" class="primary" type="button" data-i18n="next">つぎへ</button>
+            <button id="oobe-close" type="button" data-i18n="close">とじる</button>
+          </div>
+        </section>
+
+        <section id="screen-how" class="screen">
+          <div class="panel">
+            <h2 data-i18n="how">あそびかた</h2>
+            <dl class="how-grid">
+              <dt data-i18n="howto.move.title"></dt>
+              <dd data-i18n="howto.move.body"></dd>
+              <dt data-i18n="howto.look.title"></dt>
+              <dd data-i18n="howto.look.body"></dd>
+              <dt data-i18n="howto.jump.title"></dt>
+              <dd data-i18n="howto.jump.body"></dd>
+            </dl>
+            <button id="how-close" class="primary" type="button" data-i18n="close">とじる</button>
+          </div>
+        </section>
+
+        <section id="screen-pause" class="screen">
+          <div class="panel">
+            <h2 data-i18n="pause">いったんやすみ</h2>
+            <button id="btn-resume" class="primary" type="button" data-i18n="resume">
+              つづける
+            </button>
+            <button id="btn-quit" type="button" data-i18n="quit">おわる</button>
+          </div>
+        </section>
+
+        <section id="screen-result" class="screen">
+          <div class="panel">
+            <h2 id="result-title" data-i18n="result">けっか</h2>
+            <div id="result-new" class="newbest" data-i18n="newBest" hidden>
+              あたらしい さいこう！
+            </div>
+            <dl class="result-grid">
+              <dt data-i18n="score">とくてん</dt>
+              <dd id="result-score">0</dd>
+              <dt data-i18n="best">さいこう</dt>
+              <dd id="result-best">0</dd>
+              <dt data-i18n="collected">あつめた かけら</dt>
+              <dd id="result-shards">0 / 21</dd>
+              <dt data-i18n="bestCombo">さいだい コンボ</dt>
+              <dd id="result-combo">0</dd>
+              <dt data-i18n="falls">おちた かず</dt>
+              <dd id="result-falls">0</dd>
+            </dl>
+            <button id="btn-retry" class="primary" type="button" data-i18n="retry">
+              もういちど
+            </button>
+            <button id="btn-title" type="button" data-i18n="toTitle">さいしょの がめんへ</button>
+          </div>
+        </section>
+      </div>
+      <footer class="site-footer">
+        <p>
+          All code, music, and visuals are original and procedural — no external assets. Physics
+          runs in hand-built WebAssembly; saves are HMAC-SHA-256 signed.
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>
