@@ -8,6 +8,7 @@ expected_rust=1.99.0
 apps=(
   "baked-mochocho|mochocho_sim|mochocho-sim|public_html/baked-mochocho/wasm"
   "star-hopper|starhopper_sim|starhopper-sim|public_html/star-hopper/wasm"
+  "senko-hanabi|senko_sim|senko-sim|public_html/senko-hanabi/wasm"
 )
 
 if [[ $# -gt 0 ]]; then
