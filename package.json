@@ -7,8 +7,8 @@
     "node": ">=24.21.0 <25"
   },
   "scripts": {
-    "generate": "node scripts/generate-feature-data.mjs && node scripts/generate-wasm-probes.mjs && node scripts/generate-capability-reference.mjs",
-    "check:generated": "npm run generate && git diff --exit-code HEAD -- public_html/library/data/web-features.json docs/web-platform-features.md docs/capability-reference.md public_html/library/wasm/probes",
+    "generate": "node scripts/generate-feature-data.mjs && node scripts/generate-wasm-probes.mjs && node scripts/generate-capability-reference.mjs && node scripts/generate-prefecture-data.mjs",
+    "check:generated": "npm run generate && git diff --exit-code HEAD -- public_html/library/data/web-features.json docs/web-platform-features.md docs/capability-reference.md public_html/library/wasm/probes public_html/tsumiki/data/prefectures.json",
     "lint": "eslint . && node scripts/check-external-resources.mjs && node scripts/check-doc-links.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

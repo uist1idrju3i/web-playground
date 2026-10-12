@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#101528" />
+    <title>たのしい都道府県つみき · Web Playground</title>
+    <meta
+      name="description"
+      content="Stack all 47 Japanese prefectures — WebGL2 visuals, WASM physics, adaptive WebAudio score, HMAC-signed saves."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/tsumiki/app.css" />
+    <script type="module" src="/tsumiki/app.js"></script>
+  </head>
+  <body class="tsumiki">
+    <header class="site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <a class="back-link" href="/">← All apps</a>
+    </header>
+    <main class="app-shell">
+      <section class="app-hero">
+        <p class="eyebrow">BROWSER PLAY · PHYSICS</p>
+        <div class="hero-title-row">
+          <div>
+            <h1>たのしい都道府県つみき</h1>
+            <p>Stack all 47 prefecture blocks under a procedural dawn sky. iPhone-ready.</p>
+          </div>
+        </div>
+      </section>
+      <div id="requirements"></div>
+      <div id="app" class="stage">
+        <canvas id="gpu-canvas" hidden></canvas>
+        <canvas id="game-canvas" aria-label="tsumiki game field"></canvas>
+
+        <div id="hud">
+          <div class="hud-top">
+            <div class="hud-cell">
+              <span class="hud-k">とくてん</span>
+              <strong id="hud-score">0</strong>
+              <span id="hud-combo" class="combo"></span>
+            </div>
+            <div class="hud-cell">
+              <span class="hud-k">さいこう</span>
+              <strong id="hud-best">0</strong>
+            </div>
+            <div class="hud-cell">
+              <span class="hud-k">のこり</span>
+              <span id="hud-hearts" class="hearts">♥♥♥</span>
+            </div>
+            <div class="hud-cell hud-next">
+              <span class="hud-k">つぎ</span>
+              <canvas id="next-canvas" width="72" height="72"></canvas>
+              <span id="next-label">—</span>
+            </div>
+          </div>
+          <div class="hud-side">
+            <div class="height-meter"><div id="height-fill"></div></div>
+            <span class="hud-k"><span id="height-num">0.0</span> m</span>
+          </div>
+          <div id="wind-ind" aria-hidden="true"></div>
+          <div class="hud-actions">
+            <button id="btn-pause" class="icon-btn" type="button" aria-label="Pause">⏸</button>
+            <button id="mute-btn" class="icon-btn" type="button" aria-label="Mute">🔊</button>
+            <button id="btn-collection" class="icon-btn" type="button" aria-label="Collection">
+              けん
+            </button>
+          </div>
+        </div>
+
+        <div id="toast" role="status" aria-live="polite">
+          <div class="toast-main"></div>
+          <div class="toast-sub"></div>
+        </div>
+        <div id="save-warning" role="status" hidden></div>
+        <div id="boot-error" role="alert" hidden></div>
+
+        <section id="screen-title" class="screen">
+          <div class="panel">
+            <div class="panel-logo" aria-hidden="true">都</div>
+            <h2>たのしい都道府県つみき</h2>
+            <p class="lead">
+              あさの そらに、47の けんを つみあげよう。<br />
+              ひっぱって ねらう。はなして おとす。3かい おちたら おしまい。
+            </p>
+            <button id="btn-start" class="primary" type="button">はじめる</button>
+            <div class="row">
+              <button id="btn-how" type="button">あそびかた</button>
+              <button id="btn-collection-2" type="button">あつめたけん</button>
+            </div>
+            <div class="vol-row">
+              <label for="vol">おとの おおきさ</label>
+              <input id="vol" type="range" min="0" max="1" step="0.05" value="0.8" />
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-oobe" class="screen">
+          <div class="panel">
+            <h2 id="oobe-title"></h2>
+            <p id="oobe-body" class="lead"></p>
+            <div id="oobe-dots" aria-hidden="true"></div>
+            <button id="oobe-next" class="primary" type="button">つぎへ</button>
+          </div>
+        </section>
+
+        <section id="screen-pause" class="screen">
+          <div class="panel">
+            <h2>いったんやすみ</h2>
+            <button id="btn-resume" class="primary" type="button">つづける</button>
+            <button id="btn-quit" type="button">おわる</button>
+          </div>
+        </section>
+
+        <section id="screen-result" class="screen">
+          <div class="panel">
+            <h2>おしまい</h2>
+            <div id="result-new" class="newbest" hidden>あたらしい さいこう！</div>
+            <dl class="result-grid">
+              <dt>とくてん</dt>
+              <dd id="result-score">0</dd>
+              <dt>さいこう</dt>
+              <dd id="result-best">0</dd>
+              <dt>たかさ</dt>
+              <dd id="result-height">0 m</dd>
+              <dt>あつめたけん</dt>
+              <dd id="result-pieces">0 / 47</dd>
+              <dt>おとした かず</dt>
+              <dd id="result-count">0</dd>
+            </dl>
+            <button id="btn-retry" class="primary" type="button">もういちど</button>
+            <button id="btn-title" type="button">さいしょの がめんへ</button>
+          </div>
+        </section>
+
+        <section id="screen-collection" class="screen">
+          <div class="panel panel-wide">
+            <h2>あつめた けん 47</h2>
+            <div id="collection-grid"></div>
+            <button id="collection-close" class="primary" type="button">とじる</button>
+          </div>
+        </section>
+      </div>
+      <footer class="site-footer">
+        <p>
+          Shapes from Natural Earth (public domain). Physics by Rapier (Apache-2.0), vendored. Music
+          and artwork are original and procedural — no external assets.
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -67,7 +67,7 @@ function propertyName(node) {
   if (node?.type === 'ChainExpression') return propertyName(node.expression);
   if (node?.type !== 'MemberExpression') return null;
   if (!node.computed && node.property.type === 'Identifier') return node.property.name;
-  return node.computed && node.property.type === 'Literal' ? node.property.value : null;
+  return node.computed && node.property.type === 'Literal' ? String(node.property.value) : null;
 }
 
 function memberPath(node) {
