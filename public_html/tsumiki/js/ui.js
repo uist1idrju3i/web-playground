@@ -20,6 +20,7 @@ export class Ui {
       screens: {
         title: $('screen-title'),
         oobe: $('screen-oobe'),
+        oobeClose: $('oobe-close'),
         pause: $('screen-pause'),
         result: $('screen-result'),
         collection: $('screen-collection'),
@@ -110,13 +111,34 @@ export class Ui {
     map.height = 460;
     map.className = 'collection-map';
     const ctx = map.getContext('2d');
+    // Okinawa is drawn in a labelled inset box (bottom-left) instead of at
+    // its raw geographic offset, which floats far below the main islands.
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.beginPath();
+    ctx.roundRect(8, 344, 116, 106, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#b9c6ee';
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('おきなわ', 20, 366);
+    ctx.restore();
     for (const p of pieces) {
       const has = collected.has(p.code);
       const cols = pieceColor(p);
       ctx.save();
-      ctx.translate(26, 14);
-      const s = 54;
-      ctx.translate(p.map[0] * s, p.map[1] * s);
+      let s;
+      if (p.code === 'JP-47') {
+        // Center the shape inside the inset box (shape spans ±0.3 units).
+        s = 90;
+        ctx.translate(66, 400);
+        ctx.translate(-0.019 * s, 0.014 * s);
+      } else {
+        s = 54;
+        ctx.translate(26, 14);
+        ctx.translate(p.map[0] * s, p.map[1] * s);
+      }
       ctx.beginPath();
       p.poly.forEach(([x, y], i) => (i ? ctx.lineTo(x * s, y * s) : ctx.moveTo(x * s, y * s)));
       ctx.closePath();
