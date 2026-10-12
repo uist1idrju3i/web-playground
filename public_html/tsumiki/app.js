@@ -137,17 +137,33 @@ async function boot() {
     audio.stopBgm();
     document.body.classList.remove('in-game');
   });
+  // Where the collection screen was opened from, so close returns correctly.
+  let collectionFrom = 'title';
   on('btn-collection', () => {
+    collectionFrom = 'hud';
+    game.pause(); // freeze physics/audio while browsing; resume() returns to play
     ui.buildCollection(pieces, game.collected, null, game.achievements);
     ui.show('collection');
     audio.playCue('notification');
   });
   on('btn-collection-2', () => {
+    collectionFrom = 'title';
     ui.buildCollection(pieces, game.collected, null, game.achievements);
     ui.show('collection');
   });
   on('collection-close', () => {
-    ui.show(game.state === 'over' ? 'result' : game.state === 'paused' ? 'pause' : 'title');
+    if (collectionFrom === 'hud' && game.state === 'paused') {
+      game.resume();
+    } else if (game.state === 'over') {
+      ui.show('result');
+    } else if (game.state === 'paused') {
+      ui.show('pause');
+    } else {
+      ui.show('title');
+    }
+  });
+  on('oobe-close', () => {
+    ui.show('title');
   });
   on('mute-btn', () => {
     audio.ensure();

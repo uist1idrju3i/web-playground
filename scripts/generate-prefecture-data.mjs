@@ -227,6 +227,7 @@ for (const feature of source.features) {
     regionJa: REGION_JA[region],
     realArea: round3(largestArea),
     geoCenter: geoCenter.map(round3),
+    geoRing: ring,
     diagonal,
     poly: centered.map(([x, y]) => [round3(x), round3(y)]),
     tris,
@@ -235,14 +236,13 @@ for (const feature of source.features) {
 
 pieces.sort((a, b) => a.code.localeCompare(b.code));
 
-// Playable scale: piece bounding diagonal in world units grows with the
-// square-root-ish of the real area, clamped so every piece stays stackable.
-const maxArea = Math.max(...pieces.map((p) => p.realArea));
+// Real scale: 1 world unit = 1 km. Longitudes are projected at 36°N so block
+// sizes match the prefectures' true dimensions — stacking all 47 reaches
+// thousands of km, well past the Kármán line (100 km) and the ISS (400 km).
+const KM_LAT = 111.32;
+const KM_LON = 111.32 * Math.cos((36 * Math.PI) / 180);
 for (const piece of pieces) {
-  const ratio = piece.realArea / maxArea;
-  const targetDiagonal = 0.55 + 1.35 * Math.pow(ratio, 0.28);
-  piece.scale = round3(targetDiagonal / piece.diagonal);
-  piece.poly = piece.poly.map(([x, y]) => [round3(x * piece.scale), round3(y * piece.scale)]);
+  piece.poly = piece.poly.map(([x, y]) => [round3(x * KM_LON), round3(y * KM_LAT)]);
   const xs = piece.poly.map((p) => p[0]);
   const ys = piece.poly.map((p) => p[1]);
   piece.bbox = [
@@ -250,6 +250,10 @@ for (const piece of pieces) {
     round3(Math.min(...ys)),
     round3(Math.max(...xs)),
     round3(Math.max(...ys)),
+  ];
+  piece.kmSize = [
+    round3(Math.max(...xs) - Math.min(...xs)),
+    round3(Math.max(...ys) - Math.min(...ys)),
   ];
   delete piece.diagonal;
 }
@@ -275,6 +279,41 @@ for (const piece of pieces) {
   }
 }
 
+// Shared-space map polygons for the collection map: an equirectangular
+// projection around 36°N, normalised into one [0,1] box so the 46 main
+// prefectures reassemble into the real shape of Japan (y flipped for the
+// canvas). Okinawa is normalised into its own box and drawn as an inset,
+// the standard way atlases place the Ryukyu arc.
+{
+  const COS_36 = Math.cos((36 * Math.PI) / 180);
+  const proj = ([x, y]) => [x * COS_36, y];
+  const main = pieces.filter((p) => p.code !== 'JP-47');
+  const okinawa = pieces.find((p) => p.code === 'JP-47');
+  const pts = main.flatMap((p) => p.geoRing.map(proj));
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const minX = Math.min(...xs);
+  const maxY = Math.max(...ys);
+  const span = Math.max(Math.max(...xs) - minX, maxY - Math.min(...ys));
+  for (const piece of main) {
+    piece.mapPoly = piece.geoRing.map((pt) => {
+      const [x, y] = proj(pt);
+      return [round3((x - minX) / span), round3((maxY - y) / span)];
+    });
+  }
+  const opts = okinawa.geoRing.map(proj);
+  const oxs = opts.map((p) => p[0]);
+  const oys = opts.map((p) => p[1]);
+  const oMinX = Math.min(...oxs);
+  const oMaxY = Math.max(...oys);
+  const oSpan = Math.max(Math.max(...oxs) - oMinX, oMaxY - Math.min(...oys));
+  okinawa.mapPoly = okinawa.geoRing.map((pt) => {
+    const [x, y] = proj(pt);
+    return [round3((x - oMinX) / oSpan), round3((oMaxY - y) / oSpan)];
+  });
+  for (const piece of pieces) delete piece.geoRing;
+}
+
 const output = {
   artifact_kind: 'wp_tsumiki_prefectures',
   schema_version: 1,
@@ -287,7 +326,9 @@ const output = {
   notes:
     'Each prefecture is reduced to its largest outer ring (tsumiki-style single piece) ' +
     'and simplified to at most 72 vertices. Coordinates are centred on the polygon ' +
-    'centroid and pre-scaled to playable size; y points north (up).',
+    'centroid and pre-scaled to playable size; y points north (up). `map` holds ' +
+    'normalised centroid offsets and `mapPoly` the shared-space polygon for the ' +
+    'collection map (equirectangular projection, Okinawa in its own inset box).',
   count: pieces.length,
   pieces,
 };

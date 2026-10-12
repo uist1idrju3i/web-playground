@@ -32,33 +32,34 @@ void main(){
   // world-space y for parallax
   float wy = uv.y * uWorldH + uCam.y - uWorldH*0.5;
   float h = clamp(wy/ max(uWorldH,6.0)*0.5 + 0.5, 0.0, 1.0);
-  // dawn gradient: warm horizon -> indigo zenith, rising with altitude
-  vec3 horizon = mix(vec3(1.0,0.72,0.42), vec3(1.0,0.55,0.52), clamp(wy/20.,0.,1.));
-  vec3 mid     = mix(vec3(0.45,0.35,0.60), vec3(0.55,0.42,0.62), clamp(wy/30.,0.,1.));
-  vec3 zenith  = mix(vec3(0.10,0.14,0.33), vec3(0.05,0.08,0.22), clamp(wy/40.,0.,1.));
+  // dawn gradient -> stratosphere -> space, rising with altitude (wy in km)
+  vec3 horizon = mix(vec3(1.0,0.72,0.42), vec3(0.85,0.45,0.5), clamp(wy/300.,0.,1.));
+  vec3 mid     = mix(vec3(0.45,0.35,0.60), vec3(0.18,0.22,0.5), clamp(wy/500.,0.,1.));
+  vec3 zenith  = mix(vec3(0.10,0.14,0.33), vec3(0.008,0.012,0.05), clamp(wy/900.,0.,1.));
   vec3 col = mix(horizon, mid, smoothstep(0.0,0.45,h));
   col = mix(col, zenith, smoothstep(0.35,1.0,h));
-  // stars fading in with altitude and near the top
-  float star = step(0.9985, hash(floor(uv*uRes/2.))) * smoothstep(0.5,0.9,h);
+  // stars fade in past ~120 km, dense by ~400 km
+  float star = step(0.9985, hash(floor(uv*uRes/2.))) * smoothstep(120.,400.,wy);
   col += star * (0.6+0.4*sin(uTime*2.0+uv.x*50.));
-  // sun: position rides up with the camera
+  // sun: position rides up with the camera; halo thins out in space
+  float atmosphere = smoothstep(600.,200.,wy);
   vec2 sun = uSun;
   vec2 d = (uv - sun) * vec2(uRes.x/uRes.y, 1.0);
   float sd = length(d);
   col += vec3(1.0,0.85,0.6) * (0.012/(sd+0.012));            // core glow
-  col += vec3(1.0,0.6,0.35) * 0.35 * exp(-sd*3.0);          // halo
-  // god rays: angular streaks from the sun
+  col += vec3(1.0,0.6,0.35) * 0.35 * exp(-sd*3.0) * atmosphere; // halo
+  // god rays: angular streaks from the sun (atmosphere only)
   float ang = atan(d.y, d.x);
   float rays = pow(abs(sin(ang*7.0 + fbm(vec2(ang*3.0,uTime*0.05))*2.0)), 24.0);
-  col += vec3(1.0,0.75,0.45) * rays * 0.10 * exp(-sd*1.6);
-  // layered clouds drifting horizontally, parallax by altitude
+  col += vec3(1.0,0.75,0.45) * rays * 0.10 * exp(-sd*1.6) * atmosphere;
+  // layered clouds drifting horizontally, thinning out by ~60 km
   float c1 = fbm(vec2(uv.x*3.0 + uTime*0.012 + wy*0.02, uv.y*5.0));
   float c2 = fbm(vec2(uv.x*6.0 - uTime*0.02, uv.y*9.0) + 7.3);
   float clouds = smoothstep(0.55,0.8,c1)*0.5 + smoothstep(0.6,0.85,c2)*0.3;
   vec3 cloudCol = mix(vec3(1.0,0.8,0.7), vec3(0.9,0.7,0.8), h);
-  col = mix(col, cloudCol, clouds * smoothstep(0.9,0.3,h) * 0.8);
-  // distant haze band above the horizon
-  col += vec3(1.0,0.75,0.5) * 0.18 * exp(-abs(h-0.16)*14.0);
+  col = mix(col, cloudCol, clouds * smoothstep(60.,15.,wy) * 0.8);
+  // distant haze band near the ground
+  col += vec3(1.0,0.75,0.5) * 0.18 * exp(-abs(h-0.16)*14.0) * smoothstep(50.,10.,wy);
   o = vec4(col, 1.0);
 }
 `;
@@ -255,7 +256,8 @@ export class Renderer {
     });
     if (!gl) throw new Error('WebGL2 unavailable');
     this.gl = gl;
-    this.cam = { x: 0, y: 3.2, h: 9, shake: 0, t: 0 };
+    this.cam = { x: 0, y: 160, h: 520, shake: 0, t: 0 };
+    this.spaceActors = this._buildSpaceActors();
     this.meshes = new Map(); // code -> {vao,count,outlineVao,outlineCount}
     this.particles = [];
     this.time = 0;
@@ -461,28 +463,39 @@ export class Renderer {
     const tri = (pts, color, alpha = 1) =>
       quads.push({ verts: new Float32Array(pts), x: 0, y: 0, rot: 0, color, alpha });
 
+    // Decorative scenery scaled to the km world (~60x the old unit scale).
+    const K = 60;
+    const triK = (pts, color, alpha = 1) =>
+      tri(
+        pts.map((v) => v * K),
+        color,
+        alpha,
+      );
+    const pushK = (x, y, w, h, rot, color, alpha = 1) =>
+      push(x * K, y * K, w * K, h * K, rot, color, alpha);
+
     // Mt. Fuji far left-behind: tall triangle + snow cap
     const fx = -5.2,
       fy = -0.4,
       fw = 9.5,
       fh = 6.4;
-    tri([fx - fw / 2, fy, fx + fw / 2, fy, fx, fy + fh], [0.3, 0.34, 0.55], 1);
-    tri(
+    triK([fx - fw / 2, fy, fx + fw / 2, fy, fx, fy + fh], [0.3, 0.34, 0.55], 1);
+    triK(
       [fx - fw * 0.18, fy + fh * 0.66, fx + fw * 0.18, fy + fh * 0.66, fx, fy + fh],
       [0.93, 0.93, 0.97],
       1,
     );
     // hills
-    tri([-8, -0.6, -2.4, -0.6, -5.0, 1.5], [0.23, 0.3, 0.44], 1);
-    tri([2.0, -0.6, 9.0, -0.6, 6.0, 2.0], [0.26, 0.33, 0.48], 1);
-    tri([-1.0, -0.6, 5.5, -0.6, 2.6, 1.1], [0.2, 0.27, 0.4], 1);
+    triK([-8, -0.6, -2.4, -0.6, -5.0, 1.5], [0.23, 0.3, 0.44], 1);
+    triK([2.0, -0.6, 9.0, -0.6, 6.0, 2.0], [0.26, 0.33, 0.48], 1);
+    triK([-1.0, -0.6, 5.5, -0.6, 2.6, 1.1], [0.2, 0.27, 0.4], 1);
 
     // floating island under the platform
-    tri([-3.1, -0.3, 3.1, -0.3, 0, -2.6], [0.36, 0.28, 0.24], 1);
-    tri([-2.4, -0.3, 2.4, -0.3, -0.4, -1.9], [0.42, 0.33, 0.28], 1);
+    triK([-3.1, -0.3, 3.1, -0.3, 0, -2.6], [0.36, 0.28, 0.24], 1);
+    triK([-2.4, -0.3, 2.4, -0.3, -0.4, -1.9], [0.42, 0.33, 0.28], 1);
     // grass cap strip
-    push(0, -0.14, 6.3, 0.32, 0, [0.36, 0.55, 0.35]);
-    // stone pedestal (matches physics platform)
+    pushK(0, -0.14, 6.3, 0.32, 0, [0.36, 0.55, 0.35]);
+    // stone pedestal (matches physics platform — already in km)
     push(
       0,
       WORLD.platformY - WORLD.platformHalfH,
@@ -491,17 +504,17 @@ export class Renderer {
       0,
       [0.62, 0.58, 0.55],
     );
-    push(0, WORLD.platformY - 0.02, WORLD.platformHalfW * 2 + 0.16, 0.08, 0, [0.74, 0.7, 0.66]);
+    push(0, WORLD.platformY - 0.5, WORLD.platformHalfW * 2 + 10, 4, 0, [0.74, 0.7, 0.66]);
 
-    // torii gate behind the pedestal
+    // torii gate standing on the pedestal, framing the drop zone
     const ver = [0.63, 0.16, 0.13];
-    push(-2.1, 1.45, 0.28, 3.4, 0.05, ver);
-    push(2.1, 1.45, 0.28, 3.4, -0.05, ver);
-    push(0, 3.15, 5.6, 0.34, 0, [0.55, 0.13, 0.11]); // kasagi (curved ends faked)
-    push(-2.75, 3.22, 0.5, 0.3, 0.35, [0.55, 0.13, 0.11]);
-    push(2.75, 3.22, 0.5, 0.3, -0.35, [0.55, 0.13, 0.11]);
-    push(0, 2.62, 4.6, 0.24, 0, ver); // nuki
-    push(0, 2.9, 0.22, 0.5, 0, ver); // gakuzuka
+    pushK(-1.58, 1.75, 0.45, 3.8, 0.03, ver);
+    pushK(1.58, 1.75, 0.45, 3.8, -0.03, ver);
+    pushK(0, 3.5, 4.33, 0.37, 0, [0.55, 0.13, 0.11]); // kasagi (curved ends faked)
+    pushK(-2.28, 3.56, 0.5, 0.33, 0.3, [0.55, 0.13, 0.11]);
+    pushK(2.28, 3.56, 0.5, 0.33, -0.3, [0.55, 0.13, 0.11]);
+    pushK(0, 2.9, 3.85, 0.3, 0, ver); // nuki
+    pushK(0, 3.18, 0.3, 0.55, 0, ver); // gakuzuka
 
     const built = quads.map((q) => {
       const vao = gl.createVertexArray();
@@ -515,6 +528,119 @@ export class Renderer {
       return { ...q, vao, count: q.verts.length / 2 };
     });
     return built;
+  }
+
+  // Original procedural space actors (all quads/triangles, no assets):
+  // a rocket that launches past 100 km, and the ISS with a tethered
+  // astronaut cruising past ~380 km. Everything in km units.
+  _buildSpaceActors() {
+    const gl = this.gl;
+    const quad = (w, h) => [
+      -w / 2,
+      -h / 2,
+      w / 2,
+      -h / 2,
+      w / 2,
+      h / 2,
+      -w / 2,
+      -h / 2,
+      w / 2,
+      h / 2,
+      -w / 2,
+      h / 2,
+    ];
+    const mk = (verts, color, ox = 0, oy = 0, rot = 0, alpha = 1) => {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vb = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      return { vao, count: verts.length / 2, color, ox, oy, rot, alpha };
+    };
+    const white = [0.94, 0.94, 0.97];
+    const red = [0.78, 0.22, 0.2];
+    const panel = [0.16, 0.28, 0.72];
+    const rocket = {
+      on: false,
+      t: 6,
+      x: 0,
+      y: 0,
+      rot: 0.3,
+      parts: [
+        mk(quad(9, 34), white), // body
+        mk([-4.5, 17, 4.5, 17, 0, 32], red), // nose cone
+        mk([-4.5, -17, -15, -25, -4.5, -6], red), // fin L
+        mk([4.5, -17, 15, -25, 4.5, -6], red), // fin R
+        mk(quad(6, 6), [0.35, 0.6, 0.9], 0, 6), // window
+        mk([-3.5, -17, 3.5, -17, 0, -34], [1.0, 0.68, 0.2], 0, 0, 0, 0.9), // flame
+      ],
+    };
+    const iss = {
+      x: 0,
+      y: 0,
+      rot: 0.1,
+      parts: [
+        mk(quad(90, 5), [0.78, 0.8, 0.88]), // truss
+        mk(quad(26, 11), [0.9, 0.9, 0.95]), // module
+        mk(quad(12, 8), [0.85, 0.85, 0.9], -16, 0), // docked capsule
+        mk(quad(36, 15), panel, -55, 0), // solar panel L
+        mk(quad(36, 15), panel, 55, 0), // solar panel R
+        mk(quad(5, 5), [1, 0.8, 0.35], 16, 8, 0, 0.9), // beacon
+      ],
+    };
+    const astro = {
+      x: 0,
+      y: 0,
+      rot: 0.4,
+      parts: [
+        mk(quad(1.5, 14), [0.85, 0.85, 0.85], -8, -4), // tether
+        mk(quad(7, 10), [0.96, 0.96, 0.99]), // suit body
+        mk(quad(6, 5.5), [0.7, 0.85, 1.0], 0, 8), // helmet visor
+        mk(quad(4, 7), [0.6, 0.63, 0.7], -4, -1), // backpack
+      ],
+    };
+    return { list: [rocket, iss, astro], rocket, iss, astro };
+  }
+
+  _updateSpaceActors(dt) {
+    const alt = this.cam.y;
+    const r = this.spaceActors.rocket;
+    if (alt > 100) {
+      r.t += dt;
+      if (!r.on && r.t > 11) {
+        r.on = true;
+        r.t = 0;
+        const side = Math.random() < 0.5 ? -1 : 1;
+        r.x = this.cam.x + side * this.cam.h * 0.42;
+        r.y = this.cam.y - this.cam.h * 0.35;
+        r.rot = -side * 0.26 + (Math.random() - 0.5) * 0.12;
+      }
+      if (r.on) {
+        r.y += 320 * dt;
+        r.x += 90 * dt * Math.sign(-r.rot);
+        if (r.y > this.cam.y + this.cam.h * 0.75) r.on = false;
+      }
+    }
+    r.visible = r.on;
+
+    const iss = this.spaceActors.iss;
+    const astro = this.spaceActors.astro;
+    if (alt > 340) {
+      const span = this.cam.h * 0.8;
+      iss.visible = true;
+      iss.x = this.cam.x + Math.sin(this.time * 0.07) * span * 0.55;
+      iss.y = this.cam.y + this.cam.h * 0.2 + Math.sin(this.time * 0.23) * 14;
+      astro.visible = true;
+      astro.x = iss.x + 30 + Math.sin(this.time * 0.5) * 8;
+      astro.y = iss.y - 30 + Math.sin(this.time * 0.4) * 10;
+      astro.rot = 0.4 + Math.sin(this.time * 0.3) * 0.2;
+    } else {
+      iss.visible = false;
+      astro.visible = false;
+    }
   }
 
   // ----- particles -----
@@ -546,13 +672,13 @@ export class Renderer {
     if (Math.random() < dt * 6) {
       this.particles.push({
         kind: 0,
-        x: this.cam.x + (Math.random() - 0.5) * 12,
+        x: this.cam.x + (Math.random() - 0.5) * this.cam.h,
         y: this.cam.y + this.cam.h * 0.6,
-        vx: -0.5 - Math.random() * 0.6,
-        vy: -0.25 - Math.random() * 0.3,
+        vx: -30 - Math.random() * 36,
+        vy: -15 - Math.random() * 18,
         rot: Math.random() * 6,
         vr: (Math.random() - 0.5) * 4,
-        scale: 0.09 + Math.random() * 0.07,
+        scale: 5 + Math.random() * 4,
         r: 1,
         g: 0.72,
         b: 0.8,
@@ -566,7 +692,7 @@ export class Renderer {
   updateParticles(dt) {
     for (const p of this.particles) {
       p.life += dt;
-      p.vy -= 1.1 * dt * (p.kind === 0 ? 0.25 : 1); // petals glide
+      p.vy -= 70 * dt * (p.kind === 0 ? 0.25 : 1); // petals glide
       p.vx += Math.sin(p.life * 3 + p.rot) * 0.25 * dt * (p.kind === 0 ? 1 : 0.2);
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -575,14 +701,14 @@ export class Renderer {
     this.particles = this.particles.filter((p) => p.life < p.ttl);
   }
 
-  cameraFollow(targetY, dt) {
-    const desired = Math.max(3.2, targetY + 2.2);
+  cameraFollow(targetY, targetH, dt) {
+    this.cam.h += (targetH - this.cam.h) * Math.min(1, dt * 1.6);
+    const desired = Math.max(160, targetY + this.cam.h * 0.28);
     this.cam.y += (desired - this.cam.y) * Math.min(1, dt * 2.2);
-    this.cam.h = 9 + Math.max(0, this.cam.y - 3.2) * 0.16; // zoom out with height
   }
 
   shake(amount) {
-    this.cam.shake = Math.min(0.5, this.cam.shake + amount);
+    this.cam.shake = Math.min(30, this.cam.shake + amount);
   }
 
   camMatrix() {
@@ -603,8 +729,9 @@ export class Renderer {
     this.time += dt;
     this.cam.shake *= Math.pow(0.02, dt);
     this.updateParticles(dt);
-    if (!state.reduceMotion) this.sakuraAmbient(dt);
-    this.cameraFollow(state.camTarget ?? 3.2, dt);
+    if (!state.reduceMotion && this.cam.y < 80) this.sakuraAmbient(dt);
+    this.cameraFollow(state.camTarget ?? 160, state.camH ?? 520, dt);
+    this._updateSpaceActors(dt);
     const M = this.camMatrix();
 
     // ---- scene into fboScene ----
@@ -619,7 +746,7 @@ export class Renderer {
       gl.uniform2f(this.u.sky.res, this.fboScene.w, this.fboScene.h);
       gl.uniform2f(this.u.sky.cam, this.cam.x, this.cam.y);
       gl.uniform1f(this.u.sky.h, this.cam.h);
-      const sunY = Math.min(0.55, 0.3 + this.cam.y * 0.006);
+      const sunY = Math.min(0.55, 0.3 + this.cam.y * 0.0008);
       gl.uniform2f(this.u.sky.sun, 0.62, sunY);
       gl.bindVertexArray(this.vaoFull);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -637,6 +764,21 @@ export class Renderer {
       gl.bindVertexArray(q.vao);
       gl.drawArrays(gl.TRIANGLES, 0, q.count);
     }
+    // space actors: rocket flybys past 100 km, ISS + astronaut past ~380 km
+    for (const a of this.spaceActors.list) {
+      if (!a.visible) continue;
+      const c = Math.cos(a.rot);
+      const s = Math.sin(a.rot);
+      for (const pt of a.parts) {
+        gl.uniform2f(this.u.flat.pos, a.x + pt.ox * c - pt.oy * s, a.y + pt.ox * s + pt.oy * c);
+        gl.uniform1f(this.u.flat.rot, a.rot + pt.rot);
+        gl.uniform1f(this.u.flat.scale, 1);
+        gl.uniform3fv(this.u.flat.color, pt.color);
+        gl.uniform1f(this.u.flat.alpha, pt.alpha);
+        gl.bindVertexArray(pt.vao);
+        gl.drawArrays(gl.TRIANGLES, 0, pt.count);
+      }
+    }
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -648,9 +790,9 @@ export class Renderer {
     for (const p of state.bodies) {
       const m = this.meshFor(p.rec.piece);
       const groundD = Math.max(0, p.y - WORLD.platformY);
-      const a = Math.max(0, 0.35 - groundD * 0.06);
+      const a = Math.max(0, 0.35 - groundD * 0.004);
       if (a <= 0.01) continue;
-      gl.uniform2f(this.u.shape.pos, p.x + 0.12, p.y - 0.16 - groundD * 0.05);
+      gl.uniform2f(this.u.shape.pos, p.x + 8, p.y - 10 - groundD * 0.03);
       gl.uniform1f(this.u.shape.rot, p.angle);
       gl.uniform1f(this.u.shape.scale, 1.02);
       gl.uniform3f(this.u.shape.main, 0.05, 0.05, 0.1);
@@ -690,8 +832,8 @@ export class Renderer {
       // aim guide: dashed vertical drop line as thin flat quads
       gl.useProgram(this.pFlat);
       for (let i = 0; i < 14; i++) {
-        const y = state.ghost.y - 0.5 - i * 0.55;
-        if (y < WORLD.platformY + 0.1) break;
+        const y = state.ghost.y - 30 - i * 42;
+        if (y < WORLD.platformY + 10) break;
         gl.uniform2f(this.u.flat.pos, state.ghost.x, y);
         gl.uniform1f(this.u.flat.rot, 0);
         gl.uniform1f(this.u.flat.scale, 1);
@@ -753,7 +895,7 @@ export class Renderer {
     gl.bindVertexArray(vao);
     const vb = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-    gl.bufferData(gl.ARRAY_BUFFER, rectVerts(0.05, 0.3), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, rectVerts(4, 26), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);

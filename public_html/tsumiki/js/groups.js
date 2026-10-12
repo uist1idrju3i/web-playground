@@ -93,12 +93,25 @@ export const CULTURAL_GROUPS = [
   { id: 'ryukyu', name: 'りゅうきゅう', codes: ['JP-47'] },
 ];
 
+// Height milestones in km (1 world unit = 1 km): cleared against the taller
+// of the current stack and the saved best height. 10 km is cruising
+// altitude, 100 km the Kármán line, 400 km the ISS.
+export const HEIGHT_TIERS = [
+  { id: 'h-10', name: '10km', km: 10 },
+  { id: 'h-50', name: '50km', km: 50 },
+  { id: 'h-100', name: '100km', km: 100 },
+  { id: 'h-400', name: '400km', km: 400 },
+  { id: 'h-1000', name: '1,000km', km: 1000 },
+  { id: 'h-2000', name: '2,000km', km: 2000 },
+];
+
 // Sections rendered on the collection screen. `modern` groups are derived
 // from piece.region so the data file stays the source of truth.
 export const ACHIEVEMENT_SECTIONS = [
   { id: 'modern', title: 'いまの ちほう', groups: 'modern' },
   { id: 'ancient', title: 'むかしの みち', groups: ANCIENT_CIRCUITS },
   { id: 'cultural', title: 'ぶんかの くに', groups: CULTURAL_GROUPS },
+  { id: 'height', title: 'たかさ', groups: HEIGHT_TIERS },
 ];
 
 // Flat list of { id, name, codes } for completion checks.
@@ -115,5 +128,6 @@ export function achievementGroups(pieces) {
     modern: Object.values(modern),
     ancient: ANCIENT_CIRCUITS,
     cultural: CULTURAL_GROUPS,
+    height: HEIGHT_TIERS,
   };
 }
