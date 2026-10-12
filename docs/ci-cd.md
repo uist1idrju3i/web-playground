@@ -14,7 +14,7 @@
 
 Actions are pinned to full commit SHAs with version comments. Jobs use minimal permissions, `persist-credentials: false`, and `step-security/harden-runner`. Node is pinned to 24.21.0. Ubuntu 26.04 is currently a public runner-image preview; see [maintenance](maintenance.md) for the fallback policy.
 
-The `browser-policy` job intentionally remains red until the Cloudflare zone stops rewriting application HTML with Rocket Loader and stops injecting the Web Analytics beacon. It runs the per-page resource-policy checks against the production custom domain; the scheduled run also catches dashboard changes that do not create a repository push.
+The `browser-policy` job fails if the Cloudflare zone rewrites application HTML (for example with Rocket Loader) or injects third-party scripts such as the Web Analytics beacon. It runs the per-page resource-policy checks against the production custom domain; the scheduled run also catches dashboard changes that do not create a repository push.
 
 For branch protection, require the `ci-ok` aggregator and the CodeQL code-scanning check. CodeQL advanced setup analyzes Actions and JavaScript/TypeScript; C/C++ and Rust use `build-mode: none` when their sources are present.
 

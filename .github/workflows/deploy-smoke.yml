@@ -111,7 +111,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
       - run: npx playwright install --with-deps "$PLAYWRIGHT_PROJECT"
-      - run: npx playwright test tests/e2e/resource-policy.spec.js --project="${{ matrix.browser }}" --grep "static resource policy"
+      - run: npx playwright test tests/e2e/resource-policy.spec.js --project="$PLAYWRIGHT_PROJECT" --grep "static resource policy"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
