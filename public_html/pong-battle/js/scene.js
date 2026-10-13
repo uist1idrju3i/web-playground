@@ -10,6 +10,8 @@ export const PALETTE = Object.freeze({
   bgBottom: [0.015, 0.02, 0.045, 1],
   grid: [0.16, 0.24, 0.34, 0.35],
   net: [0.35, 0.5, 0.66, 0.5],
+  wall: [0.42, 0.6, 0.82, 0.85],
+  wallGlow: [0.35, 0.55, 0.85, 0.12],
   player: [0.2, 0.95, 0.65, 1], // left paddle: mint
   playerGlow: [0.2, 0.95, 0.65, 0.16],
   enemy: [1.0, 0.36, 0.55, 1], // right paddle: coral
@@ -49,9 +51,13 @@ export function buildScene({ game, layout: l, ballTrail, debugL, debugR, shakeT 
   const [cx, cy] = [l.x, l.y];
   const S = l.scale;
 
-  // Court frame + center net.
-  push('rect', cx, cy, l.w, 1.5, PALETTE.grid);
-  push('rect', cx, cy + l.h - 1.5, l.w, 1.5, PALETTE.grid);
+  // Court frame + center net. Top/bottom are real bounce walls — draw
+  // them as readable neon edges (the old 1.5px grid line was invisible
+  // against the dark court, so the ball looked like it bounced on air).
+  for (const wy of [cy, cy + l.h - 3]) {
+    push('glow', cx + l.w / 2, wy + 1.5, l.w / 2 + 4, 6, PALETTE.wallGlow);
+    push('rect', cx, wy, l.w, 3, PALETTE.wall);
+  }
   for (let i = 0; i < 12; i++)
     push(
       'rect',
