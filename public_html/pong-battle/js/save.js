@@ -13,6 +13,7 @@ export const DEFAULT_SAVE = {
   sample: 'chaser',
   code: null, // user's edited brain source
   showThought: true,
+  showTrace: true,
   muted: false,
   lang: null, // 'ja' | 'en' | null = auto
 };

@@ -20,7 +20,7 @@ module Pong
   # predictor needs is here — brains and physics share one source of truth.
   class Rules
     ATTRS = %i[
-      ball_r start_speed max_speed accel paddle_speed paddle_h paddle_w
+      ball_r start_speed max_speed abs_max_speed accel paddle_speed paddle_h paddle_w
       face_left face_right max_bounce_deg step_hz court_w court_h
     ].freeze
     attr_reader(*ATTRS)
@@ -46,7 +46,7 @@ module Pong
   end
 
   class Paddle
-    attr_reader :x, :y, :h, :w, :side, :dir, :speed_cap, :face_x, :stamina
+    attr_reader :x, :y, :h, :w, :side, :dir, :speed_cap, :face_x, :contact_x, :stamina
 
     def initialize(hash, rules)
       @side = hash[:side]&.to_sym
@@ -58,8 +58,14 @@ module Pong
       @speed_cap = hash[:speed_cap] || rules.paddle_speed
       @stamina = hash[:stamina] || 1.0
       @face_x = @side == :left ? rules.face_left : rules.face_right
+      # The plane the ball actually contacts: one ball-radius in front of the
+      # face. Predict with `ball.y_at(me.contact_x)`, not face_x, or every
+      # intercept lands ~0.3u off.
+      @contact_x = @face_x + (@side == :left ? rules.ball_r : -rules.ball_r)
       freeze
     end
+
+    attr_reader :contact_x
 
     def top = y - h / 2.0
     def bottom = y + h / 2.0
@@ -143,6 +149,8 @@ module Pong
       @serving = state[:serve][:in]
       @serve_dir = state[:serve][:dir]
       @wind_ay = state[:wind] ? state[:wind][:ay] : 0.0
+      @wind_base = state[:wind] ? state[:wind][:base] : 0.0
+      @wind_gust = state[:wind] ? state[:wind][:gust] : 0.0
       s = state[:score]
       @score = Score.new(s[:me], s[:you], s[:total], s[:win_at])
       freeze
@@ -159,6 +167,11 @@ module Pong
     # that correct their intercept by `0.5 * wind_ay * t**2` ride gusts;
     # brains that ignore it get punished — that is the point of the weather.
     attr_reader :wind_ay
+
+    # Split components of the wind: `base` persists for the rest of the rally,
+    # `gust` is a burst that ends on its own timer (mean ~0.65s). Correcting
+    # with `0.5*base*t**2 + 0.5*gust*min(t, 0.65)**2` beats flat damping.
+    attr_reader :wind_base, :wind_gust
 
     # Command toward absolute court y: full speed beyond ~3u, easing inside.
     # Returns -1.0..1.0 (the value your brain should return).
@@ -257,6 +270,26 @@ module Pong
         end
       end
 
+      # Variable watch for the debug panel: the brain's own @ivars, kept
+      # primitive so they survive JSON. Runner internals (@block) are hidden.
+      def vars
+        impl = @impl or return nil
+        out = {}
+        impl.instance_variables.each do |iv|
+          next if iv == :@block
+          v = impl.instance_variable_get(iv)
+          case v
+          when Numeric then out[iv[1..]] = v.is_a?(Float) ? v.round(4) : v
+          when String then out[iv[1..]] = v[0, 40]
+          when true, false then out[iv[1..]] = v
+          end
+          break if out.size >= 16
+        end
+        out.empty? ? nil : out
+      rescue StandardError
+        nil
+      end
+
       def debug_info(game)
         impl = @impl
         value =
@@ -335,20 +368,51 @@ module Battle
       JSON.generate(ok: false, error: serialize(e))
     end
 
-    def tick(json)
+    def tick(json, opts = nil)
       state = JSON.parse(json, symbolize_names: true)
       game = Pong::Game.new(state)
       move = nil
       error = nil
+      lines = nil
+      vars = nil
       begin
         Pong::Brain.clear_debug
-        move = Pong::Brain.call(game)
-      rescue Exception => e # rubocop:disable Lint/RescueException — a raise stuns the paddle, not the VM
+        seen = nil
+        last_line = nil
+        tp = nil
+        if opts&.dig(:trace)
+          # Line-execution trace: record every brain.rb line this tick touches.
+          # A unique set keeps loop-heavy brains cheap; `last` is the final line.
+          seen = {}
+          tp = TracePoint.new(:line) do |t|
+            if t.path == 'brain.rb'
+              seen[t.lineno] = true
+              last_line = t.lineno
+            end
+          end
+          tp.enable
+        end
+        begin
+          move = Pong::Brain.call(game)
+        rescue Exception => e # rubocop:disable Lint/RescueException — a raise stuns the paddle, not the VM
+          error = serialize(e)
+        ensure
+          tp&.disable
+        end
+        lines = { last: last_line, run: seen.keys.sort } if seen
+        vars = Pong::Brain.vars if opts&.dig(:watch)
+      rescue Exception => e # rubocop:disable Lint/RescueException
         error = serialize(e)
       end
-      JSON.generate(move: normalize(move), error: error, debug: Pong::Brain.debug_info(game))
+      JSON.generate(
+        move: normalize(move),
+        error: error,
+        debug: Pong::Brain.debug_info(game),
+        lines: lines,
+        vars: vars,
+      )
     rescue Exception => e # rubocop:disable Lint/RescueException
-      JSON.generate(move: 0.0, error: serialize(e), debug: nil)
+      JSON.generate(move: 0.0, error: serialize(e), debug: nil, lines: nil, vars: nil)
     end
 
     private
@@ -356,7 +420,9 @@ module Battle
     def normalize(move)
       case move
       when Numeric
-        move.clamp(-1.0, 1.0)
+        # NaN/Infinity would emit bare `NaN` in the JSON and kill the worker's
+        # JSON.parse — a brain returning garbage must stun, not crash the tick.
+        move.finite? ? move.clamp(-1.0, 1.0) : 0.0
       when Symbol
         { up: -1.0, down: 1.0, stay: 0.0, idle: 0.0, none: 0.0, stop: 0.0, halt: 0.0 }.fetch(move, 0.0)
       else

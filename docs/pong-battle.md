@@ -18,11 +18,12 @@ the first gesture.
 | Statechart | `js/statechart.js` | Explicit phases mirrored to `body[data-phase]` |
 | Brain workers | `brain-worker.js`, `js/brain-host.js` | Two workers, each booting a private Ruby.wasm VM (~70 MB). Brains are isolated: a crashed or hung brain is rebooted without touching the opponent |
 | Ruby SDK | `ruby/pong_kit.rb` | `brain "name" do                                                                                                                                  | g   | … end`DSL +`Brain.register`objects;`g.ball.y_at`intercept prediction,`g.seek`, `g.wind_ay`, `g.me.stamina`, `brain_debug` overlay |
-| Brains | `ruby/enemy/*.rb`, `ruby/samples/*.rb` | Three enemy levels (Rookie/Club/Ace) and five readable player samples, all in Ruby |
+| Brains | `ruby/enemy/*.rb`, `ruby/samples/*.rb` | Four enemy levels (Rookie/Club/Ace/NOVA boss) and five readable player samples, all in Ruby |
 | Renderers | `js/render-webgpu.js`, `js/render-webgl2.js` | Identical sprite-batch scene from `js/scene.js`; WebGPU first, WebGL2 fallback, `canvas[data-renderer]` reports which ran |
 | Audio | `js/audio.js` | Synthesized cues + procedural 4-bar pop loop; every cue has a visual twin (banner/HUD) |
 | Saves | `js/save.js` | HMAC-signed via `library/js/signed-storage.js`: unlocked level, best scores, settings, your code |
-| i18n | `js/i18n.js` | ja/en dictionary, `[data-i18n]` |
+| i18n | `js/i18n.js` | ja/en dictionary, `[data-i18n]` and `[data-i18n-title]` |
+| Execution trace | `ruby/pong_kit.rb`, `js/app.js` | `TracePoint(:line)` scoped to `brain.rb` reports executed lines per tick; the editor flashes the hot line and fades recent ones (toggle `#trace-toggle`) |
 
 ## Brain protocol
 
@@ -41,7 +42,17 @@ bursts (`GUST`), the ball's speed cap rises with rally length, and
 paddles drain stamina per distance travelled (`STAMINA`). This makes
 rallies always resolve while rewarding disturbance-tolerant control —
 which is the lesson the enemy ladder teaches: Rookie chases, Club
-predicts, Ace predicts-and-aims under wind correction.
+predicts, Ace predicts-and-aims under wind correction, and NOVA
+pre-positions, budgets stamina, and aims lethal-corner returns off your
+own velocity.
+
+## Match visuals
+
+Missed balls fly out of the court before the point is awarded, and both
+paddles' and the ball's glow sprites are sized near the real hit boxes
+so visual contact matches the exact swept-plane collision test in
+`js/sim.js`. Pickers lock while a match is live; the editor sits under
+the board and can expand to a focus view via `#editor-expand`.
 
 ## Tests
 

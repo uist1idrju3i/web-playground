@@ -25,9 +25,11 @@ test('pong-battle boots, deploys a sample brain and plays', async ({ page }, tes
     'required capabilities unavailable in this browser',
   );
 
-  // Pickers populated; enemy list has three levels with lock states.
+  // Pickers populated; enemy list has four levels with lock states.
   await expect(page.locator('#sample-list .pick')).toHaveCount(5);
-  await expect(page.locator('#enemy-list .pick')).toHaveCount(3);
+  await expect(page.locator('#enemy-list .pick')).toHaveCount(4);
+  // NOVA is the locked boss card.
+  await expect(page.locator('#enemy-list .pick.boss')).toHaveClass(/locked/);
 
   // Editor holds the loaded sample; enemy source is readable.
   await expect(page.locator('#enemy-code')).toContainText('brain');
@@ -59,6 +61,15 @@ test('pong-battle boots, deploys a sample brain and plays', async ({ page }, tes
   // Regression: the phase overlay must stay hidden during play — before the
   // [hidden] display guard, the last-written title ('GO!') stayed on screen.
   await expect(page.locator('#phase-overlay')).toBeHidden();
+
+  // Pickers lock while a match is live (deploy-time only inputs).
+  await expect(page.locator('#sample-list .pick').first()).toBeDisabled();
+  await expect(page.locator('#enemy-list .pick').first()).toBeDisabled();
+
+  // Execution-line trace is on by default: brain ticks report the brain.rb
+  // lines they ran. Assert on the debug hook — CodeMirror virtualizes rows,
+  // so executed lines below the viewport may have no DOM to highlight.
+  await page.waitForFunction(() => globalThis.__pong.execLines.length > 0, { timeout: 5000 });
 
   expect(pageErrors).toEqual([]);
 });
@@ -106,6 +117,19 @@ test('pong-battle rematch: overlay hides and the enemy still moves', async ({ pa
     timeout: 15000,
   });
   await expect(page.locator('#phase-overlay')).toBeHidden();
+
+  // The first serve direction and arrival height are random by design —
+  // the enemy brain would legitimately stay in its deadband when the ball
+  // opens toward the player or near center. Send the ball at the enemy's
+  // far corner instead, so a live brain is guaranteed to chase it.
+  await page.waitForFunction(() => globalThis.__pong.game.status === 'rally', { timeout: 10000 });
+  await page.evaluate(() => {
+    const g = globalThis.__pong.game;
+    g.ball.x = 40;
+    g.ball.y = 8;
+    g.ball.vx = Math.abs(g.ball.vx || 40);
+    g.ball.vy = 4;
+  });
 
   const enemyY = () => page.evaluate(() => globalThis.__pong.game.paddles.right.y);
   const y0 = await enemyY();

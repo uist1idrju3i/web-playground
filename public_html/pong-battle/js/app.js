@@ -45,6 +45,9 @@ const els = {
   enemyCode: $('#enemy-code'),
   enemyCodePanel: $('#enemy-code-panel'),
   thoughtToggle: $('#thought-toggle'),
+  traceToggle: $('#trace-toggle'),
+  editorPanel: $('#editor-panel'),
+  editorExpand: $('#editor-expand'),
   soundBtn: $('#sound-btn'),
   langBtn: $('#lang-btn'),
   pauseBtn: $('#pause-btn'),
@@ -105,7 +108,13 @@ for (const [host, side] of [
     if (m.type === 'stderr') logLine(`[${side} ERR] ${m.text.trimEnd()}`);
     if (m.type === 'tick') {
       if (m.ok === false) onBrainError(side, m.error);
-      else debug[side === 'you' ? 'L' : 'R'] = m.debug ?? null;
+      else {
+        debug[side === 'you' ? 'L' : 'R'] = m.debug ?? null;
+        if (side === 'you') {
+          if (m.lines) applyTrace(m.lines);
+          setErrLine(m.error?.line ?? null);
+        }
+      }
     }
   };
 }
@@ -166,7 +175,10 @@ function startMatch() {
 
 function physicsStep() {
   if (tickCount % TICK_EVERY === 0) {
-    if (!brainDown.you) hostL.requestTick(JSON.stringify(brainState(game, 'left')));
+    if (!brainDown.you)
+      hostL.requestTick(JSON.stringify(brainState(game, 'left')), {
+        trace: save.data.showTrace,
+      });
     if (!brainDown.enemy) hostR.requestTick(JSON.stringify(brainState(game, 'right')));
   }
   const moves = {
@@ -222,11 +234,11 @@ function endMatch() {
   const rec = save.data.best[currentEnemy.id];
   const bestScore = { for: game.score.left, against: game.score.right };
   if (won || !rec || bestScore.for > rec.for) save.data.best[currentEnemy.id] = bestScore;
-  if (won) save.data.unlocked = Math.min(3, Math.max(save.data.unlocked, currentEnemy.level + 1));
+  if (won) save.data.unlocked = Math.min(4, Math.max(save.data.unlocked, currentEnemy.level + 1));
   save.persist();
   els.overlayTitle.textContent = won ? t(lang, 'win') : t(lang, 'lose');
   els.overlaySub.textContent =
-    won && currentEnemy.level < 3 ? t(lang, 'levelClear') : won ? t(lang, 'allClear') : '';
+    won && currentEnemy.level < 4 ? t(lang, 'levelClear') : won ? t(lang, 'novaClear') : '';
   els.rematchBtn.hidden = false;
   els.overlay.hidden = false;
   buildPickers();
@@ -294,7 +306,14 @@ function updateHud() {
 
 /* ---------- pickers ---------- */
 let selectedSample = save.data.sample ?? 'chaser';
-let selectedEnemy = save.data.unlocked >= 3 ? 'ace' : save.data.unlocked >= 2 ? 'club' : 'rookie';
+let selectedEnemy =
+  save.data.unlocked >= 4
+    ? 'nova'
+    : save.data.unlocked >= 3
+      ? 'ace'
+      : save.data.unlocked >= 2
+        ? 'club'
+        : 'rookie';
 
 function buildPickers() {
   els.sampleList.innerHTML = '';
@@ -314,7 +333,11 @@ function buildPickers() {
   for (const e of ENEMIES) {
     const locked = e.level > save.data.unlocked;
     const btn = document.createElement('button');
-    btn.className = 'pick' + (e.id === selectedEnemy ? ' on' : '') + (locked ? ' locked' : '');
+    btn.className =
+      'pick' +
+      (e.id === 'nova' ? ' boss' : '') +
+      (e.id === selectedEnemy ? ' on' : '') +
+      (locked ? ' locked' : '');
     btn.disabled = locked;
     const best = save.data.best[e.id];
     btn.innerHTML = `<b>${t(lang, 'enemy' + e.level)}${locked ? ' 🔒' : ''}</b>
@@ -327,6 +350,16 @@ function buildPickers() {
       buildPickers();
     });
     els.enemyList.append(btn);
+  }
+  syncPickerLock();
+}
+
+// Pickers only matter at deploy time — changing them mid-match can never
+// affect the running game, so lock them while a match is live.
+function syncPickerLock() {
+  const inMatch = ['countdown', 'playing', 'paused', 'hold'].includes(phase);
+  for (const b of document.querySelectorAll('#sample-list .pick, #enemy-list .pick')) {
+    b.disabled = inMatch || b.classList.contains('locked');
   }
 }
 
@@ -346,6 +379,57 @@ if (typeof window.CodeMirror === 'function') {
 const getCode = () => (editor ? editor.getValue() : els.editor.value);
 const setCode = (v) => (editor ? editor.setValue(v) : (els.editor.value = v));
 
+/* ---------- execution-line trace in the editor ---------- */
+// The brain reports {last, run:[lines]} per tick; the newest line flashes
+// hot, recently-run lines fade, and a raising brain marks its error line.
+const EXEC_RUN_MS = 900;
+const EXEC_HOT_MS = 260;
+const execSeen = new Map(); // line(1-based) -> {t, hot}
+let errLine = null;
+
+function renderExecLines() {
+  if (!editor) return;
+  const now = performance.now();
+  for (const [ln, rec] of execSeen) {
+    const age = now - rec.t;
+    if (age > EXEC_RUN_MS) {
+      execSeen.delete(ln);
+      editor.removeLineClass(ln - 1, 'background', 'cm-exec-run');
+      editor.removeLineClass(ln - 1, 'background', 'cm-exec-hot');
+      continue;
+    }
+    const cls = rec.hot && age < EXEC_HOT_MS ? 'cm-exec-hot' : 'cm-exec-run';
+    editor.removeLineClass(ln - 1, 'background', 'cm-exec-run');
+    editor.removeLineClass(ln - 1, 'background', 'cm-exec-hot');
+    editor.addLineClass(ln - 1, 'background', cls);
+  }
+}
+setInterval(renderExecLines, 200);
+
+function applyTrace(lines) {
+  if (!editor || !lines) return;
+  const now = performance.now();
+  for (const ln of lines.run ?? []) execSeen.set(ln, { t: now, hot: ln === lines.last });
+  renderExecLines();
+}
+
+function setErrLine(ln) {
+  if (!editor || ln === errLine) return;
+  if (errLine != null) editor.removeLineClass(errLine - 1, 'background', 'cm-exec-err');
+  errLine = ln ?? null;
+  if (errLine != null) editor.addLineClass(errLine - 1, 'background', 'cm-exec-err');
+}
+
+function clearExecClasses() {
+  if (!editor) return;
+  for (const ln of execSeen.keys()) {
+    editor.removeLineClass(ln - 1, 'background', 'cm-exec-run');
+    editor.removeLineClass(ln - 1, 'background', 'cm-exec-hot');
+  }
+  execSeen.clear();
+  setErrLine(null);
+}
+
 async function loadSampleIntoEditor() {
   if (save.data.code && selectedSample === save.data.sample) {
     setCode(save.data.code);
@@ -357,6 +441,7 @@ if (editor) editor.on('change', () => (save.data.code = getCode()));
 
 /* ---------- deploy ---------- */
 async function deploy() {
+  clearExecClasses();
   audio
     .unlock()
     .then((ok) => {
@@ -403,6 +488,7 @@ function logLine(text) {
 }
 
 function renderChrome() {
+  syncPickerLock();
   const inMatch = ['countdown', 'playing', 'paused', 'hold'].includes(phase);
   els.overlay.hidden =
     !['ready', 'match-over', 'paused', 'hold'].includes(phase) && phase !== 'countdown';
@@ -471,6 +557,33 @@ els.thoughtToggle.addEventListener('change', () => {
   save.persist();
 });
 els.thoughtToggle.checked = save.data.showThought;
+els.traceToggle.addEventListener('change', () => {
+  save.data.showTrace = els.traceToggle.checked;
+  save.persist();
+  if (!els.traceToggle.checked) clearExecClasses();
+});
+els.traceToggle.checked = save.data.showTrace;
+
+// Editor focus mode: fills the stage while coding; Esc restores.
+function syncExpandBtn() {
+  const on = els.editorPanel.classList.contains('expanded');
+  els.editorExpand.textContent = on ? '✕' : '⛶';
+  els.editorExpand.title = t(lang, on ? 'collapseEditor' : 'expandEditor');
+  els.editorExpand.setAttribute('aria-label', t(lang, on ? 'collapseEditor' : 'expandEditor'));
+}
+els.editorExpand.addEventListener('click', () => {
+  els.editorPanel.classList.toggle('expanded');
+  syncExpandBtn();
+  if (editor) editor.refresh();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && els.editorPanel.classList.contains('expanded')) {
+    els.editorPanel.classList.remove('expanded');
+    syncExpandBtn();
+    if (editor) editor.refresh();
+  }
+});
+syncExpandBtn();
 els.soundBtn.addEventListener('click', async () => {
   const m = !audio.muted;
   await audio.unlock();
@@ -516,6 +629,10 @@ if (DEBUG) {
     save,
     deploy,
     startMatch,
+    // Lines the VM reported as executed this decay window (trace feature).
+    get execLines() {
+      return [...execSeen.keys()];
+    },
   };
 }
 

@@ -1,6 +1,6 @@
 'use strict';
 
-// Brain catalog: player sample programs and the three enemy levels.
+// Brain catalog: player sample programs and the four enemy levels.
 // Sources are .rb files served from the app directory; the UI also shows
 // the enemy sources read-only ("read your opponent's code").
 
@@ -64,6 +64,15 @@ export const ENEMIES = Object.freeze([
     style: 'Predicts, then aims every return at your open corner.',
     hint: 'Attack the model: fool the predictor, not the reflexes.',
     url: '/pong-battle/ruby/enemy/ace.rb',
+  },
+  {
+    id: 'nova',
+    level: 4,
+    name: 'NOVA',
+    tag: 'legend',
+    style: 'Solves the exact corner you cannot reach, then spends stamina like a miser.',
+    hint: 'It reads your stamina. Outlast it — or out-plan it.',
+    url: '/pong-battle/ruby/enemy/nova.rb',
   },
 ]);
 

@@ -71,7 +71,9 @@ export function buildScene({ game, layout: l, ballTrail, debugL, debugR, shakeT 
     const stamina = game.stamina?.[side] ?? 1;
     const color = stamina < 0.35 && Math.floor(shakeT * 8) % 2 === 0 ? PALETTE.staminaWarn : base;
     const [px, py] = [cx + p.x * S, cy + p.y * S];
-    push('glow', px, py, PADDLE.W * S * 4, PADDLE.H * S * 1.6, glow);
+    // Glow hugs the real paddle: oversized halos read as part of the hit box
+    // and make clean misses look like contact.
+    push('glow', px, py, PADDLE.W * S * 2.6, PADDLE.H * S * 1.12, glow);
     push(
       'rect',
       px - (PADDLE.W / 2) * S,
@@ -79,7 +81,6 @@ export function buildScene({ game, layout: l, ballTrail, debugL, debugR, shakeT 
       PADDLE.W * S,
       PADDLE.H * S,
       color,
-      2.5,
     );
   }
 
@@ -97,7 +98,7 @@ export function buildScene({ game, layout: l, ballTrail, debugL, debugR, shakeT 
     }
   }
   const [bx, by] = [cx + game.ball.x * S, cy + game.ball.y * S];
-  push('glow', bx, by, BALL.R * S * 7, BALL.R * S * 7, PALETTE.ballGlow);
+  push('glow', bx, by, BALL.R * S * 3.5, BALL.R * S * 3.5, PALETTE.ballGlow);
   push('circle', bx - BALL.R * S, by - BALL.R * S, BALL.R * 2 * S, BALL.R * 2 * S, PALETTE.ball);
 
   // Wind: two drifting streak columns, direction by sign of ay.

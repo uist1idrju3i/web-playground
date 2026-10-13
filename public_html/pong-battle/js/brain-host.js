@@ -77,10 +77,10 @@ export class BrainHost {
 
   // Ask the brain for a move. Returns immediately (null) while a tick is
   // still in flight — the freshest state always wins over a queued backlog.
-  requestTick(stateJson) {
+  requestTick(stateJson, { trace = false, watch = false } = {}) {
     if (this.state !== 'ready' || this.pendingTick) return false;
     const sentAt = performance.now();
-    const promise = this.#send('tick', { state: stateJson });
+    const promise = this.#send('tick', { state: stateJson, trace, watch });
     this.pendingTick = { sentAt, promise };
     promise.then((result) => {
       this.pendingTick = null;

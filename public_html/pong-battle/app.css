@@ -154,19 +154,36 @@ body[data-hero='done'] #hero,
 /* ---- stage ---- */
 #stage {
   flex: 1;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'board bench'
+    'editor bench';
   gap: 10px;
   padding: 0 max(env(safe-area-inset-right), 12px) max(env(safe-area-inset-bottom), 12px)
     max(env(safe-area-inset-left), 12px);
   min-height: 0;
 }
 #board {
+  grid-area: board;
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+}
+#editor-panel {
+  grid-area: editor;
+  /* Its CodeMirror grows to document height; cap the panel so the board
+     row keeps its space and the editor scrolls internally instead. */
+  max-height: 42dvh;
+  overflow: hidden;
+  min-height: 0;
+}
+#bench {
+  grid-area: bench;
 }
 #hud {
   display: flex;
@@ -363,9 +380,34 @@ meter::-moz-meter-bar {
   border-color: var(--player);
   box-shadow: 0 0 0 1px var(--player) inset;
 }
-.pick.locked {
+.pick.locked,
+.pick[disabled] {
   opacity: 0.45;
+}
+.pick.locked {
   cursor: not-allowed;
+}
+.pick.boss {
+  border-color: var(--enemy);
+  box-shadow:
+    0 0 0 1px var(--enemy) inset,
+    0 0 16px rgba(255, 54, 85, 0.22);
+}
+.pick.boss b::before {
+  content: '♛ ';
+  color: var(--enemy);
+}
+/* Execution-line trace in the editor: last line flashes hot, recently-run
+   lines fade, brain errors mark the failing line. */
+.CodeMirror .cm-exec-run {
+  background: rgba(60, 200, 130, 0.1);
+  transition: background-color 0.45s ease;
+}
+.CodeMirror .cm-exec-hot {
+  background: rgba(80, 220, 150, 0.3);
+}
+.CodeMirror .cm-exec-err {
+  background: rgba(255, 70, 90, 0.28);
 }
 #editor {
   display: none;
@@ -377,7 +419,117 @@ meter::-moz-meter-bar {
   border-radius: 8px;
   border: 1px solid var(--edge);
   font-size: 13px;
-  background: var(--panel2);
+  background: #0d1420;
+  color: #e6ecf6;
+  caret-color: #e6ecf6;
+}
+/* Dark theme for the stock CodeMirror build: the default theme is light,
+   which made text nearly the same color as the panel background. */
+.CodeMirror-gutters {
+  background: #0a1019;
+  border-right: 1px solid var(--edge);
+}
+.CodeMirror-linenumber {
+  color: #5a6478;
+}
+.CodeMirror-cursor {
+  border-left: 1.5px solid #e6ecf6;
+}
+.CodeMirror-selected {
+  background: rgba(110, 160, 255, 0.24);
+}
+.CodeMirror-focused .CodeMirror-selected {
+  background: rgba(110, 160, 255, 0.34);
+}
+.CodeMirror-line::selection,
+.CodeMirror-line > span::selection,
+.CodeMirror-line > span > span::selection {
+  background: rgba(110, 160, 255, 0.34);
+}
+.cm-s-default .cm-keyword {
+  color: #c678dd;
+}
+.cm-s-default .cm-atom {
+  color: #56b6c2;
+}
+.cm-s-default .cm-number {
+  color: #d19a66;
+}
+.cm-s-default .cm-def {
+  color: #61afef;
+}
+.cm-s-default .cm-variable,
+.cm-s-default .cm-variable-2,
+.cm-s-default .cm-variable-3 {
+  color: #e6ecf6;
+}
+.cm-s-default .cm-property {
+  color: #61afef;
+}
+.cm-s-default .cm-operator {
+  color: #56b6c2;
+}
+.cm-s-default .cm-comment {
+  color: #7a869e;
+  font-style: italic;
+}
+.cm-s-default .cm-string,
+.cm-s-default .cm-string-2 {
+  color: #98c379;
+}
+.cm-s-default .cm-meta {
+  color: #e5c07b;
+}
+.cm-s-default .cm-qualifier {
+  color: #e5c07b;
+}
+.cm-s-default .cm-builtin {
+  color: #e5c07b;
+}
+.cm-s-default .cm-bracket {
+  color: #abb2bf;
+}
+.cm-s-default .cm-tag {
+  color: #e06c75;
+}
+.cm-s-default .cm-attribute {
+  color: #d19a66;
+}
+.cm-s-default .cm-error {
+  color: #f8f8f2;
+  background: #e06c75;
+}
+/* Editor expand toggle: focus mode fills the whole stage. */
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-head h3 {
+  margin: 0;
+}
+#editor-expand {
+  font-size: 14px;
+  line-height: 1;
+  padding: 6px 10px;
+}
+/* Focus mode: a fixed overlay, not an abs-pos grid item — an abs-pos grid
+   child uses its grid area as containing block and would collapse with the
+   emptied editor row. Fixed covers the viewport on every layout. */
+#editor-panel.expanded {
+  position: fixed;
+  inset: 1rem;
+  z-index: 60;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+#editor-panel.expanded .CodeMirror {
+  flex: 1;
+  height: auto;
+  min-height: 0;
 }
 #deploy {
   margin: 0 0 8px;
@@ -421,7 +573,11 @@ meter::-moz-meter-bar {
 @media (max-width: 860px) {
   #stage {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(300px, 52dvh) 1fr;
+    grid-template-rows: minmax(300px, 52dvh) auto 1fr;
+    grid-template-areas:
+      'board'
+      'editor'
+      'bench';
   }
   #bench {
     overflow: visible;
@@ -430,8 +586,12 @@ meter::-moz-meter-bar {
 @media (max-width: 860px) and (orientation: landscape) {
   #stage {
     grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
-    grid-template-rows: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'board bench'
+      'editor bench';
     height: 100dvh;
+    overflow-y: auto;
   }
   #topbar {
     position: static;
@@ -443,5 +603,8 @@ meter::-moz-meter-bar {
 @media (prefers-reduced-motion: reduce) {
   #banner {
     animation: none;
+  }
+  .CodeMirror .cm-exec-run {
+    transition: none;
   }
 }

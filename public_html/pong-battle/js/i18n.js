@@ -15,6 +15,7 @@ export const STRINGS = {
     enemy1: '初級・ルーキー',
     enemy2: '中級・クラブ',
     enemy3: '上級・エース',
+    enemy4: '伝説・ノヴァ',
     win: 'YOU WIN!',
     lose: 'YOU LOSE…',
     nextLevel: '次のレベルへ',
@@ -27,10 +28,14 @@ export const STRINGS = {
     staminaWarn: 'スタミナ低下！',
     levelClear: 'レベルクリア！',
     allClear: '全レベル制覇！さらに強いコードに挑戦しよう',
+    novaClear: 'ノヴァ撃破！あなたは伝説になった',
     soundOn: '音 ON',
     soundOff: '音 OFF',
     langBtn: 'EN',
     showThought: '思考を表示',
+    showTrace: '実行行を光らせる',
+    expandEditor: 'エディタを拡大（Escで戻る）',
+    collapseEditor: 'エディタを元に戻す（Esc）',
     brainSource: '敵のコードを見る',
     how1: 'パドルはあなたが書く Ruby コードが毎フレーム動かします。',
     how2: 'ボールの予測・狙い・スタミナ管理が勝敗を分けます。',
@@ -60,6 +65,7 @@ export const STRINGS = {
     enemy1: 'Lv.1 Rookie',
     enemy2: 'Lv.2 Club',
     enemy3: 'Lv.3 Ace',
+    enemy4: 'Legend · NOVA',
     win: 'YOU WIN!',
     lose: 'YOU LOSE…',
     nextLevel: 'Next level',
@@ -72,10 +78,14 @@ export const STRINGS = {
     staminaWarn: 'Low stamina!',
     levelClear: 'Level clear!',
     allClear: 'All levels cleared! Now write an even stronger brain.',
+    novaClear: 'NOVA defeated — you are the legend now!',
     soundOn: 'Sound ON',
     soundOff: 'Sound OFF',
     langBtn: 'JA',
     showThought: 'Show thoughts',
+    showTrace: 'Highlight running line',
+    expandEditor: 'Expand editor (Esc to restore)',
+    collapseEditor: 'Restore editor (Esc)',
     brainSource: 'View enemy code',
     how1: 'Your Ruby code drives the paddle every frame.',
     how2: 'Prediction, aim, and stamina management decide the match.',
@@ -104,4 +114,6 @@ export function t(lang, key) {
 
 export function applyI18n(lang, root = document) {
   for (const el of root.querySelectorAll('[data-i18n]')) el.textContent = t(lang, el.dataset.i18n);
+  for (const el of root.querySelectorAll('[data-i18n-title]'))
+    el.title = t(lang, el.dataset.i18nTitle);
 }

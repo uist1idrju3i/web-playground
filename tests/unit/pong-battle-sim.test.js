@@ -101,6 +101,46 @@ describe('pong sim invariants', () => {
     assert.equal(drained, true);
   });
 
+  // A missed paddle must not score at the face plane: the ball keeps flying
+  // out of court first, so a goal visibly reads as a goal (not a freeze).
+  test('missed paddle: ball flies out before the point registers', () => {
+    const game = createGame({ seed: 1 });
+    game.status = 'rally';
+    game.ball.x = 93.7;
+    game.ball.y = 55;
+    game.ball.vx = 50;
+    game.ball.vy = 0;
+    game.ball.speed = 50;
+    game.paddles.right.y = 10; // far away — a clean miss
+    const ev = stepGame(game, { left: 0, right: 0 });
+    assert.equal(game.ball.dead, 'right');
+    assert.ok(!ev.some((e) => e.type === 'score'));
+    assert.equal(game.status, 'rally');
+    let scored = false;
+    for (let i = 0; i < 400 && !scored; i++) {
+      for (const e of stepGame(game, { left: 0, right: 0 })) {
+        if (e.type === 'score') scored = e;
+      }
+    }
+    assert.equal(scored?.side, 'left');
+    assert.equal(game.score.left, 1);
+  });
+
+  // The dead ball must not be able to collide with a paddle on its way out.
+  test('dead ball passes through paddle positions untouched', () => {
+    const game = createGame({ seed: 1 });
+    game.status = 'rally';
+    game.ball.dead = 'left';
+    game.ball.x = 3;
+    game.ball.y = 30;
+    game.ball.vx = -60;
+    game.ball.vy = 0;
+    game.ball.speed = 60;
+    game.paddles.left.y = 30; // dead ball flies straight through the paddle
+    const ev = stepGame(game, { left: 0, right: 0 });
+    assert.ok(!ev.some((e) => e.type === 'paddle-hit'));
+  });
+
   test('brainState is side-symmetric for a symmetric game', () => {
     const game = createGame({ seed: 5 });
     for (let i = 0; i < 2000; i++) stepGame(game, { left: 0, right: 0 });
@@ -199,24 +239,84 @@ end
     assert.equal(tick(vm, brainState(createGame({ seed: 10 }), 'left')).debug?.note, 'n=1');
   });
 
+  // TracePoint(:line) capture: tick opts {trace: true} returns the set of
+  // brain.rb lines executed that tick plus the final line.
+  test('tick trace returns executed brain.rb lines', { timeout: 120_000 }, async () => {
+    const src = `brain "traced" do |g|
+  if g.ball.moving_toward?(g.me)
+    g.seek(g.ball.y)
+  else
+    g.seek(g.center)
+  end
+end
+`;
+    const vm = await bootVm(src);
+    const game = createGame({ seed: 5 });
+    game.status = 'rally';
+    game.ball.vx = -30; // toward the left paddle
+    const lit = `'${JSON.stringify(brainState(game, 'left')).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    const r = JSON.parse(vm.eval(`Battle.tick(${lit}, {trace: true})`).toString());
+    assert.ok(Array.isArray(r.lines.run));
+    assert.ok(r.lines.run.includes(3)); // the seek(g.ball.y) branch line
+    assert.ok(!r.lines.run.includes(5)); // the else branch did not run
+    assert.equal(r.lines.last, 3);
+  });
+
+  // A brain returning NaN/Infinity must stun (move 0), not corrupt the
+  // worker's JSON.parse with a bare NaN literal.
+  test('tick normalizes non-finite moves to 0', { timeout: 120_000 }, async () => {
+    const src = `brain "nan" do |g|
+  0.0 / 0
+end
+`;
+    const vm = await bootVm(src);
+    const game = createGame({ seed: 5 });
+    const lit = `'${JSON.stringify(brainState(game, 'left')).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    const r = JSON.parse(vm.eval(`Battle.tick(${lit}, {trace: true, watch: true})`).toString());
+    assert.equal(r.move, 0);
+  });
+
+  // Variable watch: the brain's @ivars surface in tick output as primitives.
+  test('tick watch reports brain @ivars', { timeout: 120_000 }, async () => {
+    const src = `brain "watched" do |g|
+  @target = (@target || 0) + 1.5
+  g.seek(@target)
+end
+`;
+    const vm = await bootVm(src);
+    const game = createGame({ seed: 5 });
+    const lit = `'${JSON.stringify(brainState(game, 'left')).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+    const r = JSON.parse(vm.eval(`Battle.tick(${lit}, {watch: true})`).toString());
+    assert.equal(r.vars?.target, 1.5);
+  });
+
   test('skill ordering: rookie loses to samples and enemies', { timeout: 180_000 }, async () => {
     for (const [name, path] of [
       ['rookie', 'ruby/enemy/rookie.rb'],
       ['club', 'ruby/enemy/club.rb'],
       ['ace', 'ruby/enemy/ace.rb'],
+      ['nova', 'ruby/enemy/nova.rb'],
       ['chaser', 'ruby/samples/chaser.rb'],
     ])
       brains[name] = readFileSync(join(APP, path), 'utf8');
 
     // Every serious brain should beat the rookie decisively.
-    const [r1, r2, r3] = await Promise.all([
+    const [r1, r2, r3, r4, r5] = await Promise.all([
       playMatch(brains.chaser, brains.rookie, { points: 2, seed: 701 }),
       playMatch(brains.club, brains.rookie, { points: 2, seed: 702 }),
       playMatch(brains.ace, brains.rookie, { points: 2, seed: 703 }),
+      // The boss must out-plan Ace from BOTH sides on measured seeds —
+      // near the perfect-prediction ceiling, serve draws and escalation
+      // luck decide individual matches, so these assert nova wins on each
+      // side rather than sweeping every seed.
+      playMatch(brains.nova, brains.ace, { points: 2, seed: 704 }),
+      playMatch(brains.ace, brains.nova, { points: 2, seed: 705 }),
     ]);
     assert.equal(r1.winner, 'left');
     assert.equal(r2.winner, 'left');
     assert.equal(r3.winner, 'left');
+    assert.equal(r4.winner, 'left', `nova should beat ace on the left (${r4.ticks} ticks)`);
+    assert.equal(r5.winner, 'right', `nova should beat ace on the right (${r5.ticks} ticks)`);
     assert.ok(Math.max(r1.ticks, r2.ticks, r3.ticks) < 90000);
   });
 });
