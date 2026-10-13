@@ -14,6 +14,8 @@ export const DEFAULT_SAVE = {
   code: null, // user's edited brain source
   showThought: true,
   showTrace: true,
+  showWatch: true,
+  speed: 1, // 1 | 0.5 | 0.25 | 0.1 — whole-match slow motion for debugging
   muted: false,
   lang: null, // 'ja' | 'en' | null = auto
 };

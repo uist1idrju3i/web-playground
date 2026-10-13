@@ -54,6 +54,22 @@
           <input type="checkbox" id="trace-toggle" />
           <span data-i18n="showTrace">実行行を光らせる</span>
         </label>
+        <label class="switch">
+          <input type="checkbox" id="watch-toggle" />
+          <span data-i18n="showWatch">変数ウォッチ</span>
+        </label>
+        <div
+          id="speed-group"
+          class="seg"
+          role="group"
+          data-i18n-title="speedLabel"
+          aria-label="speed"
+        >
+          <button class="seg-btn" data-speed="1">1×</button>
+          <button class="seg-btn" data-speed="0.5">½</button>
+          <button class="seg-btn" data-speed="0.25">¼</button>
+          <button class="seg-btn" data-speed="0.1">⅒</button>
+        </div>
         <button id="sound-btn" class="chip"></button>
         <button id="lang-btn" class="chip"></button>
         <button id="pause-btn" class="chip" hidden>⏸</button>
@@ -114,6 +130,7 @@
         </div>
         <p class="hint" data-i18n="editHint"></p>
         <button id="deploy" class="cta" data-i18n="deploy">このコードで出撃</button>
+        <div id="watch-panel" hidden></div>
         <textarea id="editor" spellcheck="false"></textarea>
       </section>
 

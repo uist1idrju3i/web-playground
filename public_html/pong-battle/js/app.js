@@ -46,6 +46,9 @@ const els = {
   enemyCodePanel: $('#enemy-code-panel'),
   thoughtToggle: $('#thought-toggle'),
   traceToggle: $('#trace-toggle'),
+  watchToggle: $('#watch-toggle'),
+  watchPanel: $('#watch-panel'),
+  speedGroup: $('#speed-group'),
   editorPanel: $('#editor-panel'),
   editorExpand: $('#editor-expand'),
   soundBtn: $('#sound-btn'),
@@ -112,6 +115,7 @@ for (const [host, side] of [
         debug[side === 'you' ? 'L' : 'R'] = m.debug ?? null;
         if (side === 'you') {
           if (m.lines) applyTrace(m.lines);
+          if (m.vars) updateWatch(m.vars);
           setErrLine(m.error?.line ?? null);
         }
       }
@@ -168,6 +172,7 @@ function startMatch() {
   lowStamWarned = { left: false, right: false };
   lastWindSign = 0;
   countdownT = 2.6; // "3・2・1" + serve delay
+  clearWatch();
   els.rematchBtn.hidden = true;
   fire('deploy');
   audio.cue('deploy');
@@ -178,6 +183,7 @@ function physicsStep() {
     if (!brainDown.you)
       hostL.requestTick(JSON.stringify(brainState(game, 'left')), {
         trace: save.data.showTrace,
+        watch: save.data.showWatch,
       });
     if (!brainDown.enemy) hostR.requestTick(JSON.stringify(brainState(game, 'right')));
   }
@@ -247,7 +253,10 @@ function endMatch() {
 /* ---------- frame loop ---------- */
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.1, (now - lastT) / 1000);
+  // Whole-match slow motion for debugging: one scaled dt feeds the
+  // countdown, the physics accumulator (and with it the 30 Hz brain
+  // ticks), and the visual decay — the world slows coherently.
+  const dt = Math.min(0.1, (now - lastT) / 1000) * (save.data.speed ?? 1);
   lastT = now;
   if (!renderer || !game) return;
 
@@ -420,6 +429,82 @@ function setErrLine(ln) {
   if (errLine != null) editor.addLineClass(errLine - 1, 'background', 'cm-exec-err');
 }
 
+/* ---------- variable watch ---------- */
+// @ivars reported per brain tick; numerics keep a right-aligned ring
+// buffer drawn as a sparkline, strings/booleans show the latest value.
+const watchHist = new Map(); // name -> { nums, valEl, spark, ctx }
+const WATCH_MAX = 150;
+let watchLatest = null;
+
+function clearWatch() {
+  watchHist.clear();
+  watchLatest = null;
+  els.watchPanel.replaceChildren();
+  els.watchPanel.hidden = true;
+}
+
+function updateWatch(vars) {
+  if (!save.data.showWatch || !vars || typeof vars !== 'object') return;
+  watchLatest = vars;
+  const entries = Object.entries(vars);
+  els.watchPanel.hidden = entries.length === 0;
+  for (const [name, v] of entries) {
+    let e = watchHist.get(name);
+    if (!e) {
+      const row = document.createElement('div');
+      row.className = 'wv';
+      const nm = document.createElement('span');
+      nm.className = 'wv-name';
+      nm.textContent = '@' + name;
+      const val = document.createElement('span');
+      val.className = 'wv-val';
+      const spark = document.createElement('canvas');
+      spark.className = 'wv-spark';
+      spark.width = 130;
+      spark.height = 18;
+      row.append(nm, val, spark);
+      els.watchPanel.append(row);
+      e = { nums: [], valEl: val, spark, ctx: spark.getContext('2d') };
+      watchHist.set(name, e);
+    }
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      e.nums.push(v);
+      if (e.nums.length > WATCH_MAX) e.nums.shift();
+      e.valEl.textContent = String(Math.round(v * 100) / 100);
+      e.spark.hidden = false;
+      drawSpark(e);
+    } else {
+      e.valEl.textContent = String(v);
+      e.spark.hidden = true;
+    }
+  }
+}
+
+function drawSpark(e) {
+  const { ctx, nums, spark } = e;
+  const w = spark.width;
+  const h = spark.height;
+  ctx.clearRect(0, 0, w, h);
+  if (nums.length < 2) return;
+  let lo = Math.min(...nums);
+  let hi = Math.max(...nums);
+  if (hi - lo < 1e-6) {
+    lo -= 1;
+    hi += 1;
+  }
+  ctx.strokeStyle = '#35e0c0';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i < nums.length; i++) {
+    // newest sample pinned to the right edge
+    const x = w - ((nums.length - 1 - i) / (WATCH_MAX - 1)) * w;
+    const y = h - 2 - ((nums[i] - lo) / (hi - lo)) * (h - 4);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
 function clearExecClasses() {
   if (!editor) return;
   for (const ln of execSeen.keys()) {
@@ -563,6 +648,25 @@ els.traceToggle.addEventListener('change', () => {
   if (!els.traceToggle.checked) clearExecClasses();
 });
 els.traceToggle.checked = save.data.showTrace;
+els.watchToggle.addEventListener('change', () => {
+  save.data.showWatch = els.watchToggle.checked;
+  save.persist();
+  if (!els.watchToggle.checked) clearWatch();
+});
+els.watchToggle.checked = save.data.showWatch;
+for (const btn of els.speedGroup.querySelectorAll('.seg-btn')) {
+  btn.addEventListener('click', () => {
+    save.data.speed = Number(btn.dataset.speed);
+    save.persist();
+    syncSpeedUI();
+  });
+}
+function syncSpeedUI() {
+  for (const btn of els.speedGroup.querySelectorAll('.seg-btn')) {
+    btn.classList.toggle('on', Number(btn.dataset.speed) === (save.data.speed ?? 1));
+  }
+}
+syncSpeedUI();
 
 // Editor focus mode: fills the stage while coding; Esc restores.
 function syncExpandBtn() {
@@ -632,6 +736,14 @@ if (DEBUG) {
     // Lines the VM reported as executed this decay window (trace feature).
     get execLines() {
       return [...execSeen.keys()];
+    },
+    // Latest @ivar values reported by the watch option.
+    get watchVars() {
+      return watchLatest;
+    },
+    // The CodeMirror instance (tests set brain source through it).
+    get editor() {
+      return editor;
     },
   };
 }
