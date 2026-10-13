@@ -24,6 +24,7 @@ the first gesture.
 | Saves | `js/save.js` | HMAC-signed via `library/js/signed-storage.js`: unlocked level, best scores, settings, your code |
 | i18n | `js/i18n.js` | ja/en dictionary, `[data-i18n]` and `[data-i18n-title]` |
 | Execution trace | `ruby/pong_kit.rb`, `js/app.js` | `TracePoint(:line)` scoped to `brain.rb` reports executed lines per tick; the editor flashes the hot line and fades recent ones (toggle `#trace-toggle`) |
+| Debug tools | `js/app.js`, `ruby/pong_kit.rb` | Whole-match slow motion (`#speed-group`: 1×/½/¼/⅒, scales one `dt` so physics, brains and countdown stay coherent) and a variable-watch panel (`opts[:watch]` → `Pong::Brain.vars` dumps the brain's @ivars per tick; numerics draw sparklines) |
 
 ## Brain protocol
 

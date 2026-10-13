@@ -141,6 +141,44 @@ test('pong-battle rematch: overlay hides and the enemy still moves', async ({ pa
   expect(moved).toBe(true);
 });
 
+test('pong-battle debug tools: slow motion chips and variable watch', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  await page.goto('/pong-battle/?debug=1');
+  await page.locator('#hero-cta').click();
+  // Same escape hatch as the boot test: if the VM cannot reach 'ready'
+  // inside the budget on a slow engine, skip rather than flake.
+  await page.waitForFunction(() => ['ready', 'unsupported'].includes(document.body.dataset.phase), {
+    timeout: 20000,
+  });
+  test.skip(
+    (await page.locator('body').getAttribute('data-phase')) !== 'ready',
+    'VM boot exceeded the test budget on this engine',
+  );
+
+  // Speed control: four chips, 1x active by default, selection persists.
+  await expect(page.locator('.seg-btn')).toHaveCount(4);
+  await expect(page.locator('.seg-btn[data-speed="1"]')).toHaveClass(/on/);
+  await page.locator('.seg-btn[data-speed="0.25"]').click();
+  expect(await page.evaluate(() => globalThis.__pong.save.data.speed)).toBe(0.25);
+  await page.locator('.seg-btn[data-speed="1"]').click();
+
+  // Variable watch: deploy a brain with @ivars and the panel lists them.
+  await page.evaluate(() => {
+    globalThis.__pong.editor.setValue(
+      'brain "W" do |g|\n  @shots = (@shots || 0) + 1\n  @target = g.ball.y\n  g.seek(@target)\nend',
+    );
+  });
+  await page.locator('#deploy').click();
+  await page.waitForFunction(() => document.body.dataset.phase === 'playing', { timeout: 15000 });
+  await page.waitForFunction(() => (globalThis.__pong.watchVars?.shots ?? 0) > 2, {
+    timeout: 8000,
+  });
+  await expect(page.locator('#watch-panel .wv').first()).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('pong-battle works on iPhone portrait and landscape', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/pong-battle/');
