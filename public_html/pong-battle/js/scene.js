@@ -12,6 +12,10 @@ export const PALETTE = Object.freeze({
   net: [0.35, 0.5, 0.66, 0.5],
   wall: [0.42, 0.6, 0.82, 0.85],
   wallGlow: [0.35, 0.55, 0.85, 0.12],
+  zoneL: [0.2, 0.95, 0.65, 0.05],
+  zoneR: [1.0, 0.36, 0.55, 0.05],
+  goalEdgeL: [0.2, 0.95, 0.65, 0.2],
+  goalEdgeR: [1.0, 0.36, 0.55, 0.2],
   player: [0.2, 0.95, 0.65, 1], // left paddle: mint
   playerGlow: [0.2, 0.95, 0.65, 0.16],
   enemy: [1.0, 0.36, 0.55, 1], // right paddle: coral
@@ -51,12 +55,18 @@ export function buildScene({ game, layout: l, ballTrail, debugL, debugR, shakeT 
   const [cx, cy] = [l.x, l.y];
   const S = l.scale;
 
-  // Court frame + center net. Top/bottom are real bounce walls — draw
-  // them as readable neon edges (the old 1.5px grid line was invisible
-  // against the dark court, so the ball looked like it bounced on air).
+  // Arena frame + center net. 'rect' sprites are center+size — the walls
+  // run the full canvas width so they read as arena bounds, and the
+  // runout margins behind each paddle are tinted with the defender's
+  // color (plus a faint goal-edge line) so the space reads as the goal
+  // corridor it is rather than dead canvas.
+  push('rect', cx / 2, cy + l.h / 2, cx, l.h, PALETTE.zoneL);
+  push('rect', cx + l.w + cx / 2, cy + l.h / 2, cx, l.h, PALETTE.zoneR);
+  push('rect', cx + 1.5, cy + l.h / 2, 3, l.h, PALETTE.goalEdgeL);
+  push('rect', cx + l.w - 1.5, cy + l.h / 2, 3, l.h, PALETTE.goalEdgeR);
   for (const wy of [cy, cy + l.h - 3]) {
-    push('glow', cx + l.w / 2, wy + 1.5, l.w / 2 + 4, 6, PALETTE.wallGlow);
-    push('rect', cx, wy, l.w, 3, PALETTE.wall);
+    push('glow', cx + l.w / 2, wy + 1.5, cx + l.w / 2 + 4, 6, PALETTE.wallGlow);
+    push('rect', cx + l.w / 2, wy + 1.5, l.w + cx * 2, 3, PALETTE.wall);
   }
   for (let i = 0; i < 12; i++)
     push(
