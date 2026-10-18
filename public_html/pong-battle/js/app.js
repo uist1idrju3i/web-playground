@@ -110,13 +110,17 @@ for (const [host, side] of [
     if (m.type === 'stdout') logLine(`[${side}] ${m.text.trimEnd()}`);
     if (m.type === 'stderr') logLine(`[${side} ERR] ${m.text.trimEnd()}`);
     if (m.type === 'tick') {
-      if (m.ok === false) onBrainError(side, m.error);
-      else {
+      // A raising brain reports {move:0, error} (no `ok` flag) — that is a
+      // fault too, not just worker-level {ok:false} failures.
+      if (m.ok === false || m.error) {
+        if (side === 'you') setErrLine(m.error?.line ?? null);
+        onBrainError(side, m.error);
+      } else {
         debug[side === 'you' ? 'L' : 'R'] = m.debug ?? null;
         if (side === 'you') {
           if (m.lines) applyTrace(m.lines);
           if (m.vars) updateWatch(m.vars);
-          setErrLine(m.error?.line ?? null);
+          setErrLine(null);
         }
       }
     }
@@ -125,22 +129,38 @@ for (const [host, side] of [
 const debug = { L: null, R: null };
 let brainDown = { you: false, enemy: false };
 
+let holdError = '';
+
 function onBrainError(side, error) {
   if (brainDown[side]) return;
   brainDown[side] = true;
-  logLine(`[${side}] brain fault: ${error?.class ?? 'Error'} ${error?.message ?? ''}`);
+  const desc = `${error?.class ?? 'Error'}${error?.line ? ` brain.rb:${error.line}` : ''}: ${error?.message ?? ''}`;
+  logLine(`[${side}] brain fault: ${desc}`);
   if (side === 'you') {
     audio.cue('brainError');
     showBanner(t(lang, 'brainDown'), 'warn');
+    // Pause the match so the player can fix the code without conceding —
+    // 'hold' freezes physics (see frame()). The reboot below recovers a
+    // transient fault without any action; a persistent one surfaces the
+    // error until the next Deploy.
+    holdError = desc;
     if (phase === 'playing') fire('hold');
+    rebootBrain(hostL, 'you');
   } else {
     // Enemy brains are our own code; reboot quietly.
     rebootBrain(hostR, 'enemy');
   }
 }
 
+// Auto-reboot is best-effort: after a few faults per match the brain is
+// buggy, not unlucky — leave it down for the player to fix and redeploy.
+let reboots = { you: 0, enemy: 0 };
 async function rebootBrain(host, side) {
   brainDown[side] = true;
+  if (++reboots[side] > 2) {
+    logLine(`[${side}] reboot limit reached — fix the code and press Deploy`);
+    return;
+  }
   try {
     await host.reboot();
     brainDown[side] = false;
@@ -172,6 +192,8 @@ function startMatch() {
   lowStamWarned = { left: false, right: false };
   lastWindSign = 0;
   countdownT = 2.6; // "3・2・1" + serve delay
+  reboots = { you: 0, enemy: 0 };
+  holdError = '';
   clearWatch();
   els.rematchBtn.hidden = true;
   fire('deploy');
@@ -193,6 +215,22 @@ function physicsStep() {
   };
   const events = stepGame(game, moves, STEP_DT);
   tickCount += 1;
+  // Brain watchdog: an infinite-loop brain leaves its tick pending
+  // forever — health() flags it 'hung' but nothing reads it otherwise.
+  // About twice a second, terminate + reboot the offending VM.
+  if (tickCount % 60 === 0) {
+    for (const [host, side] of [
+      [hostL, 'you'],
+      [hostR, 'enemy'],
+    ]) {
+      if (!brainDown[side] && host.health(performance.now()) === 'hung') {
+        onBrainError(side, {
+          class: 'HungBrain',
+          message: 'no response for over 1.5 s — is there an infinite loop?',
+        });
+      }
+    }
+  }
   const fx = eventEffects(events);
   if (fx.hit) {
     audio.cue('hit', { speed: game.ball.speed });
@@ -269,7 +307,7 @@ function frame(now) {
     els.overlaySub.textContent = '';
     els.overlay.hidden = cur <= -1;
     if (countdownT <= 0) fire('serve');
-  } else if (phase === 'playing' || phase === 'hold') {
+  } else if (phase === 'playing') {
     accumulator += dt;
     let guard = 0;
     while (accumulator >= STEP_DT && guard++ < 12) {
@@ -277,6 +315,9 @@ function frame(now) {
       accumulator -= STEP_DT;
     }
   }
+  // 'hold' is entered only when the player's brain faults (enemy faults
+  // reboot without holding): freeze physics so the player can fix the
+  // code instead of conceding while their paddle is dead.
 
   // Ball trail + shake decay.
   trail.push([game.ball.x, game.ball.y]);
@@ -538,10 +579,19 @@ async function deploy() {
   save.data.code = code;
   save.persist();
   els.deployBtn.disabled = true;
-  const [resL, resR] = await Promise.all([
-    hostL.load(code),
-    hostR.load(await fetchSource(currentEnemy.url)),
-  ]);
+  let resL, resR;
+  try {
+    [resL, resR] = await Promise.all([
+      hostL.load(code),
+      hostR.load(await fetchSource(currentEnemy.url)),
+    ]);
+  } catch (err) {
+    // A dead host (reboot still in flight) must not die as an
+    // unhandled rejection — surface it and stay put.
+    showBanner(`Deploy failed: ${err.message}`, 'bad', 4000);
+    els.deployBtn.disabled = false;
+    return;
+  }
   els.deployBtn.disabled = false;
   if (!resL.ok) {
     showBanner(`${resL.error?.class}: ${resL.error?.message}`, 'bad', 4000);
@@ -586,7 +636,7 @@ function renderChrome() {
   if (phase === 'paused') els.overlayTitle.textContent = '⏸';
   if (phase === 'hold') {
     els.overlayTitle.textContent = t(lang, 'brainDown');
-    els.overlaySub.textContent = t(lang, 'brainReboot');
+    els.overlaySub.textContent = `${holdError} — ${t(lang, 'brainReboot')}`;
   }
 }
 
