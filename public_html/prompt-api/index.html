@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Explore the browser Prompt API, session lifecycle, structured output, multimodal inputs, and experimental tools."
+    />
+    <meta name="theme-color" content="#101a26" />
+    <title>Prompt API Lab · Web Playground</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="/prompt-api/app.css" />
+    <script type="module" src="/prompt-api/app.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <a class="back-link" href="/">← All apps</a>
+    </header>
+    <main class="app-shell prompt-shell">
+      <section id="availability-notice" class="availability-notice" role="status" hidden>
+        <div>
+          <p class="eyebrow">LEARNING MODE</p>
+          <h2>Prompt API is not available in this browser</h2>
+          <p>
+            Live model controls are disabled, but every tab keeps its API examples and requirements
+            visible. The web API is intended for Chrome desktop 148+ on supported hardware; Android
+            and iOS (including all iPhone browsers) are not supported.
+          </p>
+          <ul>
+            <li>Windows 10/11, macOS 13+, Linux, or ChromeOS on a Chromebook Plus.</li>
+            <li>
+              At least 22 GB of free storage; GPU with more than 4 GB VRAM, or CPU with 16 GB RAM
+              and 4 cores.
+            </li>
+            <li>
+              Audio input requires a GPU. Initial model downloads need an unmetered connection.
+            </li>
+          </ul>
+        </div>
+        <span class="status-chip status-unsupported">Unavailable</span>
+      </section>
+      <section class="app-hero">
+        <p class="eyebrow">PROMPT API · ON-DEVICE AI</p>
+        <div class="hero-title-row">
+          <div>
+            <h1>Prompt API Lab</h1>
+            <p>
+              Explore the browser's built-in language model API. Inspect real calls and results;
+              nothing is simulated by this page.
+            </p>
+          </div>
+          <span class="read-only-pill"><span aria-hidden="true">●</span> Local API explorer</span>
+        </div>
+      </section>
+
+      <div id="requirements" aria-live="polite"></div>
+      <p id="app-status" class="app-status" role="status">Checking browser support…</p>
+
+      <nav class="tabs" role="tablist" aria-label="Prompt API topics">
+        <button
+          id="tab-availability"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-availability"
+          tabindex="0"
+        >
+          Availability
+        </button>
+        <button
+          id="tab-chat"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-chat"
+          tabindex="-1"
+        >
+          Chat
+        </button>
+        <button
+          id="tab-structured"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-structured"
+          tabindex="-1"
+        >
+          Structured output
+        </button>
+        <button
+          id="tab-multimodal"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-multimodal"
+          tabindex="-1"
+        >
+          Multimodal
+        </button>
+        <button
+          id="tab-tools"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-tools"
+          tabindex="-1"
+        >
+          Tools
+        </button>
+        <button
+          id="tab-sampling"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-sampling"
+          tabindex="-1"
+        >
+          Sampling
+        </button>
+        <button
+          id="tab-errors"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-errors"
+          tabindex="-1"
+        >
+          Error lab
+        </button>
+      </nav>
+
+      <section
+        id="panel-availability"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-availability"
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">API SURFACE</p>
+              <h2>What does this browser expose?</h2>
+            </div>
+            <span id="api-surface-count" class="section-meta">Checking…</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Member</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="api-surface"></tbody>
+            </table>
+          </div>
+          <p class="section-intro">
+            Legacy extension names are presence checks only; this page never calls them.
+            Experimental members are detected independently before use.
+          </p>
+        </article>
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">OPTIONS MATRIX</p>
+              <h2>Availability by request</h2>
+            </div>
+            <span id="matrix-summary" class="section-meta">Waiting for API detection…</span>
+          </div>
+          <p class="section-intro">
+            Availability checks are read-only. Each row shows the exact options that can be passed
+            unchanged to <code>LanguageModel.create()</code>.
+          </p>
+          <label class="field">
+            <span>Session preset</span>
+            <select id="session-preset" disabled>
+              <option value="text-en">Text · English</option>
+              <option value="image-en">Image input · English</option>
+              <option value="audio-en">Audio input · English</option>
+              <option value="tools-en">Tool calls · English</option>
+            </select>
+          </label>
+          <div class="progress-line">
+            <progress id="download-progress" max="1" value="0" hidden></progress>
+            <span id="download-note" aria-live="polite"></span>
+          </div>
+          <button id="create-session" class="primary-button" type="button" disabled>
+            Download &amp; create session
+          </button>
+          <div class="table-wrap matrix-scroll">
+            <table class="data-table matrix-table">
+              <thead>
+                <tr>
+                  <th scope="col">Request</th>
+                  <th scope="col">Availability</th>
+                  <th scope="col">Exact options</th>
+                </tr>
+              </thead>
+              <tbody id="availability-matrix"></tbody>
+            </table>
+          </div>
+          <details class="code-disclosure">
+            <summary>Code · availability and create</summary>
+            <pre id="availability-code">LanguageModel.availability(options)</pre>
+          </details>
+        </article>
+      </section>
+
+      <section id="panel-chat" class="tab-panel" role="tabpanel" aria-labelledby="tab-chat" hidden>
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">SESSION CHAT</p>
+              <h2>Build a conversation</h2>
+            </div>
+            <span id="session-state" class="status-chip status-info">No session</span>
+          </div>
+          <p class="section-intro">
+            Creating or restoring a session is always an explicit action. The page does not call
+            <code>create()</code> while loading.
+          </p>
+          <div class="chat-settings">
+            <label class="field"
+              ><span>System prompt</span
+              ><textarea id="system-prompt" rows="2">
+You are a concise, helpful assistant.</textarea>
+            </label>
+            <label class="field"
+              ><span>Few-shot example (optional)</span
+              ><textarea
+                id="example-prompt"
+                rows="2"
+                placeholder="User: Give a short example&#10;Assistant: Example answer"
+              ></textarea>
+            </label>
+            <div class="field-row">
+              <label class="field"
+                ><span>Expected input language</span
+                ><select id="input-language">
+                  <option>en</option>
+                  <option>ja</option>
+                  <option>es</option>
+                  <option>de</option>
+                  <option>fr</option>
+                </select></label
+              >
+              <label class="field"
+                ><span>Expected output language</span
+                ><select id="output-language">
+                  <option>en</option>
+                  <option>ja</option>
+                  <option>es</option>
+                  <option>de</option>
+                  <option>fr</option>
+                </select></label
+              >
+            </div>
+            <label class="check-field"
+              ><input id="assistant-prefix" type="checkbox" /><span
+                >Prefill final assistant message</span
+              ></label
+            >
+            <label class="check-field"
+              ><input id="append-only" type="checkbox" /><span>Append without a reply</span></label
+            >
+          </div>
+          <div class="chat-actions">
+            <button id="restore-session" class="ghost-button" type="button" disabled>
+              Restore saved chat
+            </button>
+            <button id="clone-session" class="ghost-button" type="button" disabled>
+              Clone session
+            </button>
+            <button id="destroy-session" class="danger-button" type="button" disabled>
+              Destroy session
+            </button>
+          </div>
+          <section id="clone-pane" class="clone-pane" aria-live="polite" hidden>
+            <h3>Forked session</h3>
+            <label class="field"
+              ><span>Prompt the cloned branch</span
+              ><textarea id="clone-input" rows="2" disabled></textarea>
+            </label>
+            <div class="button-row">
+              <button id="clone-send" class="ghost-button" type="button" disabled>
+                Send to clone</button
+              ><button id="clone-destroy" class="ghost-button" type="button" disabled>
+                Destroy clone
+              </button>
+            </div>
+            <pre id="clone-result" class="result-output"></pre>
+          </section>
+          <div class="context-meter">
+            <div class="section-title">
+              <strong>Context window</strong><span id="context-label">—</span>
+            </div>
+            <progress id="context-progress" max="1" value="0"></progress>
+            <p id="context-notice" aria-live="polite"></p>
+          </div>
+          <div id="chat-log" class="chat-log" aria-live="polite" aria-label="Conversation"></div>
+          <label class="field"
+            ><span>Your message</span
+            ><textarea id="chat-input" rows="3" placeholder="Ask a question…" disabled></textarea>
+          </label>
+          <div class="chat-actions">
+            <button id="send-prompt" class="primary-button" type="button" disabled>
+              Send prompt
+            </button>
+            <button id="stop-prompt" class="danger-button" type="button" disabled>Stop</button>
+            <button id="save-chat" class="ghost-button" type="button" disabled>
+              Save signed history
+            </button>
+          </div>
+          <details class="code-disclosure">
+            <summary>Code · chat calls</summary>
+            <pre id="chat-code">LanguageModel.create(options)</pre>
+          </details>
+          <p id="save-status" class="save-status" aria-live="polite">
+            Signed save is initializing…
+          </p>
+        </article>
+      </section>
+
+      <section
+        id="panel-structured"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-structured"
+        hidden
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">CONSTRAINED OUTPUT</p>
+              <h2>Structured output</h2>
+            </div>
+          </div>
+          <p class="section-intro">
+            A response constraint guides output shape. The local validator checks only the
+            explicitly supported JSON Schema subset.
+          </p>
+          <label class="field"
+            ><span>Preset</span
+            ><select id="constraint-preset">
+              <option value="schema">JSON Schema · sentiment, hashtags, rating</option>
+              <option value="regexp">RegExp · ISO date</option>
+            </select></label
+          >
+          <label class="field"
+            ><span>Prompt</span
+            ><textarea id="structured-prompt" rows="3">
+Review: The interface is clear, though it loads slowly.</textarea>
+          </label>
+          <label class="check-field"
+            ><input id="omit-constraint" type="checkbox" /><span
+              >omitResponseConstraintInput: true</span
+            ></label
+          >
+          <button id="run-structured" class="primary-button" type="button" disabled>
+            Run constrained prompt
+          </button>
+          <p id="structured-status" class="result-note" aria-live="polite">
+            Create a model session to run this example.
+          </p>
+          <pre id="structured-result" class="result-output" aria-live="polite"></pre>
+          <details class="code-disclosure">
+            <summary>Code · response constraint</summary>
+            <pre id="structured-code">LanguageModel.create(options)</pre>
+          </details>
+        </article>
+      </section>
+
+      <section
+        id="panel-multimodal"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-multimodal"
+        hidden
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">IMAGE + AUDIO INPUT</p>
+              <h2>Multimodal prompts</h2>
+            </div>
+          </div>
+          <p class="section-intro">
+            Images and audio must be declared in <code>expectedInputs</code>. Camera and microphone
+            access is requested only by their buttons.
+          </p>
+          <div class="multimodal-grid">
+            <section class="mini-panel" aria-labelledby="image-title">
+              <h3 id="image-title">Image input</h3>
+              <label class="field"
+                ><span>Choose an image</span><input id="image-file" type="file" accept="image/*"
+              /></label>
+              <canvas
+                id="sketch-pad"
+                width="640"
+                height="360"
+                aria-label="Sketch pad; draw with pointer or touch"
+              ></canvas>
+              <div class="button-row">
+                <button id="clear-sketch" class="ghost-button" type="button">Clear sketch</button
+                ><button id="camera-button" class="ghost-button" type="button">
+                  Take camera snapshot
+                </button>
+              </div>
+              <button id="send-image" class="primary-button" type="button" disabled>
+                Ask about image
+              </button>
+              <p id="camera-note" aria-live="polite"></p>
+            </section>
+            <section class="mini-panel" aria-labelledby="audio-title">
+              <h3 id="audio-title">Audio input</h3>
+              <label class="field"
+                ><span>Choose an audio file</span
+                ><input id="audio-file" type="file" accept="audio/*"
+              /></label>
+              <div class="button-row">
+                <button id="record-audio" class="ghost-button" type="button">
+                  Start microphone recording</button
+                ><button id="stop-recording" class="ghost-button" type="button" disabled>
+                  Stop recording
+                </button>
+              </div>
+              <button id="send-audio" class="primary-button" type="button" disabled>
+                Ask about audio
+              </button>
+              <p id="audio-note" aria-live="polite"></p>
+            </section>
+          </div>
+          <pre id="multimodal-result" class="result-output" aria-live="polite"></pre>
+          <details class="code-disclosure">
+            <summary>Code · multimodal calls</summary>
+            <pre id="multimodal-code">LanguageModel.create({ expectedInputs: [...] })</pre>
+          </details>
+        </article>
+      </section>
+
+      <section
+        id="panel-tools"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-tools"
+        hidden
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">EXPERIMENTAL</p>
+              <h2>Open-loop tools</h2>
+            </div>
+            <span id="tools-support" class="status-chip status-info"
+              >Feature detection pending</span
+            >
+          </div>
+          <p class="section-intro">
+            The model can request a local action. Every call waits for your approval; rejected calls
+            return a <code>LanguageModelToolError</code>. Tool code never evaluates model-provided
+            JavaScript.
+          </p>
+          <label class="field"
+            ><span>Ask the model</span
+            ><textarea id="tools-prompt" rows="3">
+Use the calculator to work out (18 + 6) / 3.</textarea>
+          </label>
+          <button id="run-tools" class="primary-button" type="button" disabled>
+            Start tool loop
+          </button>
+          <div id="tool-approvals" class="tool-approvals" aria-live="polite"></div>
+          <pre id="tools-result" class="result-output" aria-live="polite"></pre>
+          <details class="code-disclosure">
+            <summary>Code · tool session and loop</summary>
+            <pre id="tools-code">LanguageModel.create(options)</pre>
+          </details>
+        </article>
+      </section>
+
+      <section
+        id="panel-sampling"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-sampling"
+        hidden
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">EXPERIMENTAL</p>
+              <h2>Compare sampling modes</h2>
+            </div>
+            <span id="sampling-support" class="status-chip status-info"
+              >Feature detection pending</span
+            >
+          </div>
+          <p class="section-intro">
+            Each selected mode creates a separate session, displays the resolved
+            <code>session.samplingMode</code>, and destroys it after the comparison.
+          </p>
+          <fieldset id="sampling-modes" class="sampling-modes" disabled>
+            <legend>Modes to compare</legend>
+          </fieldset>
+          <label class="field"
+            ><span>Same prompt for each session</span
+            ><textarea id="sampling-prompt" rows="2">
+Describe a quiet garden in one sentence.</textarea>
+          </label>
+          <button id="run-sampling" class="primary-button" type="button" disabled>
+            Compare selected modes
+          </button>
+          <div id="sampling-results" class="sampling-results" aria-live="polite"></div>
+          <details class="code-disclosure">
+            <summary>Code · sampling session</summary>
+            <pre id="sampling-code">LanguageModel.availability(options)</pre>
+          </details>
+        </article>
+      </section>
+
+      <section
+        id="panel-errors"
+        class="tab-panel"
+        role="tabpanel"
+        aria-labelledby="tab-errors"
+        hidden
+      >
+        <article class="panel">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">LEARN FROM FAILURES</p>
+              <h2>Error lab</h2>
+            </div>
+          </div>
+          <p class="section-intro">
+            Each button intentionally submits one invalid request. Browser versions may differ; the
+            expected name and source section are shown beside the actual result.
+          </p>
+          <div id="error-cases" class="error-cases"></div>
+          <details class="code-disclosure">
+            <summary>Code · last error case</summary>
+            <pre id="errors-code">Select a case to inspect its API call.</pre>
+          </details>
+        </article>
+      </section>
+      <p class="quiet-note">
+        Model output is rendered as plain text. The app sends no prompts, files, or history to a
+        server.
+      </p>
+    </main>
+    <footer class="site-footer">
+      <span>Open web, open knowledge.</span
+      ><span class="footer-links"
+        ><a href="/">All apps</a><a href="/docs/prompt-api.md">App notes</a></span
+      >
+    </footer>
+  </body>
+</html>

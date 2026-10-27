@@ -12,7 +12,7 @@
 
 ## Reference
 
-- App notes: [senko-hanabi](senko-hanabi.md), [baked-mochocho](baked-mochocho.md), [PONG programming battle](pong-battle.md)
+- App notes: [Prompt API Lab](prompt-api.md), [senko-hanabi](senko-hanabi.md), [baked-mochocho](baked-mochocho.md), [PONG programming battle](pong-battle.md)
 - [Generated capability reference](capability-reference.md)
 - [Native desktop apps](native-apps.md)
 - [WebAssembly](webassembly.md)
