@@ -4,6 +4,8 @@ docs/web-platform-features.md
 docs/capability-reference.md
 public_html/ruby-wasm/vendor/**
 
+public_html/codemirror/vendor/**
+
 public_html/tsumiki/vendor/**
 public_html/tsumiki/data/prefectures.json
 scripts/geo/**

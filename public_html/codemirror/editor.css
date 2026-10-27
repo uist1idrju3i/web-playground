@@ -1,0 +1,43 @@
+.cm-root {
+  height: 100%;
+  min-height: 0;
+}
+.cm-editor {
+  height: 100%;
+  min-height: 100%;
+  font-size: 15px;
+}
+.cm-editor.cm-focused {
+  outline: 2px solid #d68a3c;
+  outline-offset: -2px;
+}
+.cm-tooltip {
+  z-index: 5;
+  max-width: min(36rem, calc(100vw - 1rem));
+}
+.cm-panel.cm-search {
+  padding: 0.5rem;
+}
+.cm-panel.cm-search input {
+  min-height: 2rem;
+}
+.cm-mergeView {
+  min-width: 0;
+  height: 100%;
+}
+.cm-mergeViewEditors {
+  display: flex;
+  min-width: 0;
+  min-height: 100%;
+}
+.cm-mergeViewEditor {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: auto;
+}
+.cm-mergeViewEditor .cm-editor {
+  min-height: 20rem;
+}
+.cm-diffGutter {
+  width: 0.55rem;
+}

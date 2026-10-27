@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="A CodeMirror 6 editor and extension composition lab." />
+    <title>CodeMirror 6 Lab</title>
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="requirements" class="requirements" aria-live="polite"></section>
+      <header class="hero">
+        <p class="eyebrow">EDITOR LIBRARY · CODEMIRROR 6</p>
+        <h1>CodeMirror 6 Lab</h1>
+        <p>
+          Compose a browser editor from small extensions, then inspect the state and transactions
+          they produce.
+        </p>
+        <div class="status-row">
+          <span id="boot-status">Starting…</span><span id="save-status">Signed save: waiting</span
+          ><span id="load-metrics">Loading…</span>
+        </div>
+      </header>
+      <nav class="tabs" aria-label="Lab sections" role="tablist">
+        <button
+          class="tab is-active"
+          id="tab-editor"
+          role="tab"
+          aria-selected="true"
+          aria-controls="editor-panel"
+          data-panel="editor-panel"
+        >
+          Editor
+        </button>
+        <button
+          class="tab"
+          id="tab-merge"
+          role="tab"
+          aria-selected="false"
+          aria-controls="merge-panel"
+          data-panel="merge-panel"
+        >
+          Merge / diff
+        </button>
+        <button
+          class="tab"
+          id="tab-composition"
+          role="tab"
+          aria-selected="false"
+          aria-controls="composition-panel"
+          data-panel="composition-panel"
+        >
+          Extension composition
+        </button>
+      </nav>
+      <section class="panel" id="editor-panel" role="tabpanel" aria-labelledby="tab-editor">
+        <div class="toolbar">
+          <label
+            >Language
+            <select id="language-select"></select
+          ></label>
+          <label
+            >Theme
+            <select id="theme-select">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select></label
+          >
+          <label
+            >Keymap
+            <select id="keymap-select">
+              <option value="default">Default</option>
+              <option value="vim">Vim</option>
+            </select></label
+          >
+          <label
+            >Tab size
+            <select id="tab-size">
+              <option>2</option>
+              <option>4</option>
+              <option>8</option>
+            </select></label
+          >
+          <label>Font <input id="font-size" type="range" min="12" max="24" step="1" /></label>
+          <button id="search-button" type="button">Open search</button>
+          <button id="reset-document" type="button">Reset document</button>
+          <button id="save-now" type="button">Save</button>
+        </div>
+        <div class="feature-grid" aria-label="Editor features">
+          <label><input data-setting="lineNumbers" type="checkbox" /> Line numbers</label>
+          <label><input data-setting="foldGutter" type="checkbox" /> Fold gutter</label>
+          <label><input data-setting="bracketMatching" type="checkbox" /> Bracket matching</label>
+          <label><input data-setting="closeBrackets" type="checkbox" /> Close brackets</label>
+          <label><input data-setting="autocomplete" type="checkbox" /> Autocomplete</label>
+          <label><input data-setting="search" type="checkbox" /> Search / replace</label>
+          <label
+            ><input data-setting="multipleSelections" type="checkbox" /> Multiple selections</label
+          >
+          <label><input data-setting="activeLine" type="checkbox" /> Active line</label>
+          <label><input data-setting="lint" type="checkbox" /> Lint diagnostics</label>
+          <label><input data-setting="readOnly" type="checkbox" /> Read-only</label>
+          <label><input data-setting="lineWrapping" type="checkbox" /> Line wrapping</label>
+        </div>
+        <div id="editor-host" class="editor-host" aria-label="Code editor"></div>
+        <div class="status-bar" id="editor-status">Cursor — · selections — · document —</div>
+        <div class="explain-grid">
+          <section class="card">
+            <h2>Extensions in use</h2>
+            <pre id="extensions-code"></pre>
+          </section>
+          <section class="card">
+            <h2>What to notice</h2>
+            <p id="language-note">Each toggle is reconfigured without rebuilding the page.</p>
+            <p class="muted">
+              Ruby uses CodeMirror’s legacy stream-parser bridge. The other languages use
+              Lezer-based packages.
+            </p>
+          </section>
+        </div>
+      </section>
+      <section class="panel is-hidden" id="merge-panel" role="tabpanel" aria-labelledby="tab-merge">
+        <div class="toolbar">
+          <label
+            >View
+            <select id="merge-mode">
+              <option value="side-by-side">Side-by-side</option>
+              <option value="unified">Unified</option>
+            </select></label
+          ><button id="refresh-merge" type="button">Refresh diff</button>
+        </div>
+        <p class="callout">
+          The left/original document is the built-in sample. Edit the current document in the Editor
+          tab, then compare it here.
+        </p>
+        <div id="merge-host" class="merge-host"></div>
+      </section>
+      <section
+        class="panel is-hidden"
+        id="composition-panel"
+        role="tabpanel"
+        aria-labelledby="tab-composition"
+      >
+        <div class="explain-grid">
+          <section class="card">
+            <h2>State → view → transaction</h2>
+            <p>
+              <strong>EditorState</strong> owns the document and selection.
+              <strong>EditorView</strong> renders that state. Every edit is a transaction, and
+              extensions observe or reconfigure it.
+            </p>
+            <pre>
+EditorState.create({doc, extensions})\n  → EditorView({state, parent})\n  → view.dispatch(transaction)</pre>
+          </section>
+          <section class="card">
+            <h2>Live transaction log</h2>
+            <ol id="transaction-log" class="transaction-log">
+              <li>Waiting for the first transaction…</li>
+            </ol>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

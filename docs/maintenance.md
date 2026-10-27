@@ -29,6 +29,32 @@ Not adopted: test locks (v1.63–1.64), `--shuffle`, `TestProject.default`, retr
 
 Use Node 24 LTS, pinned by `.nvmrc` and the package engine range. Ubuntu 26.04 is a public runner-image preview. Revisit it when generally available or if the preview breaks; fall back to Ubuntu 24.04 in that case and document the reason.
 
+### CodeMirror 6 vendor set (2026-10-27)
+
+The CodeMirror 6 Lab adds exact-pinned MIT packages as development dependencies. The
+`scripts/vendor-codemirror.mjs` script copies their ESM entry points, rewrites their bare
+imports to same-origin relative imports, and preserves each package's upstream `LICENSE` file
+under `public_html/codemirror/vendor/licenses/`. `npm audit signatures` verified 118 packages,
+23 attestations, and no signature errors.
+
+The vendored set is: `@codemirror/state` 6.7.6, `@codemirror/view` 6.43.15,
+`@codemirror/commands` 6.11.1, `@codemirror/language` 6.13.1,
+`@codemirror/autocomplete` 6.20.4, `@codemirror/search` 6.7.2, `@codemirror/lint` 6.9.7,
+`@codemirror/merge` 6.12.3, `@codemirror/lang-javascript` 6.2.5,
+`@codemirror/lang-html` 6.4.12, `@codemirror/lang-css` 6.3.1,
+`@codemirror/lang-json` 6.0.2, `@codemirror/lang-markdown` 6.5.2,
+`@codemirror/legacy-modes` 6.5.5, `@codemirror/streamparser` 6.0.0,
+`@lezer/common` 1.5.4, `@lezer/highlight` 1.2.5, `@lezer/lr` 1.4.11,
+`@lezer/javascript` 1.5.6, `@lezer/css` 1.3.9, `@lezer/html` 1.3.13,
+`@lezer/json` 1.0.3, `@lezer/markdown` 1.8.1, `style-mod` 4.1.4,
+`w3c-keyname` 2.2.8, `crelt` 1.0.7, `@marijn/find-cluster-break` 1.0.4,
+`@replit/codemirror-vim` 6.4.0, and `@replit/codemirror-vim-core` 0.1.0.
+All are MIT-licensed; their exact license texts are copied next to the generated modules.
+
+The Vim add-on was retained because its MIT package published 6.4.0 in July 2026. The MIT
+`@replit/codemirror-emacs` package was not included: its latest published 6.1.0 release is from
+July 2024, so active maintenance could not be established for this demo's pinned dependency.
+
 ### Dataset and WASM updates
 
 Change source data or generators, run `npm run generate`, inspect generated diffs, and run `npm run check:generated`. For Layer 2, run `scripts/build-wasm-toolchains.sh`, inspect the manifest and binaries, and update [third-party notices](../THIRD_PARTY_NOTICES.md).

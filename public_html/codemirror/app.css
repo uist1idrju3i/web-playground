@@ -1,0 +1,234 @@
+:root {
+  --cm-ink: #18324a;
+  --cm-muted: #587087;
+  --cm-surface: #fffdf8;
+  --cm-panel: #f1f5f7;
+  --cm-line: #c9d5dc;
+  --cm-accent: #a13f55;
+}
+body {
+  background: #e7eef0;
+  color: var(--cm-ink);
+}
+.app-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+.hero {
+  padding: 1.4rem 0 1rem;
+}
+.hero h1 {
+  margin: 0.2rem 0 0.5rem;
+}
+.hero p {
+  max-width: 70ch;
+}
+.eyebrow {
+  color: var(--cm-accent);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--cm-muted);
+  font-size: 0.85rem;
+}
+.status-row span {
+  border: 1px solid var(--cm-line);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  background: var(--cm-surface);
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.5rem 0;
+}
+.tab,
+button,
+select,
+input {
+  min-height: 2.5rem;
+}
+.tab {
+  border: 1px solid var(--cm-line);
+  border-radius: 0.6rem 0.6rem 0 0;
+  background: var(--cm-panel);
+  padding: 0.5rem 0.9rem;
+  color: var(--cm-ink);
+}
+.tab.is-active {
+  background: var(--cm-surface);
+  border-bottom-color: var(--cm-surface);
+  font-weight: 700;
+}
+.panel {
+  background: var(--cm-surface);
+  border: 1px solid var(--cm-line);
+  border-radius: 0 0.7rem 0.7rem 0.7rem;
+  padding: clamp(0.8rem, 2vw, 1.4rem);
+}
+.is-hidden {
+  display: none;
+}
+.toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+.toolbar label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.toolbar select,
+.toolbar input {
+  width: auto;
+}
+button,
+select {
+  border: 1px solid #78909d;
+  border-radius: 0.45rem;
+  background: #fff;
+  color: var(--cm-ink);
+  padding: 0.35rem 0.6rem;
+}
+button:hover,
+button:focus-visible {
+  border-color: var(--cm-accent);
+}
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 0.35rem 0.7rem;
+  margin-bottom: 0.9rem;
+}
+.feature-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+.editor-host,
+.merge-host {
+  min-height: 24rem;
+  height: min(58dvh, 40rem);
+  overflow: auto;
+  border: 1px solid var(--cm-line);
+  border-radius: 0.5rem;
+}
+.status-bar {
+  padding: 0.55rem 0;
+  color: var(--cm-muted);
+  font:
+    0.82rem ui-monospace,
+    monospace;
+}
+.explain-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.8rem;
+  margin-top: 0.9rem;
+}
+.card {
+  border: 1px solid var(--cm-line);
+  border-radius: 0.5rem;
+  padding: 0.8rem;
+  min-width: 0;
+}
+.card h2 {
+  font-size: 1rem;
+  margin-top: 0;
+}
+.card pre {
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.muted {
+  color: var(--cm-muted);
+  font-size: 0.88rem;
+}
+.callout {
+  border-left: 4px solid #d68a3c;
+  background: #fff5df;
+  padding: 0.7rem;
+}
+.transaction-log {
+  margin: 0;
+  padding-left: 1.4rem;
+  font:
+    0.8rem ui-monospace,
+    monospace;
+}
+.transaction-log li {
+  padding: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+.requirements:empty {
+  display: none;
+}
+.requirements {
+  border: 1px solid #d68a3c;
+  background: #fff5df;
+  border-radius: 0.5rem;
+  padding: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+@media (max-width: 600px) {
+  .app-shell {
+    padding-left: max(0.7rem, env(safe-area-inset-left));
+    padding-right: max(0.7rem, env(safe-area-inset-right));
+  }
+  .hero {
+    padding-top: 0.8rem;
+  }
+  .tabs {
+    gap: 0.25rem;
+  }
+  .tab {
+    flex: 1 1 30%;
+    padding: 0.45rem 0.5rem;
+  }
+  .panel {
+    border-radius: 0.5rem;
+    padding: 0.7rem;
+  }
+  .toolbar {
+    align-items: stretch;
+  }
+  .toolbar label,
+  .toolbar button {
+    flex: 1 1 8rem;
+  }
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .editor-host,
+  .merge-host {
+    height: min(55dvh, 31rem);
+  }
+  .explain-grid {
+    grid-template-columns: 1fr;
+  }
+  .status-row {
+    font-size: 0.75rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .editor-host,
+  .merge-host {
+    height: 52svh;
+  }
+  .hero {
+    padding-block: 0.5rem;
+  }
+}

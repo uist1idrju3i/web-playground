@@ -14,6 +14,7 @@ export default [
       'test-results/**',
       'tests/servo/bin/**',
       'public_html/library/wasm/toolchains/**',
+      'public_html/codemirror/vendor/**',
       'public_html/tsumiki/vendor/**',
       'public_html/ruby-wasm/vendor/**',
     ],
