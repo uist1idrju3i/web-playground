@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f3f0e8" />
+    <meta
+      name="description"
+      content="Explore Ace editor modes, workers, themes, keybindings, extensions, and API events."
+    />
+    <title>Ace Lab · Web Playground</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/library/css/base.css" />
+    <link rel="stylesheet" href="./vendor/css/ace.css" />
+    <link rel="stylesheet" href="./vendor/css/theme/chrome.css" id="theme-light" />
+    <link rel="stylesheet" href="./vendor/css/theme/tomorrow_night.css" id="theme-dark" disabled />
+    <link rel="stylesheet" href="./app.css" />
+    <script src="./vendor/ace.js" defer></script>
+    <script src="./vendor/ext-beautify.js" defer></script>
+    <script src="./vendor/ext-diff.js" defer></script>
+    <script src="./vendor/ext-language_tools.js" defer></script>
+    <script src="./vendor/ext-searchbox.js" defer></script>
+    <script src="./vendor/ext-settings_menu.js" defer></script>
+    <script src="./vendor/ext-statusbar.js" defer></script>
+    <script src="./vendor/keybinding-vim.js" defer></script>
+    <script src="./vendor/keybinding-emacs.js" defer></script>
+    <script src="./vendor/keybinding-vscode.js" defer></script>
+    <script src="./vendor/keybinding-sublime.js" defer></script>
+    <script src="./vendor/mode-javascript.js" defer></script>
+    <script src="./vendor/mode-html.js" defer></script>
+    <script src="./vendor/mode-css.js" defer></script>
+    <script src="./vendor/mode-json.js" defer></script>
+    <script src="./vendor/mode-markdown.js" defer></script>
+    <script src="./vendor/mode-ruby.js" defer></script>
+    <script src="./vendor/mode-python.js" defer></script>
+    <script src="./vendor/theme-chrome.js" defer></script>
+    <script src="./vendor/theme-tomorrow_night.js" defer></script>
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body data-app-ready="false" data-phase="initializing">
+    <header class="site-header ace-site-header">
+      <a class="wordmark" href="/">Web Playground</a>
+      <span class="header-note">A hands-on guide to the web platform</span>
+    </header>
+    <main class="ace-shell">
+      <a class="back-link" href="/">← All experiments</a>
+      <section class="ace-intro">
+        <p class="eyebrow">EDITOR ENGINE · ACE 1.45.2</p>
+        <h1>Ace Lab</h1>
+        <p>
+          Change one editor option at a time, inspect the API call, and watch Ace respond.
+          Everything here runs from this site’s own files.
+        </p>
+      </section>
+      <section class="requirements-panel" id="requirements" aria-live="polite"></section>
+      <div class="save-notice" id="save-notice" role="status" aria-live="polite"></div>
+      <div class="app-tabs" role="tablist" aria-label="Ace Lab sections">
+        <button id="tab-editor" role="tab" aria-selected="true" aria-controls="panel-editor">
+          Editor
+        </button>
+        <button id="tab-diff" role="tab" aria-selected="false" aria-controls="panel-diff">
+          Inline diff
+        </button>
+        <button id="tab-api" role="tab" aria-selected="false" aria-controls="panel-api">API</button>
+      </div>
+
+      <section id="panel-editor" class="tab-panel" role="tabpanel" aria-labelledby="tab-editor">
+        <div class="control-bar">
+          <label class="field-label" for="language">Language</label>
+          <select id="language" data-testid="language">
+            <option value="javascript">JavaScript</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            <option value="markdown">Markdown</option>
+            <option value="ruby">Ruby</option>
+            <option value="python">Python</option>
+          </select>
+          <label class="field-label" for="keybinding">Keys</label>
+          <select id="keybinding" data-testid="keybinding">
+            <option value="default">Default</option>
+            <option value="vim">Vim</option>
+            <option value="emacs">Emacs</option>
+            <option value="vscode">VS Code</option>
+            <option value="sublime">Sublime</option>
+          </select>
+          <label class="field-label" for="theme">Theme</label>
+          <select id="theme">
+            <option value="chrome">Chrome · light</option>
+            <option value="tomorrow_night">Tomorrow Night · dark</option>
+          </select>
+          <button id="search-button" type="button">Search</button>
+          <button id="settings-button" type="button">Ace settings</button>
+          <button id="beautify-button" type="button">Beautify</button>
+          <button id="reset-button" type="button">Reset</button>
+        </div>
+        <div class="editor-options" aria-label="Editor options">
+          <label><input id="read-only" type="checkbox" /> Read-only</label>
+          <label><input id="wrap" type="checkbox" /> Wrap lines</label>
+          <label><input id="invisibles" type="checkbox" /> Invisibles</label>
+          <label><input id="guides" type="checkbox" checked /> Indent guides</label>
+          <label><input id="fold-widgets" type="checkbox" checked /> Folding</label>
+          <label><input id="autocomplete" type="checkbox" checked /> Autocomplete + snippets</label>
+          <label><input id="close-brackets" type="checkbox" checked /> Close brackets</label>
+          <label><input id="multi-cursor" type="checkbox" checked /> Multiple cursors</label>
+          <label for="tab-size">Tab size</label>
+          <input id="tab-size" type="number" min="1" max="8" value="2" />
+          <label for="font-size">Font size</label>
+          <input id="font-size" type="number" min="12" max="28" value="15" />
+        </div>
+        <div class="editor-card">
+          <div id="editor" class="editor-mount" aria-label="Ace code editor"></div>
+          <div class="editor-footer">
+            <span id="ace-status" aria-label="Ace status bar"></span>
+            <span id="document-status"></span>
+          </div>
+        </div>
+        <div class="demo-actions">
+          <button id="marker-button" type="button">Highlight a range</button>
+          <button id="annotation-button" type="button">Add sample annotation</button>
+          <span id="worker-status" role="status" aria-live="polite">
+            Validation workers start for JavaScript, JSON, CSS, and HTML.
+          </span>
+        </div>
+        <details class="api-disclosure" open>
+          <summary>Equivalent editor options</summary>
+          <pre><code id="api-example"></code></pre>
+        </details>
+      </section>
+
+      <section id="panel-diff" class="tab-panel" role="tabpanel" aria-labelledby="tab-diff" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">ACE EXTENSION</p>
+            <h2>Inline diff</h2>
+          </div>
+          <p>Compare two original versions in one editor surface.</p>
+        </div>
+        <div id="diff-editor" class="editor-mount diff-mount" aria-label="Inline diff editor"></div>
+        <p class="inline-note" id="diff-status" role="status">
+          Ace’s bundled ext-diff extension renders additions and deletions inline.
+        </p>
+      </section>
+
+      <section id="panel-api" class="tab-panel" role="tabpanel" aria-labelledby="tab-api" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">OBSERVE THE EDITOR</p>
+            <h2>API and events</h2>
+          </div>
+          <p>Listen to live changes and inspect the options produced by the controls.</p>
+        </div>
+        <div class="metrics-grid" aria-label="Editor metrics">
+          <div><span>Cursor</span><strong id="metric-cursor">—</strong></div>
+          <div><span>Selections</span><strong id="metric-selections">—</strong></div>
+          <div><span>Document length</span><strong id="metric-length">—</strong></div>
+          <div><span>Editor load</span><strong id="metric-load">—</strong></div>
+          <div><span>Vendored bytes</span><strong id="metric-vendor-bytes">—</strong></div>
+        </div>
+        <div class="api-columns">
+          <section class="api-card">
+            <h3>Current options</h3>
+            <pre><code id="api-example-secondary"></code></pre>
+          </section>
+          <section class="api-card">
+            <h3>Live event log</h3>
+            <ol id="event-log" aria-live="polite"></ol>
+          </section>
+        </div>
+      </section>
+      <p class="quiet-note">
+        Your editor state is signed locally. The signature detects edits; it does not encrypt your
+        documents.
+      </p>
+    </main>
+    <footer class="site-footer">
+      <span>Open web, open knowledge.</span>
+      <a href="/docs/ace.html">Ace Lab notes</a>
+    </footer>
+  </body>
+</html>

@@ -14,6 +14,7 @@ This project includes generated data from the following projects:
 - **@ruby/wasm-wasi 2.10.1** — vendored as `public_html/ruby-wasm/vendor/browser.umd.js`. Copyright (c) 2022 Yuta Saito. Licensed under the MIT License.
 - **@ruby/3.4-wasm-wasi 2.10.1** — CRuby 3.4.1 with stdlib compiled to WebAssembly, shipped compressed as `public_html/ruby-wasm/ruby+stdlib.wasm.gz`. Ruby itself is distributed under the Ruby License or the 2-clause BSDL; bundled stdlib and extension libraries carry their own permissive licenses (see the upstream `LEGAL` file in the ruby source).
 - **CodeMirror 6.65.7** — editor component loaded from cdnjs with SRI (core, `mode/ruby`, `closebrackets`, `matchbrackets`). Copyright (c) Marijn Haverbeke and others. Licensed under the MIT License.
+- **ace-builds 1.45.2** — vendored Ace editor runtime, modes, workers, themes, keybindings, extensions, snippets, and CSS in `public_html/ace/vendor/`. Copyright (c) Ajax.org B.V. Licensed under the BSD 3-Clause License; the upstream license text is `public_html/ace/vendor/LICENSE`.
 
 Design methods adapted into the project skills under `.agents/skills/`:
 
