@@ -36,6 +36,10 @@ The CodeMirror 6 Lab adds exact-pinned MIT packages as development dependencies.
 imports to same-origin relative imports, and preserves each package's upstream `LICENSE` file
 under `public_html/codemirror/vendor/licenses/`. `npm audit signatures` verified 118 packages,
 23 attestations, and no signature errors.
+The script also applies a documented post-copy patch table with exact-match guards. It currently
+escapes the word-character fallback in `@codemirror/autocomplete` 6.20.4. If the pinned upstream
+package fixes that code, remove the patch entry and regenerate; `--check` includes the patched
+output and fails if a patch no longer matches exactly once.
 
 The vendored set is: `@codemirror/state` 6.7.6, `@codemirror/view` 6.43.15,
 `@codemirror/commands` 6.11.1, `@codemirror/language` 6.13.1,

@@ -31,6 +31,13 @@ relative same-origin files, and copies upstream MIT license texts into `vendor/l
 packages use `dist/index.js`; utility packages and Ruby/Vim core use the ESM entry path advertised
 by their package metadata. Unknown bare imports and non-ESM entries fail loudly.
 
+The script applies the explicit post-copy patches in `vendorPatches`; each records its target,
+exact source fragment, replacement, reason, and upstream. The current patch fixes the fallback
+word-character class in `@codemirror/autocomplete` 6.20.4. Each patch must match exactly once, so a
+dependency update or upstream fix fails loudly. When upstream contains the fix, remove the patch
+entry and regenerate instead of editing the vendored file directly. `--check` compares against the
+patched output.
+
 ## CSP-compatible editor mounting
 
 CodeMirror views are mounted inside open shadow roots. Each host gets a same-origin

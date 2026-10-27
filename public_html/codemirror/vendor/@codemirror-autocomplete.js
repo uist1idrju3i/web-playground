@@ -1719,7 +1719,7 @@ function wordRE(wordChars) {
         return new RegExp(`[\\p{Alphabetic}\\p{Number}_${escaped}]+`, "ug");
     }
     catch (_a) {
-        return new RegExp(`[\w${escaped}]`, "g");
+        return new RegExp(`[\\w${escaped}]`, "g");
     }
 }
 function mapRE(re, f) {

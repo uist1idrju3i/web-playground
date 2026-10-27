@@ -44,6 +44,17 @@ export const vendorModules = [
   ['@replit/codemirror-vim-core', 'vim.js'],
 ];
 
+export const vendorPatches = [
+  {
+    file: '@codemirror-autocomplete.js',
+    find: 'return new RegExp(`[\\w${escaped}]`, "g");',
+    replace: 'return new RegExp(`[\\\\w${escaped}]`, "g");',
+    reason:
+      'Template literal drops the backslash, so the fallback class matches the letter w instead of word characters (CodeQL js/useless-regexp-character-escape); unreachable where Unicode property escapes are supported; present in @codemirror/autocomplete 6.20.4.',
+    upstream: 'https://code.haverbeke.berlin/codemirror/autocomplete',
+  },
+];
+
 function packageName(specifier) {
   if (specifier.startsWith('@')) return specifier.split('/').slice(0, 2).join('/');
   return specifier.split('/')[0];
@@ -147,6 +158,24 @@ export function rewriteModuleSource(source, sourceName, specifierTargets = new M
   return rewritten.replace(/[ \t]+(?=\r?$)/gmu, '').replace(/(?:\r?\n)+$/u, '') + lineEnding;
 }
 
+export function applyVendorPatches(generated, patches = vendorPatches) {
+  const patched = new Map(generated);
+  for (const patch of patches) {
+    if (!patched.has(patch.file)) {
+      throw new Error(`Vendor patch target is missing: ${patch.file} (${patch.upstream}).`);
+    }
+    const source = patched.get(patch.file);
+    const matchCount = source.split(patch.find).length - 1;
+    if (matchCount !== 1) {
+      throw new Error(
+        `Vendor patch ${patch.file} (${patch.upstream}) matched ${matchCount} times; expected exactly once.`,
+      );
+    }
+    patched.set(patch.file, source.replace(patch.find, patch.replace));
+  }
+  return generated.map(([file]) => [file, patched.get(file)]);
+}
+
 async function packageManifest(name) {
   const path = join(packageDirectory(name), 'package.json');
   if (!existsSync(path)) throw new Error(`Package is not installed: ${name}`);
@@ -186,7 +215,7 @@ async function buildExpectedFiles() {
 async function generatedFiles() {
   const { generated, licenses } = await buildExpectedFiles();
   return {
-    generated,
+    generated: applyVendorPatches(generated),
     licenses: [...licenses].map(([name, source]) => [
       `licenses/${name.replaceAll('/', '-')}.LICENSE`,
       source,
