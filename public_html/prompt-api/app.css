@@ -636,6 +636,65 @@ body {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .data-table,
+  .data-table tbody,
+  .data-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .data-table tr {
+    margin: 0 0 10px;
+    border: 1px solid #dfe7ec;
+    border-radius: 10px;
+  }
+
+  .data-table td,
+  .data-table td:first-child,
+  .matrix-table td:first-child,
+  .matrix-table td:last-child {
+    display: grid;
+    grid-template-columns: minmax(5.25rem, 32%) minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    color: #40586b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .data-table tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .matrix-table code {
+    min-width: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 }
 
 @media (max-width: 420px) {

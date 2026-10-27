@@ -238,12 +238,15 @@ function renderSurface() {
   for (const [name, present, note] of rows) {
     const row = document.createElement('tr');
     const member = document.createElement('td');
+    member.dataset.label = 'Member';
     member.textContent = name;
     const state = document.createElement('td');
+    state.dataset.label = 'Status';
     state.append(
       appendStatus(state, present ? 'present' : 'absent', present ? 'Present' : 'Absent'),
     );
     const detail = document.createElement('td');
+    detail.dataset.label = 'Notes';
     detail.textContent = note;
     row.append(member, state, detail);
     tbody.append(row);
@@ -292,8 +295,10 @@ async function availability(options, timeoutMs = 2200) {
 function renderMatrixRow(item, result) {
   const row = document.createElement('tr');
   const label = document.createElement('td');
+  label.dataset.label = 'Request';
   label.textContent = item.label;
   const state = document.createElement('td');
+  state.dataset.label = 'Availability';
   const statusLabel = result?.status ?? 'unavailable';
   state.append(appendStatus(state, statusLabel, statusLabel));
   if (result?.detail) {
@@ -301,6 +306,7 @@ function renderMatrixRow(item, result) {
     state.setAttribute('aria-label', `${statusLabel}: ${result.detail}`);
   }
   const exact = document.createElement('td');
+  exact.dataset.label = 'Exact options';
   const code = document.createElement('code');
   code.textContent = pretty(item.options);
   exact.append(code);

@@ -50,6 +50,12 @@ async function installFake(page) {
   await page.addInitScript({ path: fixturePath });
 }
 
+async function installNoApi(page) {
+  await page.addInitScript(() => {
+    delete globalThis.LanguageModel;
+  });
+}
+
 async function openFakeApp(page) {
   await installFake(page);
   await page.goto('/prompt-api/');
@@ -63,26 +69,36 @@ test('boot without LanguageModel keeps a readable learning page', async ({
 }) => {
   const diagnostics = await collectDiagnostics(page);
   const requestTracker = trackExternalRequests(page, baseURL);
-  await page.addInitScript(() => {
-    try {
-      Object.defineProperty(globalThis, 'LanguageModel', {
-        configurable: true,
-        value: undefined,
-        writable: true,
-      });
-    } catch {
-      // The browser may not expose this global as configurable.
-    }
-  });
+  await installNoApi(page);
   await page.goto('/prompt-api/');
   await expect(page.getByRole('heading', { name: 'Prompt API Lab' })).toBeVisible();
   await expect(page.locator('#availability-notice')).toBeVisible();
   await expect(page.locator('#create-session')).toBeDisabled();
+  expect(await page.evaluate(() => typeof globalThis.LanguageModel)).toBe('undefined');
   await expect(page.locator('#availability-matrix tr')).toHaveCount(35);
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
   await assertClean(page, diagnostics, browserName);
   expect(requestTracker.externalRequests).toEqual([]);
   requestTracker.stop();
+});
+
+test('no-API learning notice stays near the top at all requested viewports', async ({ page }) => {
+  await installNoApi(page);
+  for (const viewport of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/prompt-api/');
+    await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
+    await expect(page.locator('#availability-notice')).toBeVisible();
+    const noticeTop = await page
+      .locator('#availability-notice')
+      .evaluate((element) => element.getBoundingClientRect().top);
+    expect(noticeTop).toBeGreaterThanOrEqual(0);
+    expect(noticeTop).toBeLessThan(viewport.height / 2);
+  }
 });
 
 test('fake API renders the availability matrix without creating on load', async ({ page }) => {
@@ -182,7 +198,9 @@ test('error lab reports the documented error names with the fake API', async ({ 
   }
 });
 
-test('Prompt API Lab stays within portrait and landscape phone bounds', async ({ page }) => {
+test('every Prompt API tab stays within portrait and landscape phone bounds', async ({ page }) => {
+  await installFake(page);
+  const tabs = ['availability', 'chat', 'structured', 'multimodal', 'tools', 'sampling', 'errors'];
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 844, height: 390 },
@@ -190,20 +208,48 @@ test('Prompt API Lab stays within portrait and landscape phone bounds', async ({
     await page.setViewportSize(viewport);
     await page.goto('/prompt-api/');
     await expect(page.getByRole('heading', { name: 'Prompt API Lab' })).toBeVisible();
-    const bounds = await page.evaluate(() =>
-      [...document.querySelectorAll('button, input, select, textarea')]
-        .filter((element) => !element.closest('.tabs'))
-        .map((element) => {
-          const rect = element.getBoundingClientRect();
-          return {
-            left: rect.left,
-            right: rect.right,
-            hidden: rect.width === 0 || rect.height === 0,
-          };
-        })
-        .filter(({ hidden }) => !hidden),
-    );
-    expect(bounds.every(({ left, right }) => left >= -1 && right <= viewport.width + 1)).toBe(true);
+    for (const tab of tabs) {
+      await page.locator(`#tab-${tab}`).click();
+      if (tab === 'tools') {
+        await page.locator('#run-tools').click();
+        const toolCard = page.locator('.tool-card').last();
+        await expect(toolCard).toBeVisible();
+        await toolCard.getByRole('button', { name: 'Approve' }).click();
+        await expect(page.locator('#tools-result')).toContainText('approved tool result');
+      }
+      if (tab === 'sampling') {
+        await page.locator('#run-sampling').click();
+        await expect(page.locator('.sampling-card').first()).toBeVisible();
+      }
+      const bounds = await page.evaluate(() => {
+        const panel = document.querySelector('.tab-panel:not([hidden])');
+        const width = window.innerWidth;
+        const elements = [panel, ...panel.querySelectorAll('*')];
+        return {
+          viewportWidth: width,
+          documentScrollWidth: document.documentElement.scrollWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+          offenders: elements
+            .map((element) => {
+              const rect = element.getBoundingClientRect();
+              return {
+                name: `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ''}${element.className && typeof element.className === 'string' ? `.${element.className.trim().replaceAll(/\s+/gu, '.')}` : ''}`,
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+                hidden: rect.width === 0 || rect.height === 0,
+              };
+            })
+            .filter(
+              ({ left, right, width: elementWidth, hidden }) =>
+                !hidden && (left < -1 || right > width + 1 || elementWidth > width + 1),
+            ),
+        };
+      });
+      expect(bounds.documentScrollWidth).toBeLessThanOrEqual(bounds.viewportWidth);
+      expect(bounds.bodyScrollWidth).toBeLessThanOrEqual(bounds.viewportWidth);
+      expect(bounds.offenders, `${viewport.width}px · ${tab}`).toEqual([]);
+    }
   }
 });
 
