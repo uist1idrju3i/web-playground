@@ -50,10 +50,9 @@ description: Procedures for repository maintenance in web-playground - adding a 
 
 - Playwright WebKit screenshots inject a temporary inline stylesheet; assert CSP diagnostics
   before taking screenshots.
-- WebKit emits its own `style-src-attr` violation (sample `text-overflow:inherit`) on native
-  controls. `tests/e2e/csp-violations.js` filters only that exact sample and a canary test
-  fails when WebKit stops emitting it. Never broaden the filter to cover app-originated
-  violations; fix the source.
+- WebKit used to emit its own `style-src-attr` violation on native controls; upstream fixed
+  it (WebKit build 2388) and the exact-match filter plus canary were removed. The CSP gate
+  now has no engine exceptions — never re-add one; pin or fix the browser instead.
 - Headless runners have no WebGPU adapter and no audio output; such tests skip with a reason.
 - servoshell is driven over W3C WebDriver (sync `execute` only, one session per process), not
   Playwright. Its `style-src-attr` violations with `blockedURI: 'inline'` are diagnostics in
