@@ -19,6 +19,18 @@ eslint 9.39.1 → 10.12.0, @eslint/js 9.39.1 → 10.0.1, globals 16.5.0 → 17.1
 
 **github/codeql-action 4.38.2 (init + analyze).** Reviewed 4.37.8–4.38.2: default CodeQL bundle 2.26.4 → 2.27.1, experimental per-language bundles (rolled out automatically), toolcache cleanup on hosted runners, and native linux-arm64 bundles. All changes apply automatically; nothing to adopt in `codeql.yml`. The pinned SHA matches the annotated `v4.38.2` tag. v4.38.3 (released 2026-10-08) falls inside the 7-day dependabot cooldown and is expected next cycle.
 
+### Dependabot batch review (2026-11-14, github-actions)
+
+step-security/harden-runner 2.22.1 → 2.22.2, github/codeql-action (init + analyze) 4.38.2 → 4.39.1, actions/setup-go 6.5.0 → 7.0.0, and zizmorcore/zizmor-action 0.6.4 → 0.8.1 (dependabot proposed 0.8.0; 0.8.1 was taken as the current release).
+
+**harden-runner 2.22.2.** macOS ingress/egress classification, enterprise-tier Linux endpoint handling, and network/DNS tracing improvements; none touch this repository's `egress-policy: audit` usage on ubuntu-26.04. No adoption needed.
+
+**codeql-action 4.39.1.** v4.39.0 raises the minimum CodeQL bundle to 2.20.7 (satisfied — the action downloads its own current bundle), adds `checkout_path` validation on `analyze` (unused here — checkout is the workspace root), fixes third-party cache restores, and aligns `start-proxy` release lookup with `init` (Code Scanning Default Setup is not in use). v4.39.1 bumps the default bundle to 2.27.3. All changes apply automatically; nothing to adopt in `codeql.yml`.
+
+**setup-go 7.0.0.** Major bump migrating the action to ESM and `@actions/cache` 6.2.0; the action runs on the GitHub-provided Node runtime, so the migration is transparent to `native-build.yml`'s `go-version-file` usage. No workflow change beyond the pin.
+
+**zizmor-action 0.6.4 → 0.8.1.** Reviewed 0.7.0, 0.7.1, 0.8.0, and 0.8.1 plus the zizmor releases they bundle (1.28 → 1.32). The action defaults to newer zizmor; audits gained precision (`dangerous-triggers` now counts `issue_comment`, `self-hosted-runner` reduced false positives, `typosquat-uses` reads pre-commit config, `unpinned-images` more precise spans) and 0.8.0 adds prerelease support (not adopted — pinned releases only). The stricter `dangerous-triggers` audit is relevant because the new dependabot auto-regenerate workflow uses `pull_request_target`; it is restricted to `actor == 'dependabot[bot]'` and executes only same-repo generator code.
+
 ### Playwright 1.56.1 → 1.64.0 review
 
 The complete v1.57–v1.64 release notes were reviewed, including browser changes, reporter/CLI updates, locator and accessibility APIs, storage APIs, screenshots/video, test-runner options, and breaking changes. The v1.57 Chrome-for-Testing switch and v1.58 macOS 13 WebKit removal were noted; CI uses supported Linux browser builds. The v1.59 screencast/agent tooling, v1.60 ARIA/abort APIs, v1.62 component-testing model, and v1.63 cross-frame/visible locators do not match this repository's current test needs. Adopted from v1.57: context-level request events for service-worker coverage. Adopted from v1.61: `page.localStorage`/`page.sessionStorage` cleanup assertions, `failOnFlakyTests`, and the supported Ubuntu 26.04 runner. Adopted from v1.64: `page.webmcp` for the feature-tool integration test.
