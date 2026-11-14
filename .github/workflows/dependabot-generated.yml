@@ -1,0 +1,83 @@
+name: Dependabot Generated Refresh
+
+# Data-package bumps (web-features, @mdn/browser-compat-data) change generated
+# outputs, so the static job's check:generated gate fails on every Dependabot PR
+# that touches them. This workflow regenerates those outputs and pushes them to
+# the Dependabot branch so such PRs arrive mergeable.
+#
+# Security: runs only for Dependabot's own pull requests (the PR author login
+# is dependabot[bot], which GitHub controls and cannot be spoofed, and the head
+# branch lives in this repository), executes only the repository's generators
+# after a signature-verified install, and commits nothing outside the generated
+# paths. pull_request_target is required because pull_request workflows get a
+# read-only token on Dependabot PRs and could not push the regenerated files.
+on: # zizmor: ignore[dangerous-triggers] gated to the Dependabot bot's same-repo PRs; only repo generators run and pushes are limited to the generated paths
+  pull_request_target:
+    paths:
+      - package.json
+      - package-lock.json
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
+      - name: Regenerate derived files
+        run: npm run generate
+      - name: Commit and push regenerated files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          paths=(
+            public_html/library/data/web-features.json
+            docs/web-platform-features.md
+            docs/capability-reference.md
+            public_html/library/wasm/probes
+            public_html/tsumiki/data/prefectures.json
+          )
+          if [[ -z "$(git status --porcelain -- "${paths[@]}")" ]]; then
+            echo "Generated files already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${paths[@]}"
+          excludes=()
+          for p in "${paths[@]}"; do excludes+=(":(exclude)$p"); done
+          strays="$(git status --porcelain -- . "${excludes[@]}")"
+          if [[ -n "$strays" ]]; then
+            echo "::error::Working tree has changes outside generated paths."
+            echo "$strays"
+            exit 1
+          fi
+          git commit -m "chore: regenerate derived files for dependabot bump"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:${HEAD_REF}"
+          # GITHUB_TOKEN pushes suppress event-triggered workflows, but
+          # workflow_dispatch runs are exempt: dispatch CI so the refreshed
+          # commit still gets validated on the pull request.
+          gh workflow run ci.yml --ref "$HEAD_REF"

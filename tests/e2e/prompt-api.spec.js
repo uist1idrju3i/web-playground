@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
-import { filterWebKitUaStyleDiagnostics } from './csp-violations.js';
 
 const fixturePath = fileURLToPath(new URL('./fixtures/fake-language-model.js', import.meta.url));
 
@@ -34,15 +33,11 @@ async function collectDiagnostics(page) {
   return { consoleErrors, pageErrors };
 }
 
-async function assertClean(page, diagnostics, browserName) {
+async function assertClean(page, diagnostics) {
   await page.waitForTimeout(100);
-  const filtered = filterWebKitUaStyleDiagnostics(
-    await page.evaluate(() => window.__securityPolicyViolations ?? []),
-    diagnostics.consoleErrors,
-    browserName,
-  );
-  expect(filtered.violations).toEqual([]);
-  expect(filtered.consoleErrors).toEqual([]);
+  const violations = await page.evaluate(() => window.__securityPolicyViolations ?? []);
+  expect(violations).toEqual([]);
+  expect(diagnostics.consoleErrors).toEqual([]);
   expect(diagnostics.pageErrors).toEqual([]);
 }
 
@@ -62,11 +57,7 @@ async function openFakeApp(page) {
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
 }
 
-test('boot without LanguageModel keeps a readable learning page', async ({
-  page,
-  baseURL,
-  browserName,
-}) => {
+test('boot without LanguageModel keeps a readable learning page', async ({ page, baseURL }) => {
   const diagnostics = await collectDiagnostics(page);
   const requestTracker = trackExternalRequests(page, baseURL);
   await installNoApi(page);
@@ -77,7 +68,7 @@ test('boot without LanguageModel keeps a readable learning page', async ({
   expect(await page.evaluate(() => typeof globalThis.LanguageModel)).toBe('undefined');
   await expect(page.locator('#availability-matrix tr')).toHaveCount(35);
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
   expect(requestTracker.externalRequests).toEqual([]);
   requestTracker.stop();
 });
@@ -256,12 +247,11 @@ test('every Prompt API tab stays within portrait and landscape phone bounds', as
 test('fake API page has no CSP, console, page, or external-request diagnostics', async ({
   page,
   baseURL,
-  browserName,
 }) => {
   const diagnostics = await collectDiagnostics(page);
   const requestTracker = trackExternalRequests(page, baseURL);
   await openFakeApp(page);
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
   expect(requestTracker.externalRequests).toEqual([]);
   requestTracker.stop();
 });

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { attachConsoleWarnings, filterWebKitUaStyleDiagnostics } from './csp-violations.js';
+import { attachConsoleWarnings } from './csp-violations.js';
 
 function trackExternalRequests(page, baseURL) {
   const sameOrigin = new URL(baseURL).origin;
@@ -33,7 +33,6 @@ test('the portal links to Browser Features without third-party requests', async 
 test('Browser Features loads without console errors or third-party requests', async ({
   page,
   baseURL,
-  browserName,
 }, testInfo) => {
   const consoleErrors = [];
   const consoleWarnings = [];
@@ -67,16 +66,12 @@ test('Browser Features loads without console errors or third-party requests', as
   await expect(page.getByRole('heading', { name: 'Highlight capabilities' })).toBeVisible();
   await expect(page.locator('[data-capability-id="web-crypto"]')).toBeVisible();
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
-  const diagnostics = filterWebKitUaStyleDiagnostics(
-    await page.evaluate(() => window.__securityPolicyViolations),
-    consoleErrors,
-    browserName,
-  );
+  const violations = await page.evaluate(() => window.__securityPolicyViolations);
   await attachConsoleWarnings(testInfo, consoleWarnings);
   expect({
-    consoleErrors: diagnostics.consoleErrors,
+    consoleErrors,
     pageErrors,
-    violations: diagnostics.violations,
+    violations,
     externalRequests: requestTracker.externalRequests,
   }).toEqual({ consoleErrors: [], pageErrors: [], violations: [], externalRequests: [] });
   // Playwright's WebKit screenshotter injects body {}, triggering an expected post-assertion CSP violation.

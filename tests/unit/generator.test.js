@@ -11,9 +11,9 @@ const markdownPath = new URL('../../docs/web-platform-features.md', import.meta.
 test('generated feature data has the expected schema and pinned source metadata', async () => {
   const data = JSON.parse(await readFile(jsonPath, 'utf8'));
   assert.equal(data.meta.source, 'web-features');
-  assert.equal(data.meta.web_features_version, '3.42.0');
+  assert.equal(data.meta.web_features_version, '3.46.0');
   assert.equal(data.meta.web_features_license, 'Apache-2.0');
-  assert.equal(data.meta.browser_compat_data_version, '8.1.5');
+  assert.equal(data.meta.browser_compat_data_version, '8.1.9');
   assert.equal(data.meta.browser_compat_data_license, 'CC0-1.0');
   assert.ok(data.features.length > 1000);
   assert.deepEqual(
@@ -82,7 +82,7 @@ test('generation is deterministic and documents every active feature group', asy
         feature.status?.moved ||
         feature.status?.split),
   );
-  assert.equal(data.features.length + excluded.length, 1214);
+  assert.equal(data.features.length + excluded.length, 1228);
   assert.ok(markdown.includes(`## Discouraged or superseded (${excluded.length})`));
   for (const feature of excluded) {
     assert.ok(markdown.includes(`| ${escapeMarkdownTableCell(feature.name)} |`));

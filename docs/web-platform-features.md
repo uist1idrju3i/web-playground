@@ -1,12 +1,12 @@
 # Web Platform Features Supported by Chrome and Safari
 
-Generated from web-features 3.42.0 and @mdn/browser-compat-data 8.1.5.
+Generated from web-features 3.46.0 and @mdn/browser-compat-data 8.1.9.
 
-Total features: **1156** — Chrome and Safari: **845**, Chrome only: **218**, Safari only: **33**, neither: **60**.
+Total features: **1170** — Chrome and Safari: **850**, Chrome only: **228**, Safari only: **30**, neither: **62**.
 
 Chrome and Safari versions and support groups come from the WebDX feature dataset, which incorporates browser-compat-data. Where a feature has no specific version, the generator checks BCD compatibility keys; “Yes” means support is recorded without a version. Discouraged, moved, and split features are excluded from these totals and listed separately.
 
-## Chrome + Safari (845)
+## Chrome + Safari (850)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
@@ -15,7 +15,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Abortable fetch | 66 | 12.1 | widely | If you construct a fetch request with an AbortSignal, you can cancel the request. |
 | AbortController and AbortSignal | 66 | 12.1 | widely | The AbortController and AbortSignal APIs allow you to cancel an ongoing operation, such as a fetch() request. |
 | AbortSignal.any() | 116 | 17.4 | widely | The AbortSignal.any() static method combines an iterable of abort signals into a single signal, with the abort reason taken from the first signal to abort. |
-| AbortSignal.timeout() | 124 | 16 | newly | The AbortSignal.timeout() static method returns an abort signal that automatically aborts after a specified duration. |
+| AbortSignal.timeout() | 124 | 16 | widely | The AbortSignal.timeout() static method returns an abort signal that automatically aborts after a specified duration. |
 | abs() and sign() | 138 | 15.4 | newly | The abs() and sign() CSS functions compute the absolute value or the sign of the input. |
 | Absolute positioning | 1 | 1 | widely | The position: absolute CSS declaration removes an element from the normal flow and positions it relative to its containing block, which is often the root element, or closest positioned ancestor. |
 | accent-color | 93 | 26.2 | limited | The accent-color CSS property sets a color for checkboxes, radio buttons, and other form controls. |
@@ -23,11 +23,12 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Active view transition | 125 | 18.2 | newly | The :active-view-transition CSS pseudo-class matches the root element when a view transition is active. The :active-view-transition-type() CSS pseudo-class matches only when the active view transition was started with the specified type. |
 | <address> | 1 | 1 | widely | The <address> element represents contact information for a person or people, or for an organization. |
 | Alerts | 1 | 1 | widely | The window.alert(), window.confirm(), and window.prompt() methods open modal dialogs for notifying the user, asking for confirmation, or entering text. |
-| align-content in block layouts | 123 | 17.4 | newly | The align-content property vertically aligns content in block layouts, like it does in flex or grid layouts. |
+| align-content in block layouts | 123 | 17.4 | widely | The align-content property vertically aligns content in block layouts, like it does in flex or grid layouts. |
 | alignment-baseline | 1 | 5.1 | limited | The alignment-baseline CSS property sets which baseline of an element is aligned with the corresponding baseline of its parent. |
 | all | 37 | 9.1 | widely | The all CSS property is a shorthand for all CSS properties, except for direction and unicode-bidi. It accepts only the keywords for explicit defaulting (such as initial and inherit), since they are the only values supported on all CSS properties. |
-| alpha() | 151 | 27 | newly | The alpha() CSS function computes a relative color value by adjusting the opacity of an origin color. |
+| alpha() | 152 | 27 | newly | The alpha() CSS function computes a relative color value by adjusting the opacity of an origin color. |
 | Alt text for generated content | 77 | 17.4 | newly | The / notation in content CSS property values adds alternative text to generated content. For example, the content: url('upvote-icon.svg') / 'Upvote' declaration adds accessible 'Upvote' text to the SVG icon. Also known as alternate text. |
+| Anchor positioning | 157 | 27 | limited | Anchor positioning places an element based on the position of another element. For example, you can place a tooltip next to the content it references. |
 | Anchor positioning animations and transitions | 125 | 26 | limited | The anchor() and anchor-size() CSS functions animate or transition on changes such as the anchor box moving or the anchor element changing. |
 | Anchor positioning transforms | 144 | 27 | limited | Anchor positioned elements take CSS transforms on their anchor elements into account. |
 | ANGLE_instanced_arrays WebGL extension | 32 | 8 | widely | The ANGLE_instanced_arrays extension for WebGL 1.0 contexts draws the same object multiple times or groups of similar objects multiple times, if the group shares the same vertex data, primitive count and type. |
@@ -210,6 +211,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | <dfn> | 15 | 6 | widely | The <dfn> element marks a term to be defined, styling text as italic by default. |
 | <dialog> | 37 | 15.4 | widely | The <dialog> HTML element represents a modal or non-modal dialog box, such as a confirmation prompt or a subwindow used to enter data. |
 | Digital credentials | 141 | 26 | limited | The digital credentials API issues and requests digital credentials, such as driver's licenses or ID cards, with the browser or operating system. Digital credentials extend the navigator.credentials credential management API. |
+| dir | 1 | 3 | widely | The dir global HTML attribute sets an element's text direction to left to right (ltr), right to left (rtl), or based on the content (auto). Elements generally inherit their parent's direction when the attribute is omitted. |
 | :dir() | 120 | 16.4 | widely | The :dir() CSS functional pseudo-class matches elements by text direction, either right to left (rtl) or left to right (ltr). |
 | dirname | 17 | 6 | widely | The dirname attribute of <textarea> and <input> HTML elements includes the field's writing direction as form data on submission. |
 | Display | 1 | 1 | widely | The display CSS property sets the display behavior of an element's box within its layout and sets the layout behavior for its child elements. |
@@ -249,7 +251,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | EXT_texture_compression_bptc WebGL extension | 93 | 16 | limited | The EXT_texture_compression_bptc extension for WebGL 1.0 and 2.0 contexts adds the BPTC compressed texture formats to compressedTexImage2D() and compressedTexSubImage2D(). |
 | EXT_texture_compression_rgtc WebGL extension | 93 | 14.1 | newly | The EXT_texture_compression_rgtc extension for WebGL 1.0 and 2.0 contexts adds RGTC compressed texture formats. RGTC is a block-based texture compression format suited for unsigned and signed red and red-green textures. Also known as Red-Green Texture Compression. |
 | EXT_texture_filter_anisotropic WebGL extension | 34 | 9.1 | widely | The EXT_texture_filter_anisotropic extension for WebGL 1.0 and 2.0 contexts adds anisotropic filtering (AF). AF improves the quality of mipmapped texture access when viewing a textured primitive at an oblique angle. |
-| EXT_texture_norm16 WebGL extension | 87 | 16 | limited | The EXT_texture_norm16 extension to WebGL 2.0 contexts adds 16 bit signed normalized and unsigned normalized fixed-point texture, renderbuffer, and texture buffer formats. |
+| EXT_texture_norm16 WebGL extension | 87 | 16 | newly | The EXT_texture_norm16 extension to WebGL 2.0 contexts adds 16 bit signed normalized and unsigned normalized fixed-point texture, renderbuffer, and texture buffer formats. |
 | Fetch | 42 | 10.1 | widely | The fetch() method makes asynchronous HTTP requests. |
 | Fetch priority | 103 | 17.2 | newly | The fetch() priority option and the fetchpriority HTML attribute give hints to the browser about which requests to do before other requests of the same type. |
 | field-sizing | 123 | 26.2 | newly | The field-sizing CSS property allows form controls such as <textarea> to be sized based on their content. |
@@ -388,7 +390,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Intl.Locale info | 130 | 17 | newly | The getter methods of the Intl.Locale API provide supplemental information about a Unicode locale, such as the locale's calendar (for example, the first day in a week or the weekend start day), writing direction, 12- or 24-hour cycles, and numbering system. |
 | Intl.PluralRules | 63 | 13 | widely | The Intl.PluralRules API creates a locale-aware object that tells you which of the language's pluralization rules apply based on a given number. |
 | Intl.RelativeTimeFormat | 71 | 14 | widely | The Intl.RelativeTimeFormat API creates a locale-aware formatter that turns an object representing a relative time (such as '1 day ago') into a localized string. |
-| Intl.Segmenter | 87 | 14.1 | newly | The Intl.Segmenter API creates a locale-aware text splitter that can separate a string into meaningful graphemes, words, or sentences. |
+| Intl.Segmenter | 87 | 14.1 | widely | The Intl.Segmenter API creates a locale-aware text splitter that can separate a string into meaningful graphemes, words, or sentences. |
 | Invoker commands | 135 | 26.2 | newly | The command and commandfor attributes for the <button> HTML element dispatch an action to an element when the button is invoked (by click or keystroke), as a declarative alternative to addEventListener() calls or onclick attribute handlers. |
 | :is() | 88 | 14 | widely | The :is() CSS functional pseudo-class takes a selector list as its argument, and matches any element that can be selected by one of the selectors in that list. |
 | isSecureContext | 55 | 11.1 | widely | The isSecureContext global property is a boolean for whether the current browsing context is secure. This is primarily a check that the page has been served over an HTTPS URL. |
@@ -596,6 +598,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | resolution media query (compatibility prefixes) | 1 | 3 | widely | The -webkit-device-pixel-ratio, -webkit-min-device-pixel-ratio, and -webkit-max-device-pixel-ratio CSS media queries are standardized compatibility alternatives to resolution media queries. |
 | Resource size | 54 | 16.4 | widely | The decodedBodySize, encodedBodySize, and transferSize properties of the PerformanceResourceTiming API reports the size of resources loaded. |
 | Resource timing performance entries | 29 | 11 | widely | A resource performance entry records when a network event happens while loading a resource, such as when a connection starts and ends. You can use this information to measure loading times. |
+| revert-rule | 148 | 27 | newly | The revert-rule CSS keyword resets a property to its previous value in the cascade, as if the current style rule had not been present. It's especially useful with conditionals, to cancel a declaration when the condition is not met. |
 | revert | 84 | 9.1 | widely | The revert CSS keyword resets any property to its previous default, provided by either the user or browser stylesheets. For example, setting display: revert on a <div> will likely result in display: block, the browser default style. This is often confused with initial. |
 | rex unit | 111 | 17.2 | newly | The rex CSS length unit is a font-relative length that is equal to the x-height of the root element. |
 | RGB | 65 | 12.1 | widely | The rgb(), rgba(), and hexadecimal (as in #004488ff) notations pick colors using red, green, blue, and alpha (transparency) channels. |
@@ -605,13 +608,14 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | round(), mod(), and rem() | 125 | 17.2 | newly | The round(), mod(), and rem() CSS functions compute rounded values and the remainder after division. |
 | <ruby> | 5 | 5 | widely | The <ruby> element produces small annotations that are rendered with its base text. |
 | ruby-align | 128 | 18.2 | newly | The ruby-align CSS property sets the spacing and alignment of ruby annotation text when it does not fill its available space. |
+| ruby-overhang | 151 | 18.2 | limited | The ruby-overhang CSS property sets whether ruby annotations may overlap adjacent text. |
 | ruby-position | 84 | 18.2 | newly | The ruby-position CSS property sets the position of a ruby annotation in relation to its base text. Annotations can display over, under, or interleaved with the base text. |
 | <s> | 1 | ≤4 | widely | The <s> HTML element indicates text that is no longer relevant or accurate, styling text as strikethrough by default. |
 | Safe area inset environment variables | 69 | 11.1 | widely | The safe-area-inset- CSS environment variables represent a rectangle that cannot cut off content within a non-rectangular screen. For example, top:\\ env(safe-area-inset-top); positions the top of an element below the notch on an iPhone. |
 | <samp> | 1 | ≤4 | widely | The <samp> element represents a sample or quoted output from a computer program. Styled in a monospace font by default. |
 | @scope | 143 | 26.4 | newly | The @scope CSS at-rule sets the scope for a group of rules. |
 | :scope (pseudo-class) | 27 | 7 | widely | The :scope CSS pseudo-class matches the scoping root, for instance the element that querySelector() is called on, or the root of a DOM subtree specified with @scope. |
-| Scoped custom element registries | 146 | 26 | limited | The CustomElementRegistry() constructor creates a new custom element registry that's separate from the global window.customElements registry. Creating more than one registry is useful for multiple custom elements that have the same tag name to coexist. |
+| Scoped custom element registries | 146 | 26 | newly | The CustomElementRegistry() constructor creates a new custom element registry that's separate from the global window.customElements registry. Creating more than one registry is useful for multiple custom elements that have the same tag name to coexist. |
 | Screen | 1 | 1 | widely | The window.screen property contains information about the screen of the output device that the referenced window is being rendered on. |
 | Screen capture | 72 | 13 | limited | The navigator.mediaDevices.getDisplayMedia() method asks the user to choose a screen or portion of a screen (such as a window) to capture as a media stream. |
 | Screen orientation | 38 | 16.4 | widely | The screen.orientation API gets information about the orientation of the viewport, such as landscape or portrait. With this API, you can adapt an application's layout or behavior in response to changes in orientation. |
@@ -619,7 +623,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | <script> and <noscript> | 1 | 3 | widely | The <script> element contains or loads data or executable code. This is typically used to load JavaScript code. The <noscript> element represents alternative content to show when scripting is not allowed. |
 | scripting media query | 120 | 17 | widely | The scripting CSS media query sets styles based on whether scripting such as JavaScript is available. Values are enabled if scripting is available, initial-only if scripting is only available on page load (for example, printed content), or none. |
 | scroll-behavior | 61 | 15.4 | widely | The scroll-behavior CSS property controls whether scrolling is smooth or snaps, for scroll actions not performed by the user such as those triggered by navigation. |
-| Scroll-driven animations | 115 | 26 | limited | The animation-timeline, scroll-timeline, and view-timeline CSS properties advance animations based on the user's scroll position. |
+| Scroll-driven animations | 115 | 26 | newly | The animation-timeline, scroll-timeline, and view-timeline CSS properties advance animations based on the user's scroll position. |
 | Scroll methods on elements | 61 | 14 | widely | The scroll() and scrollBy() methods change the scroll position of overflow content within an element. Similar to setting scrollTop and scrollLeft properties, but with options setting whether the scroll should animate smoothly or jump. Note that scrollTo() is an alias for scroll(). |
 | scrollIntoView() | 1 | 3 | widely | The scrollIntoView() method scrolls an element's ancestor containers such that the element is visible to the user. |
 | Scroll snap | 69 | 11 | widely | CSS scroll snap controls the panning and scrolling behavior within a scroll container. |
@@ -694,13 +698,14 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | style (attribute) | 1 | 1 | widely | The style global HTML attribute applies inline CSS styling declarations to individual elements. |
 | <sub> and <sup> | 1 | ≤4 | widely | The <sub> and <sup> elements sets inline text to be displayed as subscript or superscript for solely typographical reasons. |
 | Subgrid | 117 | 16 | widely | The subgrid value for the grid-template-columns and grid-template-rows properties allows a grid item to inherit the grid definition of its parent grid container. |
-| Subresource integrity | 46 | 11.1 | widely | Subresource integrity verifies that a resource, such as script served from a content delivery network, matches a known cryptographic hash. Also known as SRI. |
+| Subresource integrity | 46 | 11.1 | widely | Subresource integrity verifies that a resource, such as a script served from a content delivery network, matches a known cryptographic hash. Also known as SRI. |
 | @supports | 28 | 9 | widely | The @supports at-rule applies styles based on a browser's support for CSS features, such as a CSS property and value. Also known as feature queries. |
 | @supports (compatibility prefix) | 2 | 4 | widely | The @supports (-webkit-transform-3d) CSS media query is a standardized compatibility alternative to @supports (transform-style). |
 | SVG | 1 | 3 | widely | The SVG image format, represented by the <svg> element, creates two-dimensional vector graphics with declarative or scripted interaction and animation. |
 | SVG filters | 5 | 6 | widely | The <filter> SVG element applies custom effects such as color manipulation, blurring, or morphing to SVG elements. |
 | Symbol | 38 | 9 | widely | A Symbol value is a unique, non-enumerable primitive value used for encapsulation or information hiding. For example, a symbol can be a key of an object that can never collide with any other key. |
 | System colors | 1 | 1 | widely | The system color CSS keywords, such as ButtonBorder or LinkText, allow you to match default colors from the user agent. |
+| AccentColor and AccentColorText | 149 | 16.5 | limited | The AccentColor and AccentColorText CSS system color values are the background color and text color of accented user interface controls. To prevent browser fingerprinting, browsers may (and often do) use fixed color values that do not reflect user customization or theming choices. |
 | tab-size | 42 | 13.1 | widely | The tab-size CSS property sets the width of the tab character. |
 | tabindex | 1 | 3.1 | widely | The tabindex HTML attribute make an element focusable, and sets the element's relative ordering for sequential focus navigation. |
 | Tables | 1 | 1 | widely | The <table> HTML element, with several related elements, represents tabular data in rows and columns of cells. |
@@ -741,7 +746,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Top-level await | 89 | 27 | newly | The await keyword, when used at the top level of a module (outside of an async function), delays parent module execution until after a promise fulfills. |
 | touch-action | 36 | 13 | widely | The touch-action CSS property sets whether an element on a touch screen can be panned or pinched to zoom. |
 | Transferable ArrayBuffer | 114 | 17.4 | widely | The transfer() and transferToFixedLength() methods of ArrayBuffer move a buffer from one context to another (for example, to a worker). |
-| transform-box | 118 | 13.1 | newly | The transform-box CSS property sets the position and dimensions of the reference box relative to which an element's transformations are calculated. |
+| transform-box | 118 | 13.1 | widely | The transform-box CSS property sets the position and dimensions of the reference box relative to which an element's transformations are calculated. |
 | 2D transforms | 36 | 9 | widely | The transform CSS property and its 2D transform functions allow rotating, scaling, skewing, and translating an element. Arbitrary 2D transforms are also possible using a transformation matrix. |
 | 3D transforms | 36 | 15.4 | widely | The transform CSS property and its 3D transform functions allow rotations and other transforms in three dimensions, including perspective transforms. |
 | transition-behavior | 117 | 17.4 | newly | The transition-behavior: allow-discrete CSS declaration allows transitions for properties whose animation behavior is discrete. Such properties can't be interpolated and swap from their start value to the end value at 50%. |
@@ -856,7 +861,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | zoom | 1 | 3.1 | newly | The zoom CSS property scales the size of an element. Unlike the transform property, a zoomed element affects page layout. |
 | Zstandard compression | 123 | 26.3 | newly | Zstandard or zstd is a fast lossless compression algorithm. When used as a content encoding, it is often faster and offers better compression than brotli. |
 
-## Chrome only (218)
+## Chrome only (228)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
@@ -879,6 +884,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | calc-size() | 129 | — | limited | The calc-size() CSS function computes mathematical expressions that include height and width keyword values, for example calc-size(fit-content, size / 2). Not to be confused with the calc() CSS function, which cannot use keyword values. |
 | 2D canvas opacity | 32 | — | limited | The optional alpha parameter of a 2D canvas's getContext() method sets whether the canvas has an alpha transparency channel. If set to false, then this permits the browser to optimize compositing for an opaque canvas. |
 | contextlost and contextrestored | 99 | — | limited | The contextlost event for <canvas> fires when the canvas backing storage is lost, while the contextrestored event fires when it is recreated. |
+| HTML-in-canvas | 157 | — | limited | A <canvas> HTML element with the content="drawable" attribute can draw descendant elements in its rendering context. You can use it to style and layout text in a canvas, expose canvas content to browser features (like accessibility, translate, or find-in-page), and apply 2D and 3D effects to HTML. |
 | Capture Handle | 102 | — | limited | The capture handle API allows you to share a custom handle (a string) from a web application being captured by getDisplayMedia() to the capturing web application. |
 | captureStream() for <audio> and <video> | 62 | — | limited | The captureStream() method for <audio> and <video> elements returns a MediaStream for the media element's content. You can use this to record media or send it elsewhere, such as a canvas or WebRTC connection. |
 | caret-shape | 144 | — | limited | The caret-shape CSS property sets the shape of the insertion caret, the symbol that shows where the next character is to be inserted or deleted. |
@@ -890,11 +896,12 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | COLRv1 | 98 | — | limited | COLRv1 is a font format that supports multi-color glyphs. COLRv1 extends COLRv0 to support gradients, transforms, and blending modes. |
 | Column breaks | 102 | — | limited | In columnar layouts (created by the columns or column-count CSS properties), the break-after, break-before, break-inside properties control where columns start or end. |
 | ::column | 135 | — | limited | The ::column CSS pseudo-element represents the individual columns of a multi-column layout container. Columns can only be styled with scroll snap CSS properties and can also have a ::scroll-marker pseudo-element, which scrolls to the column when activated. |
+| column-wrap | 145 | — | limited | The column-wrap and column-height CSS properties control when columns in a multicolumn layout wrap or overflow. You can use this to constrain the height of columns within a taller box or to create two-dimensional column layouts. |
 | Compression Dictionary Transport | 130 | — | limited | Compression Dictionary Transport is a mechanism for using designated HTTP responses as an external dictionary for future HTTP responses for compression schemes that support using external dictionaries (e.g., Brotli and Zstandard) |
 | CPU compute pressure | 125 | — | limited | The PressureObserver API monitors CPU load, allowing you to adjust workloads in response to available computing resources. Also known as the Compute Pressure API. |
 | Connection allowlists | 152 | — | limited | The Connection-Allowlist HTTP response header limits which requests a page may initiate using fetch and other APIs. |
 | Anchor position container queries | 143 | — | limited | Anchor position container queries with the @container anchored(fallback: …) at-rule apply styles to an element based on the element's anchor position. |
-| Container scroll-state queries | 133 | — | limited | Container scroll-state queries with the @container scroll-state(...) at-rule apply styles to an element based on the sticky positioning, snapped, and scrollable state of the container. |
+| Container scroll-state queries | 144 | — | limited | Container scroll-state queries with the @container scroll-state(...) at-rule apply styles to an element based on the sticky positioning, snapped, scrollable, and scrolled state of the container. |
 | context-fill and context-stroke | 124 | — | limited | The context-fill and context-stroke CSS values are used with fill and stroke in SVG <marker> or <use> elements to match a color from where they appear. |
 | controlslist | 58 | — | limited | The controlslist attribute for <audio> or <video> hides parts of the browser's built-in controls. For example, controlslist="nofullscreen" removes the button to play the video in fullscreen. |
 | Cookie store | 87 | — | limited | The CookieStore API is an asynchronous and promise-based API for managing cookies. It does not rely on document and so is available to service workers as well. |
@@ -907,6 +914,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | devicePixelRatio | 1 | — | limited | The window.devicePixelRatio property is the ratio of the size of one CSS pixel to the vertical size of one physical pixel on the current display device. |
 | <dialog closedby> | 134 | — | limited | The closedby HTML attribute for <dialog> sets which user actions close a dialog. For example, closedby="any" allows the dialog to be closed by clicking outside of it. |
 | display-mode media query | 47 | — | limited | The display-mode CSS media query sets styles based on whether the web page is in an ordinary browser tab mode or another mode, such as fullscreen, standalone, or minimal-ui. |
+| Document-Isolation-Policy | 137 | — | limited | The Document-Isolation-Policy HTTP header makes a document cross-origin isolated, giving it access to APIs such as SharedArrayBuffer, without requiring the document or those it embeds to send Cross-Origin-Opener-Policy or Cross-Origin-Embedder-Policy headers. |
 | Document picture-in-picture | 130 | — | limited | The document picture-in-picture API creates an always-on-top window from arbitrary HTML content. |
 | dynamic-range-limit | 136 | — | limited | The dynamic-range-limit CSS property controls the peak luminance of high dynamic range content. You can use this to coordinate the apparent brightness of HDR and SDR content. |
 | EditContext | 121 | — | limited | The EditContext API allows you to build rich text editors that support advanced text input, such as Input Method Editor (IME) composition, an emoji picker, or other platform-specific editing UI. |
@@ -914,13 +922,14 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Element timing performance entries | 77 | — | limited | An element performance entry measures the time to render elements that have the elementtiming attribute. |
 | Explicit resource management | 134 | — | limited | The using and await using declarations and the dispose and asyncDispose symbols manage the lifecycle of resources such as file handles and streams. The DisposableStack and AsyncDisposableStack objects can group, dispose, and coordinate dependencies between multiple disposable resources. |
 | Eyedropper | 96 | — | limited | The EyeDropper API opens an eyedropper tool, a color picker that allows users to select a color from their screen. |
-| Federated credential management | 116 | — | limited | The IdentityCredential API delegates authentication to a third-party identity provider, instead of using third-party cookies. Also known as FedCM. |
+| Federated credential management | 136 | — | limited | The IdentityCredential API delegates authentication to a third-party identity provider, instead of using third-party cookies. Also known as FedCM. |
 | Federated credentials | 51 | — | limited | The FederatedCredential API represents the details required to authenticate a user using a third-party identity provider. Not to be confused with federated credential management (FedCM). |
 | Fetch metadata request headers | 80 | — | limited | The Sec-Fetch-Dest, Sec-Fetch-Mode, Sec-Fetch-Site, and Sec-Fetch-User HTTP headers provide extra information about the way a request was made, to help servers reject certain kinds of malicious requests. |
 | Fetch upload streams | 105 | — | limited | The fetch() method and Request() constructor accept a ReadableStream object as the request's body option, to stream upload data to the server. |
 | fetchLater | 135 | — | limited | The fetchLater() method requests a deferred fetch sent at an unknown time. The browser chooses a reliable time to send the request, ideally when the document is unloaded, and ignores the response. This API is useful for sending beacons to a server without expecting a particular response. |
 | File system access | 86 | — | limited | The showOpenFilePicker(), showDirectoryPicker(), and showSaveFilePicker() methods request access to files and directories on the user's device and returns a handle for reading and writing to them. |
 | flex-wrap: balance | 150 | — | limited | The flex-wrap: balance CSS declaration distributes items in a multi-line flex container such that each line has about the same number of items. |
+| focusgroup | 150 | — | limited | The focusgroup global HTML attribute combines descendant elements into a single tab stop, with arrow-key navigation between them, for toolbars, tabs, menus, radio groups, and other composite controls. It's an alternative to the sequential navigation of tabindex. |
 | font-language-override | 143 | — | limited | The font-language-override CSS property sets which language-specific glyphs are displayed. |
 | Font metric overrides | 87 | — | limited | The ascent-override, descent-override, and line-gap-override descriptors adjust the display of a font declared in an @font-face statement. This can help make fallback fonts look the same size. |
 | font-palette animation | 121 | — | limited | You can animate color fonts between two font-palette values. |
@@ -935,6 +944,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | hidden="until-found" | 102 | — | limited | The hidden="until-found" attribute hides an element until it is found using the browser's find-in-page search or it is directly navigated to by following a URL fragment. |
 | Custom highlights from point | 140 | — | limited | The CSS.highlights.highlightsFromPoint() method returns an array of Highlight objects at a specified point. |
 | HTML processing instructions | 150 | — | limited | An HTML processing instruction is text enclosed by <? and >, which marks a target for further processing. They may appear anywhere in a document. They are ignored like comments when they're not recognized for a specific purpose. |
+| HTML setter methods | 157 | — | limited | The setHTML(), replaceWithHTML(), beforeHTML(), prependHTML(), appendHTML() and afterHTML() DOM methods, and unsafe equivalents, insert HTML into an existing tree. |
 | Hyphenate limit chars | 109 | — | limited | The hyphenate-limit-chars CSS property sets the number of characters in a word before it is hyphenated and the minimum number of characters on either side of the hyphen. |
 | Idle detection | 94 | — | limited | The IdleDetector API is used to notify a webpage of the user's idle, active, and locked state. |
 | if() | 137 | — | limited | The if() CSS function is an inline conditional value that returns a value based on a set of conditions. |
@@ -945,7 +955,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | <input type="week"> | 20 | — | limited | The <input type="week"> HTML element shows a week picker. |
 | Interaction contentful paint performance entries | 151 | — | limited | An interaction-contentful-paint performance entry measures the duration of an interaction that causes one or more contentful paints. You can use it to measure LCP for soft navigations in single page apps. |
 | interactivity | 135 | — | limited | The interactivity: inert CSS declaration makes an element and its descendants inert, like when using the inert HTML attribute. Inert elements can't be focused or clicked, their text can't be selected or found using the browser's find-in-page feature. |
-| Interest invokers | 142 | — | limited | Interest invokers, registered by the interestfor HTML attribute, trigger events and actions on a target element when a user shows interest in the element, through behaviors such as hover, focus, or long-press. Pseudo-elements apply styles to sources and targets of interest. |
+| Interest invokers | 149 | — | limited | Interest invokers, registered by the interestfor HTML attribute, trigger events and actions on a target element when a user shows interest in the element, through behaviors such as hover, focus, or long-press. Pseudo-elements apply styles to sources and targets of interest. |
 | interpolate-size | 129 | — | limited | The interpolate-size CSS property sets whether animations and transitions interpolate between a numeric value and a keyword value, such as from a fixed length to auto or fit-content. |
 | Intersection observer visibility tracking | 74 | — | limited | The trackVisibility parameter for the IntersectionObserver constructor enables tracking the visibility of an element, to detect if it may be obscured by other content or visual effects. Also known as IntersectionObserver v2. |
 | Error.isError() | 134 | — | limited | The Error.isError() static method checks whether a value is an Error object. |
@@ -961,7 +971,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | <link rel="prefetch"> | 8 | — | limited | The rel="prefetch" attribute for the <link> HTML element is a hint to the browser that the user is likely to navigate to a resource, so the browser should preemptively fetch and cache the resource. |
 | Lazy-loading media | 150 | — | limited | The loading="lazy" attribute for <video> and <audio> elements defers loading the media resource until the element is near the viewport. This matches the lazy-loading behavior for <img> and <iframe> elements. |
 | Local fonts | 103 | — | limited | The window.queryLocalFonts() method returns an array of locally-installed fonts, each represented by a FontData object. |
-| Local network access | 142 | — | limited | The "local-network-access" user permission (and certain actions that imply this permission, such as a fetch() request with { targetAddressSpace: "local" }) allows a site to send requests to servers on a user's local network. |
+| Local network access | 145 | — | limited | The "local-network-access" user permission (and certain actions that imply this permission, such as a fetch() request with { targetAddressSpace: "local" }) allows a site to send requests to servers on a user's local network. |
 | Long animation frames performance entries | 123 | — | limited | A long-animation-frame performance entry measures rendering updates that take longer than 50 milliseconds. Also known as LoAFs. |
 | Long task performance entries | 58 | — | limited | A longtask performance entry measures tasks that occupy the UI thread for 50 milliseconds or more, a metric for input latency, delayed animations, and other sources of "jank." |
 | ::marker | 86 | — | limited | The ::marker CSS pseudo-element selects list item markers for styling numbers or bullets. |
@@ -970,6 +980,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | <meta name="text-scale"> | 146 | — | limited | The <meta name="text-scale" content="scale" /> HTML element allows the browser's initial font size to be affected by the operating system text scale settings. The <meta name="text-scale" content="legacy" /> element is the default behavior that respects only browser font-size settings. |
 | moveBefore() | 133 | — | limited | The moveBefore() DOM method relocates a node while preserving its state. For example, you can move the active element without losing focus, move an animated element without resetting the animation, or move an iframe without reloading its content. |
 | Navigation precommit handlers | 146 | — | limited | The precommitHandler callback option to NavigateEvent's intercept() method returns a promise that defers navigation until the promise resolves. You can use this to change the navigation's URL, state, and history before navigation occurs. |
+| :navigation-source | 156 | — | limited | The :navigation-source CSS pseudo-class matches the element that triggered the current navigation, such as a link, form, or button. |
 | Navigation timing confidence | 145 | — | limited | The confidence property of a navigation performance entry describes whether the navigation metric is likely to be representative the page's performance (high confidence) or affected by transient conditions, such as browser startup (low confidence). |
 | Non-cookie storage access | 125 | — | limited | Non-cookie storage access extends the requestStorageAccess() API to let content in cross-site iframes request access to first-party data beyond cookies. |
 | object-view-box | 104 | — | limited | The object-view-box CSS property crops and zooms to an inset area of an image. |
@@ -1000,6 +1011,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Deprecation reports | 69 | — | limited | Deprecation reporting sends a report to a URL nominated by the Reporting-Endpoints header or the ReportingObserver API when a page uses a deprecated API or other browser feature. |
 | Permissions policy violation reporting | 120 | — | limited | Permissions policy violation reporting sends a report to a URL nominated by the Reporting-Endpoints header or the ReportingObserver API when a page violates a policy. You can also use the Permissions-Policy-Report-Only header to receive reports of what might break under a given policy. |
 | requestIdleCallback() | 47 | — | limited | The requestIdleCallback() API queues a function that runs in idle browser time, either at the end of a frame or when the user is inactive. Also known as the background tasks API. |
+| Retriable module loading | 156 | — | limited | You can retry importing a module that failed to import previously. Failed module imports, through the import JavaScript statement, the import() JavaScript syntax, or dynamically created <script src="…" type="module"> HTML elements, aren't cached. |
 | Sanitizer API | 146 | — | limited | The Sanitizer API customizes the sanitization of HTML parsed and inserted into the DOM in a way that can prevent cross-site scripting attacks. You can use it with DOM APIs that accept a sanitizer option, such as parseHTML() or setHTML(). |
 | Save-Data | 65 | — | limited | Browsers send the Save-Data HTTP request header when the user turns on a data-saving mode. It is a hint to reduce data sent to the browser. Servers should respond with alternative content, such as smaller images and videos, or different markup and styling. |
 | Scheduler API | 129 | — | limited | The scheduler API provides a way to prioritize all tasks belonging to an application. |
@@ -1011,10 +1023,13 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Scroll markers | 135 | — | limited | A scroll marker scrolls a container to a scroll target. The ::scroll-marker CSS pseudo-element selects a scroll marker in a ::scroll-marker-group pseudo-element, generated before or after the scroll container. You can use them to navigate and style tables of contents, tab panels, and carousels. |
 | Scroll method promises | 150 | — | limited | The scroll(), scrollBy(), scrollTo(), and scrollIntoView() methods on the Element and Window interfaces return Promises that resolve when scrolling completes. |
 | Scroll snap events | 129 | — | limited | The scrollsnapchanging and scrollsnapchange events fire when a scroll gesture changes the selected scroll snap target. |
+| scroll-snap-type: pair | 156 | — | limited | The scroll-snap-type: pair CSS declaration snaps scrolling to a single element in both the X and Y axes. You can use this to snap to scattered points of interest on a 2D plane. |
 | scroll-target-group | 140 | — | limited | The scroll-target-group CSS property sets the container where anchor links act as scroll markers. Using selectors such as :target-current, you can style elements when a target has scrolled into view. It's an alternative to the ::scroll-marker-group pseudo-element, which generates scroll markers. |
+| Scroll-triggered animations | 146 | — | limited | Scroll-triggered animations start and stop CSS animations when an element is within or outside a scrolling range. It's an alternative to applying styles with the IntersectionObserver API. Not to be confused with scroll-driven animations. |
 | Secure payment confirmation | 139 | — | limited | The payment extension of a web authentication credential allows a relying party (such as a bank) to create a credential that can be queried by any merchant origin as part of an online checkout that uses the Payment Request API's secure-payment-confirmation payment method. Also known as SPC. |
 | Web serial | 89 | — | limited | The navigator.serial API communicates with devices over serial ports, such as microcontrollers. |
 | Serializable errors | 77 | — | limited | The DOMException, Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, and URIError objects are serializable. You can call structuredClone() on an error object or pass it to a worker using postMessage(). |
+| polygon() round keyword | 150 | — | limited | The polygon() CSS function accepts the round keyword and a <length> value that rounds every vertex of the polygon. You can use it to make rounded shapes without computing Bézier curves by hand. |
 | Shared worker extended lifetime | 148 | — | limited | The extendedLifetime option of the SharedWorker() constructor gives shared workers extra time to perform operations after all pages using it have been navigated away from or closed. |
 | showPicker() for <select> | 121 | — | limited | The showPicker() method for <select> elements shows the dropdown menu or other user interface for picking one of the options. |
 | Signature-based resource integrity | 141 | — | limited | Signature-based resource integrity verifies a script's provenance by checking that the resource has been signed with a trusted key given by the <script> element's integrity attribute. |
@@ -1079,11 +1094,10 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Window management | 111 | — | limited | The window.getScreenDetails() method gets information about the screens on a device, which you can use to place new windows on a specific screen with window.open(). |
 | word-break: auto-phrase | 119 | — | limited | The word-break: auto-phrase CSS declaration specifies that wrapping should occur at natural phrase boundaries, especially in CJK languages. |
 
-## Safari only (33)
+## Safari only (30)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
-| Anchor positioning | — | 27 | limited | Anchor positioning places an element based on the position of another element. For example, you can place a tooltip next to the content it references. |
 | Audio session | — | 16.4 | limited | The navigator.audioSession API controls how audio playback interacts with other applications. For example, playing music can pause audio from other applications, while ambient audio can play at the same time. |
 | Audio and video tracks | — | 8 | limited | The audioTracks and videoTracks APIs for media elements switch audio and video tracks during playback. |
 | Case-sensitive attribute selector | — | 27 | limited | The s identifier in a CSS attribute selector matches attribute values case-sensitively in document languages like HTML where attribute values are case-insensitive. |
@@ -1095,7 +1109,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | filter() | — | 9.1 | limited | The filter() CSS function applies one or more graphic effects to a CSS image, such as a background image. You can use functions, such as blur() and drop-shadow(), alone or combined to produce different effects. For instance, background: filter(url(image.png), blur(2px)). |
 | UI fonts | — | 13.1 | limited | The ui-serif, ui-sans-serif, ui-monospace and ui-rounded values for the font-family CSS property use device-default user interface fonts for text. |
 | font-width | — | 18.4 | limited | The font-width CSS property selects a font face from a font family based on width, either by a keyword such as condensed or a percentage. |
-| Grid lanes | — | 26.4 | limited | The display: grid-lanes and display: inline-grid-lanes CSS declarations create a layout where items are tightly packed in parallel lanes. Items are placed one by one in the lane that has the most available space. Also known as masonry. |
+| Grid lanes | — | 27.2 | limited | The display: grid-lanes and display: inline-grid-lanes CSS declarations create a layout where items are tightly packed in parallel lanes. Items are placed one by one in the lane that has the most available space. Also known as masonry. |
 | Hanging punctuation | — | 26.5 | limited | The hanging-punctuation CSS property puts punctuation characters outside of the box to align the text with the rest of the document. |
 | alpha and colorspace attributes for <input type=color> | — | 18.4 | limited | The ability to control the opacity of a color picked using <input type="color"> and determine the colorspace of the selected color. |
 | Insertable streams for MediaStreamTrack | — | 18 | limited | The MediaStreamTrackProcessor and MediaStreamTrackGenerator APIs modify the contents of a media track for merging streams, applying real-time effects like funny hats, and content overlays. |
@@ -1106,9 +1120,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Media element pseudo-classes | — | 15.4 | limited | The :playing, :paused, :seeking, :buffering, :stalled, :muted, and :volume-locked CSS pseudo-classes match <audio> and <video> elements based on their state. |
 | <meta name="theme-color"> | — | 15 | limited | The name="theme-color" attribute for the <meta> HTML element suggests a color that the browser can use to customize the display of the page or the browser user interface. |
 | Private click measurement | — | 15.4 | limited | The attributionsourceid and attributiondestination attributes for <a> elements measure clicks across websites without associating a click to a specific session. Not to be confused with attribution reporting. Also known as PCM. |
-| random() | — | 26.2 | limited | The random() CSS function chooses a random numeric value within a specified range. This allows for dynamic, randomized styling using CSS. |
 | ReadableStream.from() | — | 27 | limited | The ReadableStream.from() static method converts an iterable or async iterable object, such as an array or async generator function, into a readable stream. |
-| ruby-overhang | — | 18.2 | limited | The ruby-overhang CSS property sets whether ruby annotations may overlap adjacent text. |
 | speak-as | — | 11.1 | limited | The speak-as CSS property sets how any element's content is spoken. Not to be confused with the speak-as descriptor of @counter-style at-rules. |
 | <input type="checkbox" switch> | — | 17.4 | limited | The switch attribute, when present on an <input type="checkbox"> HTML element, renders a switch control with an on and off state instead of a checkbox control. |
 | text-autospace | — | 27 | limited | The text-autospace CSS property sets whether and how to insert spaces in inter-script text (such as when mixing Latin and Chinese characters) and around punctuation. |
@@ -1117,14 +1129,13 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | WebVTT cue alignment | — | 14.1 | limited | The WebVTT cue alignment settings control which part of the cue is aligned with the given line and position. Cue alignment is set using line and position settings in WebVTT files or the lineAlign and positionAlign properties of VTTCue using JavaScript. |
 | WebVTT regions | — | 14.1 | limited | WebVTT regions set the areas of the video where captions or subtitles should be rendered, such as placing roll-up captions used for live captions. |
 
-## Neither (60)
+## Neither (62)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
 | Alternative style sheets | — | — | limited | The rel="alternate stylesheet" attribute for the <link> HTML element offers an alternative style option to users. |
 | Ambient light sensor | — | — | limited | The AmbientLightSensor API returns the current light level in lux of the ambient light level around the device. |
 | Barcode detector | — | — | limited | The BarcodeDetector API recognizes various barcode formats in images. |
-| HTML in canvas | — | — | limited | A <canvas> HTML element with the layoutsubtree attribute can draw descendant elements in its rendering context. You can use it to style and layout text in a canvas, expose canvas content to browser features (like accessibility, translate, or find-in-page), and apply 2D and 3D effects to HTML. |
 | Contact picker | — | — | limited | The navigator.contacts API allows you to ask users to share limited details about entries in their contact list with your application. |
 | Container timing performance entries | — | — | limited | A container performance entry measures time to render child elements, for container elements that have the containertiming attribute. |
 | Content Index | — | — | limited | The Content Index API allows developers to register their offline enabled content with the browser. |
@@ -1136,12 +1147,12 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Digital goods | — | — | limited | The window.getDigitalGoodsService API connects to stores or billing services for in-app products and subscriptions. |
 | display: contents | — | — | limited | The display: contents CSS declaration sets an element to display only its contents, not itself. |
 | display: ruby | — | — | limited | The display: ruby CSS declaration renders an element with the box layout of a <ruby> HTML element. Child elements may use equivalents to <ruby> internal elements such as display: ruby-base for <rb>. |
+| display-state media query | — | — | limited | A display-state media query sets styles based on whether the window is normal, minimized, maximized, or fullscreen. |
 | document.modelContext | — | — | limited | The document.modelContext API registers page actions that can be called by in-browser AI agents or browser extensions. Also known as WebMCP. |
 | Early data | — | — | limited | TLS 1.3 sessions may be resumed more quickly by sending so-called early data to servers before the TLS handshake has finished. Also known as zero round-trip time resumption or 0-RTT. |
 | element() | — | — | limited | The element() CSS function creates a live-updating image from an HTML element that can be used as an image or background image. |
 | EXT_disjoint_timer_query WebGL extension | — | — | limited | The EXT_disjoint_timer_query extension for WebGL 1.0 contexts measures the duration of a set of GL commands, without stalling the rendering pipeline. |
 | fit-content() | — | — | limited | The fit-content() CSS function, used outside of a grid layout property, clamps a length between min-content and max-content. |
-| focusgroup | — | — | limited | The focusgroup global HTML attribute combines descendant elements into a single tab stop, with arrow-key navigation between them, for toolbars, tabs, menus, radio groups, and other composite controls. It's an alternative to the sequential navigation of tabindex. |
 | font-synthesis-position | — | — | limited | The font-synthesis-position CSS property sets whether or not the browser should synthesize subscript and superscript typefaces when they're missing from the font. |
 | font-variant-position | — | — | limited | The font-variant-position CSS property sets whether to use alternate glyphs for subscript and superscript text. |
 | Gamepad VR hands and poses | — | — | limited | The hand and pose properties of a Gamepad object represent the position in space and the hand that WebVR controllers are held in. |
@@ -1152,25 +1163,27 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Heading offset | — | — | limited | The headingoffset HTML attribute offsets the heading level of descendant <h1>–<h6> elements. The headingreset HTML attribute prevents heading offset computation from traversing beyond the element. |
 | Heading pseudo-classes | — | — | limited | The :heading and :heading() CSS pseudo-classes match headings of varying levels. The :heading pseudo-class matches any heading (<h1> through <h6>). The :heading() selector matches any of the given levels. For example, :heading(1, 2) matches headings level 1 and 2. |
 | HTML media capture | — | — | limited | The capture HTML attribute for <input type="file"> elements allows the user to capture media using the device's camera or microphone. |
-| HTML setter methods | — | — | limited | The setHTML(), replaceWithHTML(), beforeHTML(), prependHTML(), appendHTML() and afterHTML() DOM methods, and unsafe equivalents, insert HTML into an existing tree. |
-| HTML streaming setters | — | — | limited | The streamHTML(), streamReplaceWithHTML(), streamBeforeHTML(), streamPrependHTML(), streamAppendHTML() and streamAfterHTML() DOM methods, and unsafe equivalents, return writeable streams that incrementally insert HTML into an existing tree. |
+| HTML streaming setters | — | — | limited | The streamHTML(), streamReplaceWithHTML(), streamBeforeHTML(), streamPrependHTML(), streamAppendHTML() and streamAfterHTML() DOM methods, and unsafe equivalents, return writable streams that incrementally insert HTML into an existing tree. |
 | image() | — | — | limited | The image() CSS function creates an image similar to url() but with additional functionality. It can create a solid color as an image, provide a fallback from an image URL to a solid color, or clip a sprite image using media fragments. Not to be confused with the Image() constructor. |
 | import defer | — | — | limited | The import defer and import.defer() JavaScript statements import a module while deferring its evaluation until its first use. |
 | <install> | — | — | limited | The <install> HTML element represents a button that, upon activation, prompts the user to choose whether to install a progressive web app. |
 | line-clamp | — | — | limited | The line-clamp CSS property limits the text in a block container to a certain number of lines. The prefixed -webkit-line-clamp is widely supported but only works with -webkit-box-orient: vertical in combination with display: -webkit-box or display: -webkit-inline-box. |
 | Link parameters | — | — | limited | The link-parameters CSS property, param() modifier for the url() CSS function, and the #:~:param(…) URL fragment set custom CSS environment variables on an external resource, such as an SVG image, allowing the external resource to adapt its presentation based on the variables. |
+| :link-to() | — | — | limited | The :link-to() CSS pseudo-class matches links to a certain URL or pattern. |
 | Magnetometer | — | — | limited | The Magnetometer API reads magnetic field sensor data from the device's magnetometer. |
 | Web app manifest localization | — | — | limited | The _localized suffixed members of the web app manifest set translated names, descriptions, icons, and shortcuts. The browser automatically selects resources based on the user's language and region settings. |
 | @mixin | — | — | limited | The @mixin and @apply CSS at-rules define reusable style declaration fragments and apply them inside rules, optionally passing arguments. |
 | navigator.install() | — | — | limited | The navigator.install() method triggers a request to install a progressive web app. |
 | Network Information | — | — | limited | The navigator.connection API provides information about the network connection a device is using and fires events when the connection type changes. |
+| OfflineAudioContext incremental rendering | — | — | limited | The startRendering() method of the OfflineAudioContext API accepts an optional chunk size argument, which sets the number of sample frames to render in an AudioBuffer. You can use this to process audio incrementally, reducing the memory required to process high amounts of data. |
 | OpaqueRange | — | — | limited | The createValueRange() for form elements, such as <textarea> or <input type="text">, gets an OpaqueRange object that represents a live span of text. You can use this for range-based operations on the input text, such as setting custom highlights or placing autocomplete popovers. |
 | overflow-clip-margin | — | — | limited | The overflow-clip-margin CSS property sets how far overflow content may appear outside the bounds of an element before it's clipped by effects such as overflow: clip. |
 | OVR_multiview2 WebGL extension | — | — | limited | The OVR_multiview2 extension for WebGL 2.0 contexts renders into multiple views simultaneously. This especially useful for virtual reality (VR) and WebXR. |
 | prefers-reduced-data media query | — | — | limited | The prefers-reduced-data CSS media query detects whether the user has a preference for using less network traffic. For example, you can use this media query to avoid loading large font files and use a system font instead. |
+| random() | — | — | limited | The random() CSS function chooses a random numeric value within a specified range. This allows for dynamic, randomized styling using CSS. |
 | Related apps | — | — | limited | The related_applications web app manifest member lists operating system-specific applications that are related to the current web app, such as an Android app that provides similar functionality. The getInstalledRelatedApps() method lists which of those are installed on the current device. |
 | Integrity violation reports | — | — | limited | Subresource integrity violation reporting sends a report to a URL nominated by the Reporting-Endpoints header or the ReportingObserver API when a resource request violates an integrity check. |
-| Retriable module loading | — | — | limited | You can retry importing a module that failed to import previously. Failed module imports, through the import JavaScript statement, the import() JavaScript syntax, or dynamically created <script src="…" type="module"> HTML elements, aren't cached. |
+| resizable media query | — | — | limited | A resizable media query sets styles based on whether the user may resize the window. |
 | Rhythmic sizing | — | — | limited | The line-height-step CSS property creates consistent vertical rhythm by setting the spacing between body text baselines. It rounds taller lines like headings up to the next multiple of the body text spacing. |
 | Screen orientation lock | — | — | limited | The screen.orientation.lock() method prevents changes to the screen orientation, typically in fullscreen applications such as games. For example, while locked, rotating a phone to the side won't change the screen orientation from landscape to portrait. |
 | image-rendering: smooth | — | — | limited | The image-rendering: smooth CSS declaration scales images while retaining a gradual color blending that is useful for photos. |
@@ -1181,6 +1194,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Web NFC | — | — | limited | The NDEFReader API reads and writes messages to near-field communication (NFC) tags. |
 | WebDriver | — | — | limited | The WebDriver protocol allows out-of-process programs to inspect and control browsers to, for example, run tests of web applications. Also known as WebDriver classic. |
 | WebNN | — | — | limited | The WebNN API constructs and executes computational graphs of neural networks by making use of the various machine learning capabilities and hardware accelerators available on the device. Also known as Web Neural Network API. |
+| Window resizing | — | — | limited | The window.minimize(), window.maximize(), window.restore(), and window.setResizable() methods control the size of a window and whether users may resize it. |
 
 ## Discouraged or superseded (58)
 
@@ -1192,7 +1206,7 @@ These features are excluded from the JSON dataset and headline counts because th
 | Ad selection | discouraged | — | — | limited | The Ad Selection API facilitates advertisement sales by allowing sites to register users as part of an interest group or to choose which ads appear based on those interest groups, while minimizing the ability of advertisers to track specific members of the interest group. |
 | anchors-valid and anchors-visible | discouraged | — | 26.2 | limited | The position-visibility: anchors-valid and position-visibility: anchors-visible CSS declarations are aliases for anchor-valid and anchor-visible. |
 | arguments.callee | discouraged | 1 | 1 | limited | The callee property of the arguments variable in a non-strict function body's local scope is the function that arguments belongs to. |
-| Attribution reporting | discouraged | 133 | — | limited | The attribution reporting API measures when an ad click or view leads to a conversion, such as a purchase on an advertiser site. |
+| Attribution reporting | discouraged | — | — | limited | The attribution reporting API measures when an ad click or view leads to a conversion, such as a purchase on an advertiser site. |
 | AudioListener setPosition() and setOrientation() | discouraged | 14 | 6 | limited | The setPosition() and setOrientation() methods of the AudioListener API set the virtual position and orientation of a person relative to sound sources, to spatialize audio in a Web Audio context. |
 | clip | discouraged | 1 | 1.3 | limited | The clip CSS property sets the visible area of an absolutely positioned element. |
 | color-adjust | discouraged | — | 15.4 | limited | The color-adjust shorthand CSS property allows multiple performance related color adjustments to be set at once. Setting the print-color-adjust CSS property directly is preferred, as it is the only such adjustment so far defined. |
@@ -1225,14 +1239,14 @@ These features are excluded from the JSON dataset and headline counts because th
 | PerformanceTiming and PerformanceNavigation | discouraged | 56 | 14.1 | limited | The window.performance.timing and window.performance.navigation APIs report performance timing information for events that occur during the loading and use of the current page. |
 | Portals | discouraged | — | — | limited | The <portal> HTML element embeds another page into the current page as a non-interactive preview. |
 | Private network access | discouraged | — | — | limited | The Access-Control-Request-Private-Network: true and Access-Control-Allow-Private-Network: true HTTP request and response headers establish permission for websites to make requests to internal networks, such as to routers. |
-| Protected audience | discouraged | 134 | — | limited | The protected audience API facilitates advertisement sales by allowing sites to register users as part of an interest group or to choose which ads appear based on those interest groups, while minimizing the ability of advertisers to track specific members of the interest group. Also known as FLEDGE. |
+| Protected audience | discouraged | — | — | limited | The protected audience API facilitates advertisement sales by allowing sites to register users as part of an interest group or to choose which ads appear based on those interest groups, while minimizing the ability of advertisers to track specific members of the interest group. Also known as FLEDGE. |
 | __proto__ | discouraged | 1 | 3 | limited | The __proto__ property of objects partially exposes the prototype of an object. |
 | RegExp compile() | discouraged | 1 | 3.1 | limited | The compile() method of RegExp objects recompiles an existing regular expression object using a new pattern and flags. |
 | RegExp static properties | discouraged | 1 | 3 | limited | The RegExp object has several static properties to access the input and results of the most-recent regular expression match. |
 | Related website sets | discouraged | 119 | — | limited | Related website sets declares relationships between sites so the browser allows cookie and storage access between them through methods such as document.requestStorageAccessFor(). |
 | Intervention reports | discouraged | 69 | — | limited | Intervention reporting sends a report to a URL nominated by the Reporting-Endpoints header when the browser has not honored an application's request, contrary to specified behavior, such as for security or privacy reasons. |
 | Shared storage | discouraged | — | — | limited | The sharedStorage API stores data to a shared space where the data can then be processed without the ability to track users across the different sites they visit. A common use case is measuring the reach of third-party ads without using user-tracking cookies. |
-| Shared storage locks | discouraged | 134 | — | limited | The withLock option to set(), append(), delete(), clear(), and batchUpdate() methods of the sharedStorage API prevents duplicate reporting from cross-site race conditions. |
+| Shared storage locks | discouraged | — | — | limited | The withLock option to set(), append(), delete(), clear(), and batchUpdate() methods of the sharedStorage API prevents duplicate reporting from cross-site race conditions. |
 | Speech recognition grammar | discouraged | — | — | limited | The SpeechRecognition.grammars property of the Web Speech API represents a set of words or patterns of words that the recognition service should recognize, used for when the recognition service's accuracy is low. |
 | String substr() | discouraged | 1 | 1 | limited | The substr() method of strings returns part of a string, starting from an index and ending a given number of characters after. |
 | String trimLeft() and trimRight() | discouraged | 4 | 5 | limited | The trimLeft() and trimRight() methods of strings return a new string with whitespace removed from the beginning or end of the string. They're aliases for trimStart() and trimEnd(). |

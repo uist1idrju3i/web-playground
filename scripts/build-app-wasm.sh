@@ -2,7 +2,7 @@
 set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-expected_rust=1.99.0
+expected_rust=1.100.0
 
 # Each app: <crate dir under wasm/apps>|<crate lib name>|<wasm output stem>|<public dir>
 apps=(

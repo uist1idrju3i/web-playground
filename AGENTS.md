@@ -4,7 +4,7 @@
 - Keep this a static site with no build step. Load JavaScript/CSS only from this origin or `https://cdnjs.cloudflare.com`. cdnjs resources must be version-pinned and use `integrity` (SRI sha384/sha512 from the cdnjs API) with `crossorigin="anonymous"`. Do not use any other third-party origin.
 - Put shared runtime code only in `public_html/library/`.
 - Every app must call `checkRequirements` before using its required capabilities. Never trigger permission prompts while a page loads.
-- Never weaken or bypass the static resource gate, runtime resource E2E gate, CSP lock test, or CodeQL. The only runtime CSP exception is the exact WebKit user-agent sample in `tests/e2e/csp-violations.js`; never broaden it to cover app-originated violations. Fix the source instead. Never add `'unsafe-inline'` or `'unsafe-eval'`.
+- Never weaken or bypass the static resource gate, runtime resource E2E gate, CSP lock test, or CodeQL. The runtime CSP gate has no engine exceptions: every `securitypolicyviolation` on every engine is fatal. Fix the source instead. Never add `'unsafe-inline'` or `'unsafe-eval'`.
 - Never add secrets or private credentials. Write repository documentation and comments in English.
 - Before every commit, recheck copyright, licenses, and attribution of everything staged: only original or compatibly licensed material, upstream notices kept, `THIRD_PARTY_NOTICES.md` updated, and no imitation of existing works, brands, or characters.
 
@@ -81,7 +81,7 @@ Unless the requester says otherwise, every app: is researched and planned before
 - COEP can block cross-origin assets even when ordinary CORS would allow them.
 - Never hand-edit generated files; fix their source and regenerate.
 - `untestable` is not the same as `unsupported`.
-- The WebKit CSP sample filter is exact-match only and may never be broadened to cover app-originated violations.
+- The CSP gate tolerates no engine quirks; if a browser regresses into a user-agent violation, fix or pin the browser rather than adding an exception.
 - Never re-enable HTML-rewriting Cloudflare features such as Rocket Loader, Speed Brain (`Speculation-Rules: "/cdn-cgi/speculation"`), or automatic Web Analytics injection.
 - Keep every E2E test under 30 seconds. Do not add tests that play an app through in real time; cover long flows with unit tests on the simulation, rules, and statechart.
 - Use Node 24 LTS. Ubuntu 26.04 is a public preview; revisit it at GA or fall back to 24.04 if the preview breaks.

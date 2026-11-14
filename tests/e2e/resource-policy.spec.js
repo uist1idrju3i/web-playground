@@ -1,17 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { appPaths, cdnjsPath, htmlPages } from '../pages.mjs';
-import {
-  attachConsoleWarnings,
-  filterWebKitUaStyleDiagnostics,
-  WEBKIT_UA_STYLE_CONSOLE_ERROR,
-  WEBKIT_UA_STYLE_SAMPLES,
-} from './csp-violations.js';
+import { attachConsoleWarnings } from './csp-violations.js';
 
 const pages = htmlPages();
 const apps = appPaths();
 
 for (const path of pages) {
-  test(`static resource policy: ${path}`, async ({ browser, browserName, baseURL }, testInfo) => {
+  test(`static resource policy: ${path}`, async ({ browser, baseURL }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     const allowedOrigin = new URL(baseURL).origin;
@@ -66,9 +61,8 @@ for (const path of pages) {
     try {
       await page.goto(path, { waitUntil: 'load' });
       await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-      // Violation events and their mirrored console errors are delivered
-      // asynchronously after load; a synchronous read here can race them and
-      // leave WebKit's user-agent style diagnostics unpaired. Wait briefly for
+      // Violation events and console errors are delivered asynchronously
+      // after load; a synchronous read here can race them. Wait briefly for
       // the batch, then give stragglers a moment to land. Pages that emit no
       // violations exit the first wait via its timeout.
       await page
@@ -77,19 +71,14 @@ for (const path of pages) {
         })
         .catch(() => {});
       await page.waitForTimeout(250);
-      const diagnostics = filterWebKitUaStyleDiagnostics(
-        await page.evaluate(() => window.__resourcePolicyViolations),
-        consoleErrors,
-        browserName,
-      );
-      cspViolations.push(...diagnostics.violations);
+      cspViolations.push(...(await page.evaluate(() => window.__resourcePolicyViolations)));
       await attachConsoleWarnings(testInfo, consoleWarnings);
       expect(
         {
           externalRequests: [...externalRequests],
           cspViolations,
           pageErrors,
-          consoleErrors: diagnostics.consoleErrors,
+          consoleErrors,
         },
         path,
       ).toEqual({ externalRequests: [], cspViolations: [], pageErrors: [], consoleErrors: [] });
@@ -98,53 +87,6 @@ for (const path of pages) {
     }
   });
 }
-
-test('WebKit user-agent style CSP canary remains exact-match', async ({
-  browserName,
-  page,
-  baseURL,
-}) => {
-  test.skip(
-    browserName !== 'webkit',
-    'This canary verifies WebKit-specific native select behavior.',
-  );
-  await page.addInitScript(() => {
-    window.__resourcePolicyViolations = [];
-    document.addEventListener('securitypolicyviolation', (event) => {
-      window.__resourcePolicyViolations.push({
-        directive: event.violatedDirective,
-        blockedURI: event.blockedURI,
-        sample: event.sample,
-        sourceFile: event.sourceFile,
-        line: event.lineNumber,
-      });
-    });
-  });
-  const consoleErrors = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
-  });
-  await page.goto(new URL('/__tests__/webkit-select-csp.html', baseURL).href);
-  // Violation events are delivered asynchronously after load; wait for them.
-  // If WebKit stops emitting this violation the poll times out and the canary
-  // still fails, which is the signal this test exists to detect.
-  await expect
-    .poll(() => page.evaluate(() => window.__resourcePolicyViolations.length), {
-      timeout: 8000,
-    })
-    .toBeGreaterThan(0);
-  const violations = await page.evaluate(() => window.__resourcePolicyViolations);
-  expect(
-    violations.every(
-      ({ directive, blockedURI }) => directive === 'style-src-attr' && blockedURI === 'inline',
-    ),
-  ).toBe(true);
-  expect([...new Set(violations.map(({ sample }) => sample))].sort()).toEqual(
-    [...WEBKIT_UA_STYLE_SAMPLES].sort(),
-  );
-  await expect.poll(() => consoleErrors.length, { timeout: 8000 }).toBe(violations.length);
-  expect(consoleErrors).toEqual(Array(violations.length).fill(WEBKIT_UA_STYLE_CONSOLE_ERROR));
-});
 
 test('portal links resolve and every app index is registered', async ({ page, baseURL }) => {
   await page.goto('/');
