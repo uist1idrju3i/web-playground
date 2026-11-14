@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: write
     steps:
       - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
@@ -66,10 +67,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "${paths[@]}"
-          if [[ -n "$(git status --porcelain)" ]]; then
+          excludes=()
+          for p in "${paths[@]}"; do excludes+=(":(exclude)$p"); done
+          strays="$(git status --porcelain -- . "${excludes[@]}")"
+          if [[ -n "$strays" ]]; then
             echo "::error::Working tree has changes outside generated paths."
-            git status --porcelain
+            echo "$strays"
             exit 1
           fi
           git commit -m "chore: regenerate derived files for dependabot bump"
           git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:${HEAD_REF}"
+          # GITHUB_TOKEN pushes suppress event-triggered workflows, but
+          # workflow_dispatch runs are exempt: dispatch CI so the refreshed
+          # commit still gets validated on the pull request.
+          gh workflow run ci.yml --ref "$HEAD_REF"
