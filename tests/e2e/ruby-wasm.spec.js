@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { filterWebKitUaStyleDiagnostics } from './csp-violations.js';
 
 function trackExternalRequests(page, baseURL) {
   const sameOrigin = new URL(baseURL).origin;
@@ -40,15 +39,10 @@ async function collectDiagnostics(page) {
   return { consoleErrors, pageErrors, violations };
 }
 
-async function assertClean(page, diagnostics, browserName) {
+async function assertClean(page, diagnostics) {
   const violations = await page.evaluate(() => window.__securityPolicyViolations ?? []);
-  const filtered = filterWebKitUaStyleDiagnostics(
-    violations,
-    diagnostics.consoleErrors,
-    browserName,
-  );
-  expect(filtered.violations).toEqual([]);
-  expect(filtered.consoleErrors).toEqual([]);
+  expect(violations).toEqual([]);
+  expect(diagnostics.consoleErrors).toEqual([]);
   expect(diagnostics.pageErrors).toEqual([]);
 }
 
@@ -56,7 +50,7 @@ async function waitForBoot(page) {
   await expect(page.locator('#vm-state')).toContainText('ready', { timeout: 60_000 });
 }
 
-test('Ruby.wasm app boots the VM and runs Ruby', async ({ page, baseURL, browserName }) => {
+test('Ruby.wasm app boots the VM and runs Ruby', async ({ page, baseURL }) => {
   const diagnostics = await collectDiagnostics(page);
   const requestTracker = trackExternalRequests(page, baseURL);
   await page.goto('/ruby-wasm/');
@@ -67,12 +61,12 @@ test('Ruby.wasm app boots the VM and runs Ruby', async ({ page, baseURL, browser
   await expect(page.locator('#boot-metrics')).toContainText('ruby 3.4');
   await expect(page.locator('#boot-metrics')).toContainText('wasm32-wasi');
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
   expect(requestTracker.externalRequests).toEqual([]);
   requestTracker.stop();
 });
 
-test('eval runs Ruby code and shows the IRB-style result', async ({ page, browserName }) => {
+test('eval runs Ruby code and shows the IRB-style result', async ({ page }) => {
   const diagnostics = await collectDiagnostics(page);
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
@@ -90,13 +84,10 @@ test('eval runs Ruby code and shows the IRB-style result', async ({ page, browse
   const entry = page.locator('.irb-entry').last();
   await expect(entry).toContainText('hello from spec', { timeout: 15_000 });
   await expect(entry).toContainText('=> 42');
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
 });
 
-test('snippet gallery loads and runs the click counter on the stage', async ({
-  page,
-  browserName,
-}) => {
+test('snippet gallery loads and runs the click counter on the stage', async ({ page }) => {
   const diagnostics = await collectDiagnostics(page);
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
@@ -108,10 +99,10 @@ test('snippet gallery loads and runs the click counter on the stage', async ({
   });
   await page.locator('#stage-btn').click();
   await expect(page.locator('#stage-out')).toContainText('clicked 1 time', { timeout: 15_000 });
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
 });
 
-test('canvas snippet paints pixels through the DOM bridge', async ({ page, browserName }) => {
+test('canvas snippet paints pixels through the DOM bridge', async ({ page }) => {
   const diagnostics = await collectDiagnostics(page);
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
@@ -126,10 +117,10 @@ test('canvas snippet paints pixels through the DOM bridge', async ({ page, brows
     return colored;
   });
   expect(painted).toBeGreaterThan(100);
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
 });
 
-test('feature matrix rows report support status', async ({ page, browserName }) => {
+test('feature matrix rows report support status', async ({ page }) => {
   const diagnostics = await collectDiagnostics(page);
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
@@ -141,10 +132,10 @@ test('feature matrix rows report support status', async ({ page, browserName }) 
   const threadRow = rows.filter({ hasText: 'Thread.new' });
   await threadRow.locator('.feature-run').click();
   await expect(threadRow.locator('.status-chip')).toContainText('limited', { timeout: 15_000 });
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
 });
 
-test('kill button terminates a hung VM and restart recovers it', async ({ page, browserName }) => {
+test('kill button terminates a hung VM and restart recovers it', async ({ page }) => {
   const diagnostics = await collectDiagnostics(page);
   await page.goto('/ruby-wasm/');
   await waitForBoot(page);
@@ -162,5 +153,5 @@ test('kill button terminates a hung VM and restart recovers it', async ({ page, 
   await expect(page.locator('#vm-state')).toContainText('stopped');
   await page.locator('#restart-button').click();
   await expect(page.locator('#vm-state')).toContainText('ready', { timeout: 60_000 });
-  await assertClean(page, diagnostics, browserName);
+  await assertClean(page, diagnostics);
 });
