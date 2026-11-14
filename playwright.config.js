@@ -7,7 +7,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   failOnFlakyTests: !!process.env.CI,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: process.env.CI
+    ? [['failures'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
