@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 
-
 const fixturePath = fileURLToPath(new URL('./fixtures/fake-language-model.js', import.meta.url));
 
 function trackExternalRequests(page, baseURL) {
@@ -58,10 +57,7 @@ async function openFakeApp(page) {
   await expect(page.locator('body')).toHaveAttribute('data-app-ready', 'true');
 }
 
-test('boot without LanguageModel keeps a readable learning page', async ({
-  page,
-  baseURL,
-}) => {
+test('boot without LanguageModel keeps a readable learning page', async ({ page, baseURL }) => {
   const diagnostics = await collectDiagnostics(page);
   const requestTracker = trackExternalRequests(page, baseURL);
   await installNoApi(page);

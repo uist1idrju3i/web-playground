@@ -241,10 +241,7 @@ for (const { width, height } of [
   });
 }
 
-test('the rendered scene is non-black and non-uniform', async ({
-  page,
-  baseURL,
-}, testInfo) => {
+test('the rendered scene is non-black and non-uniform', async ({ page, baseURL }, testInfo) => {
   const watcher = await startAndAssertGate(page, baseURL, testInfo);
   try {
     const bounds = await page.locator('#stage').boundingBox();
