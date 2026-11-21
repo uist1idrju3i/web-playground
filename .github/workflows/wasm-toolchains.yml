@@ -36,7 +36,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,13 +50,13 @@ jobs:
       - name: Install checksum-verified Emscripten SDK
         run: |
           emsdk_root="$RUNNER_TEMP/emsdk"
-          emsdk_commit=1693ce7359fc9694f198694f902a2cc061239b86
+          emsdk_commit=a7c808831a666cc903fedb906c171a718cd97341
           git init "$emsdk_root"
           git -C "$emsdk_root" remote add origin https://github.com/emscripten-core/emsdk.git
           git -C "$emsdk_root" fetch --depth=1 origin "$emsdk_commit"
           git -C "$emsdk_root" checkout --detach "$emsdk_commit"
-          "$emsdk_root/emsdk" install 7.0.0
-          "$emsdk_root/emsdk" activate 7.0.0
+          "$emsdk_root/emsdk" install 7.0.1
+          "$emsdk_root/emsdk" activate 7.0.1
       - name: Install pinned Rust targets and wasm-bindgen
         run: |
           rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown --target wasm32-wasip1

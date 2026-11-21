@@ -1,7 +1,7 @@
 {
   "version": 1,
   "toolchains": {
-    "emscripten": "7.0.0",
+    "emscripten": "7.0.1",
     "rust": "1.100.0",
     "wasmBindgen": "0.2.130"
   },
@@ -66,8 +66,8 @@
         "-sPTHREAD_POOL_SIZE=2"
       ],
       "sha256": {
-        "entry": "92f7c1e61db47ebf05e70077b85479db647c38a1db53154519cf8f45127f1a32",
-        "wasm": "d8e5052942d7bb5d18b556a7161cb52c82cd9a3922f976fe0f534f32f6a6c93f"
+        "entry": "fa3c00ef486e9f1bef918f0575972752d3ed768ab8f0fff2fafd360a83f83cf7",
+        "wasm": "f68fa43888558babaf1bf699394674cdf0d6f0ff47844fd7379224f6eee831a9"
       }
     },
     {
@@ -197,11 +197,11 @@
     },
     {
       "file": "emscripten-pthreads.js",
-      "sha256": "92f7c1e61db47ebf05e70077b85479db647c38a1db53154519cf8f45127f1a32"
+      "sha256": "fa3c00ef486e9f1bef918f0575972752d3ed768ab8f0fff2fafd360a83f83cf7"
     },
     {
       "file": "emscripten-pthreads.wasm",
-      "sha256": "d8e5052942d7bb5d18b556a7161cb52c82cd9a3922f976fe0f534f32f6a6c93f"
+      "sha256": "f68fa43888558babaf1bf699394674cdf0d6f0ff47844fd7379224f6eee831a9"
     },
     {
       "file": "emscripten-simd.js",
