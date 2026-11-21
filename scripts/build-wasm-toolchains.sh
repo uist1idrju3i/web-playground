@@ -5,7 +5,7 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 emsdk_root="${EMSDK:-$HOME/emsdk}"
 source "$emsdk_root/emsdk_env.sh" >/dev/null
 
-expected_emscripten=7.0.0
+expected_emscripten=7.0.1
 expected_rust=1.100.0
 expected_bindgen=0.2.130
 if [[ "$(emcc --version | head -n 1)" != *"$expected_emscripten"* ]]; then

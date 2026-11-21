@@ -1,12 +1,12 @@
 # Web Platform Features Supported by Chrome and Safari
 
-Generated from web-features 3.46.0 and @mdn/browser-compat-data 8.1.9.
+Generated from web-features 3.47.0 and @mdn/browser-compat-data 8.1.10.
 
-Total features: **1170** — Chrome and Safari: **850**, Chrome only: **228**, Safari only: **30**, neither: **62**.
+Total features: **1176** — Chrome and Safari: **851**, Chrome only: **231**, Safari only: **30**, neither: **64**.
 
 Chrome and Safari versions and support groups come from the WebDX feature dataset, which incorporates browser-compat-data. Where a feature has no specific version, the generator checks BCD compatibility keys; “Yes” means support is recorded without a version. Discouraged, moved, and split features are excluded from these totals and listed separately.
 
-## Chrome + Safari (850)
+## Chrome + Safari (851)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
@@ -421,7 +421,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Let and const | 49 | 10 | widely | The let and const declarations define block-scoped variables. |
 | letter-spacing | 1 | 1 | widely | The letter-spacing CSS property controls the amount of space between each letter in an element or block of text. |
 | lh unit | 109 | 16.4 | widely | The lh CSS length unit corresponds to the requested line height, the computed value of the line-height property. Some lines may be higher than this based on their content. |
-| light-dark() | 123 | 17.5 | newly | The light-dark() CSS function accepts two colors and uses one depending on the current color scheme. |
+| light-dark() | 123 | 17.5 | widely | The light-dark() CSS function accepts two colors and uses one depending on the current color scheme. |
 | light-dark() image values | 150 | 27 | newly | The light-dark() CSS function accepts, in addition to colors, two <image> values, such as a gradient or URL, and uses one depending on the current color scheme. |
 | line-break | 83 | 13 | widely | The line-break CSS property sets how strictly to apply rules for wrapping text to new lines, especially for symbols and punctuation. |
 | line-height | 1 | 1 | widely | The line-height CSS property sets the spacing between text baselines, oriented to the horizontal or vertical writing mode. |
@@ -452,6 +452,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Media capabilities | 101 | 15.4 | widely | The navigator.mediaCapabilities API queries the encoding and decoding abilities of the device, such as supported codecs, resolutions, and bitrates. |
 | Media capture | 53 | 11 | widely | The navigator.mediaDevices.getUserMedia() API requests access to devices that produce audio or video streams, such as microphones or video cameras. |
 | Media playback quality | 80 | 8 | widely | The getVideoPlaybackQuality() method of HTMLVideoElement returns metrics that can be used to determine the playback quality of a video, such as how many frames were dropped. |
+| Media element pseudo-classes | 158 | 15.4 | limited | The :playing, :paused, :seeking, :buffering, :stalled, :muted, and :volume-locked CSS pseudo-classes match <audio> and <video> elements based on their state. |
 | Media queries | 1 | 3 | widely | The @media CSS rule conditionally applies styles based on the output device type, its capabilities, and the user's preferences. Media queries are composed of an optional media type such as screen or print, and one or more mandatory media features, such as prefers-reduced-animations. |
 | Media query range syntax | 104 | 16.4 | widely | The range syntax of CSS media queries allows you to use mathematical comparison operators such as <, >, <=, and >= to define a range of values for a media query. For example, (400px < width < 1000px) returns true if the viewport width is between 400px and 1000px. |
 | Media session | 73 | 15 | limited | The navigator.mediaSession API integrates with platform UI for media playback. It can be used to set metadata such as title and artwork, and to handle user actions like playing, pausing, or seeking. |
@@ -605,7 +606,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | ric unit | 111 | 17.2 | newly | The ric CSS length unit, or root international character, is a font-relative length equal to the width of CJK character relative to the root element. |
 | rlh unit | 111 | 16.4 | widely | The rlh CSS length unit is a font-relative length relative to the line height of root element. |
 | :root | 1 | 1 | widely | The :root pseudo-class matches the root element of the document, usually the <html> element. |
-| round(), mod(), and rem() | 125 | 17.2 | newly | The round(), mod(), and rem() CSS functions compute rounded values and the remainder after division. |
+| round(), mod(), and rem() | 125 | 17.2 | widely | The round(), mod(), and rem() CSS functions compute rounded values and the remainder after division. |
 | <ruby> | 5 | 5 | widely | The <ruby> element produces small annotations that are rendered with its base text. |
 | ruby-align | 128 | 18.2 | newly | The ruby-align CSS property sets the spacing and alignment of ruby annotation text when it does not fill its available space. |
 | ruby-overhang | 151 | 18.2 | limited | The ruby-overhang CSS property sets whether ruby annotations may overlap adjacent text. |
@@ -671,7 +672,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | srcset and sizes | 38 | 10.1 | widely | The srcset and sizes attributes for <img> elements set a list of possible sources for the image and a corresponding list of size conditions for choosing a source, to show a responsive image that fits the size of the display. |
 | Stable array sort | 70 | 10.1 | widely | Stable array sort() function |
 | @starting-style | 117 | 17.5 | newly | The @starting-style CSS at-rule sets the starting values for properties that are transitioning when the target element's style is first updated. |
-| :state() | 125 | 17.4 | newly | The :state() CSS pseudo-class matches custom elements based on their custom state, set through the ElementInternals.states API. |
+| :state() | 125 | 17.4 | widely | The :state() CSS pseudo-class matches custom elements based on their custom state, set through the ElementInternals.states API. |
 | Static positioning | 1 | 1 | widely | The position: static CSS declaration positions an element in the normal flow. A statically positioned element ignores physical and logical properties such as top or inset-block-start. |
 | steps() easing | 77 | 14 | widely | The steps() CSS easing function divides an animation or transition into equidistant intervals, jumping from value to value. The step-start and step-end keyword values are presets with a single interval. |
 | Sticky positioning | 56 | 13 | widely | The position: sticky CSS declaration positions an element in the normal flow until it crosses a specified threshold, at which points it becomes fixed (stuck) at that position. |
@@ -735,7 +736,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | text-underline-offset | 87 | 12.1 | widely | The text-underline-offset CSS property shifts underlines on text from the initial position by a given distance. The initial position is affected by the text-underline-position property. |
 | text-underline-position | 33 | 12.1 | widely | The text-underline-position CSS property sets the position of underlines on text. For example, text-underline-position: under places the underline below the text, avoiding crossing descenders. The underline may be further adjusted by the text-underline-offset property. |
 | text-wrap | 130 | 17.5 | newly | The text-wrap CSS property sets how lines break in text that overflows the container. It is a shorthand for text-wrap-style and text-wrap-mode. |
-| text-wrap: balance | 114 | 17.5 | newly | The text-wrap: balance CSS declaration balances the length of each line when text is broken into multiple lines. Also known as headline balancing. |
+| text-wrap: balance | 114 | 17.5 | widely | The text-wrap: balance CSS declaration balances the length of each line when text is broken into multiple lines. Also known as headline balancing. |
 | text-wrap: pretty | 117 | 26 | limited | The text-wrap: pretty CSS declaration prioritizes better layout over speed when text is broken into multiple lines. |
 | <textarea> | 1 | ≤4 | widely | The <textarea> element represents an editing control that allows users to enter multi-line, free-form, plain text. |
 | <time> | 62 | 10 | widely | The <time> HTML element represents a time, such as a calendar date, clock time, or duration. It may include the datetime attribute to translate dates into machine-readable format. |
@@ -858,10 +859,10 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | XMLSerializer | 1 | 3 | widely | The XMLSerializer API provides the serializeToString() method to construct an XML string representing a DOM tree. |
 | XPath | 1 | 3 | widely | The document.evaluate() method selects elements in an HTML or XML document based on an expression of XPath, a domain specific language for querying XML documents. Also known as XML Path Language. |
 | z-index | 1 | 1 | widely | The z-index CSS property orders overlapping elements, with higher values appearing in front of or on top of lower values. |
-| zoom | 1 | 3.1 | newly | The zoom CSS property scales the size of an element. Unlike the transform property, a zoomed element affects page layout. |
+| zoom | 1 | 3.1 | widely | The zoom CSS property scales the size of an element. Unlike the transform property, a zoomed element affects page layout. |
 | Zstandard compression | 123 | 26.3 | newly | Zstandard or zstd is a fast lossless compression algorithm. When used as a content encoding, it is often faster and offers better compression than brotli. |
 
-## Chrome only (228)
+## Chrome only (231)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
@@ -945,6 +946,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Custom highlights from point | 140 | — | limited | The CSS.highlights.highlightsFromPoint() method returns an array of Highlight objects at a specified point. |
 | HTML processing instructions | 150 | — | limited | An HTML processing instruction is text enclosed by <? and >, which marks a target for further processing. They may appear anywhere in a document. They are ignored like comments when they're not recognized for a specific purpose. |
 | HTML setter methods | 157 | — | limited | The setHTML(), replaceWithHTML(), beforeHTML(), prependHTML(), appendHTML() and afterHTML() DOM methods, and unsafe equivalents, insert HTML into an existing tree. |
+| HTML streaming setters | 157 | — | limited | The streamHTML(), streamReplaceWithHTML(), streamBeforeHTML(), streamPrependHTML(), streamAppendHTML() and streamAfterHTML() DOM methods, and unsafe equivalents, return writable streams that incrementally insert HTML into an existing tree. |
 | Hyphenate limit chars | 109 | — | limited | The hyphenate-limit-chars CSS property sets the number of characters in a word before it is hyphenated and the minimum number of characters on either side of the hyphen. |
 | Idle detection | 94 | — | limited | The IdleDetector API is used to notify a webpage of the user's idle, active, and locked state. |
 | if() | 137 | — | limited | The if() CSS function is an inline conditional value that returns a value based on a set of conditions. |
@@ -985,6 +987,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Non-cookie storage access | 125 | — | limited | Non-cookie storage access extends the requestStorageAccess() API to let content in cross-site iframes request access to first-party data beyond cookies. |
 | object-view-box | 104 | — | limited | The object-view-box CSS property crops and zooms to an inset area of an image. |
 | Observable | 135 | — | limited | The when() method on a event target returns an Observable object, which provides a declarative API for subscribing to and operating on events. It's an alternative to addEventListener() callbacks. |
+| OfflineAudioContext incremental rendering | 158 | — | limited | The startRendering() method of the OfflineAudioContext API accepts an optional chunk size argument, which sets the number of sample frames to render in an AudioBuffer. You can use this to process audio incrementally, reducing the memory required to process high amounts of data. |
 | Orientation Sensor | 67 | — | limited | The AbsoluteOrientationSensor and RelativeOrientationSensor APIs describe the physical orientation of a device in three-dimensional space, either in relation to the Earth's coordinate system or in relation to the device's own orientation, respectively. |
 | overlay | 117 | — | limited | The overlay CSS property, used as an allow-discrete CSS transition, prevents a top layer element, such as a popover or a <dialog>, from being removed from the top layer before it has finished animating. You can't set the value of the overlay property; only use it as transition property. |
 | overscroll-behavior | 144 | — | limited | The overscroll-behavior CSS property disables default scrolling behaviors when the edges of a scrolling area are reached. |
@@ -1045,6 +1048,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | symbols() | 155 | — | limited | The symbols() CSS function defines counter styles as a value of properties such as list-style. It's an inline alternative to the @counter-style CSS at-rule. |
 | <template for> | 150 | — | limited | The <template for="…"> HTML element replaces the content at a named range or insertion point, marked by the processing instructions <?start name="…"> and <?end> or <?marker name="…">. You can use this to stream or "patch" partial updates into the document out of order. |
 | Temporal | 144 | — | limited | The Temporal API allows you to work with dates, times, time zones, and durations. It is more powerful than the Date API. |
+| text-decoration-inset | 157 | — | limited | The text-decoration-inset CSS property offsets the start and end point of a text decoration. You can use this to shorten, lengthen, or shift the position of an underline, overline, or line-through. |
 | text-decoration in ::selection | 105 | — | limited | The text-decoration CSS property in a ::selection rule sets the underline and other text decoration styles on the text a user has highlighted. |
 | text-decoration-skip-spaces | 155 | — | limited | The text-decoration-skip-spaces CSS property sets whether text decoration lines (such as underlines and overlines) skip over whitespace characters. You can use this to prevent decorations from being drawn under spaces, which is sometimes more visually appealing. |
 | text-fit | 150 | — | limited | The text-fit CSS property scales text to fill the inline size of its container. You can use this to grow or shrink headlines, captions, or pull quotes to fit a container. |
@@ -1106,6 +1110,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | cross-fade() | — | 10 | limited | The cross-fade() CSS function generates an image by mixing two images. |
 | fastSeek() | — | 8 | limited | The fastSeek() method seeks an <audio> or <video> element as fast as possible, by seeking to a keyframe instead of exactly the requested time. |
 | Fetch form data | — | 14.1 | limited | The Request.formData() and Response.formData() methods read a request or response body and return a FormData promise. You can use it to access the fields of a form submission. |
+| ::field-content | — | 27.2 | limited | The ::field-content CSS pseudo-element selects the portion of an <input> element that contains editable text. |
 | filter() | — | 9.1 | limited | The filter() CSS function applies one or more graphic effects to a CSS image, such as a background image. You can use functions, such as blur() and drop-shadow(), alone or combined to produce different effects. For instance, background: filter(url(image.png), blur(2px)). |
 | UI fonts | — | 13.1 | limited | The ui-serif, ui-sans-serif, ui-monospace and ui-rounded values for the font-family CSS property use device-default user interface fonts for text. |
 | font-width | — | 18.4 | limited | The font-width CSS property selects a font face from a font family based on width, either by a keyword such as condensed or a percentage. |
@@ -1117,7 +1122,6 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Managed media source | — | 17 | limited | The ManagedMediaSource API is a MediaSource where the browser manages the memory of source buffers and may evict data if needed. |
 | margin-trim | — | 16.4 | limited | The margin-trim CSS property removes the margins of child elements when they meet the edges of the container. |
 | mask-border | — | 17.2 | limited | The mask-border CSS property sets how the edges of an element are masked. It is a shorthand for mask-border-outset, mask-border-repeat, mask-border-slice, mask-border-source, and mask-border-width. |
-| Media element pseudo-classes | — | 15.4 | limited | The :playing, :paused, :seeking, :buffering, :stalled, :muted, and :volume-locked CSS pseudo-classes match <audio> and <video> elements based on their state. |
 | <meta name="theme-color"> | — | 15 | limited | The name="theme-color" attribute for the <meta> HTML element suggests a color that the browser can use to customize the display of the page or the browser user interface. |
 | Private click measurement | — | 15.4 | limited | The attributionsourceid and attributiondestination attributes for <a> elements measure clicks across websites without associating a click to a specific session. Not to be confused with attribution reporting. Also known as PCM. |
 | ReadableStream.from() | — | 27 | limited | The ReadableStream.from() static method converts an iterable or async iterable object, such as an array or async generator function, into a readable stream. |
@@ -1129,7 +1133,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | WebVTT cue alignment | — | 14.1 | limited | The WebVTT cue alignment settings control which part of the cue is aligned with the given line and position. Cue alignment is set using line and position settings in WebVTT files or the lineAlign and positionAlign properties of VTTCue using JavaScript. |
 | WebVTT regions | — | 14.1 | limited | WebVTT regions set the areas of the video where captions or subtitles should be rendered, such as placing roll-up captions used for live captions. |
 
-## Neither (62)
+## Neither (64)
 
 | Feature | Chrome | Safari | Baseline | Summary |
 | --- | --- | --- | --- | --- |
@@ -1155,7 +1159,6 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | fit-content() | — | — | limited | The fit-content() CSS function, used outside of a grid layout property, clamps a length between min-content and max-content. |
 | font-synthesis-position | — | — | limited | The font-synthesis-position CSS property sets whether or not the browser should synthesize subscript and superscript typefaces when they're missing from the font. |
 | font-variant-position | — | — | limited | The font-variant-position CSS property sets whether to use alternate glyphs for subscript and superscript text. |
-| Gamepad VR hands and poses | — | — | limited | The hand and pose properties of a Gamepad object represent the position in space and the hand that WebVR controllers are held in. |
 | Gamut mapping | — | — | limited | Colors in CSS and <canvas> elements can be defined out of range of an output device or the color space of the canvas. Gamut mapping brings the color into range while preserving hue and lightness. |
 | getBoxQuads() | — | — | limited | The getBoxQuads() method, when called on a document, element, pseudo-element, or text node, returns the list of DOMQuad objects that represent the CSS boxes used to render the node. |
 | Global privacy control | — | — | limited | The Sec-GPC request header indicates that the user does not consent to a website or service selling or sharing their personal information with third parties. |
@@ -1163,7 +1166,7 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | Heading offset | — | — | limited | The headingoffset HTML attribute offsets the heading level of descendant <h1>–<h6> elements. The headingreset HTML attribute prevents heading offset computation from traversing beyond the element. |
 | Heading pseudo-classes | — | — | limited | The :heading and :heading() CSS pseudo-classes match headings of varying levels. The :heading pseudo-class matches any heading (<h1> through <h6>). The :heading() selector matches any of the given levels. For example, :heading(1, 2) matches headings level 1 and 2. |
 | HTML media capture | — | — | limited | The capture HTML attribute for <input type="file"> elements allows the user to capture media using the device's camera or microphone. |
-| HTML streaming setters | — | — | limited | The streamHTML(), streamReplaceWithHTML(), streamBeforeHTML(), streamPrependHTML(), streamAppendHTML() and streamAfterHTML() DOM methods, and unsafe equivalents, return writable streams that incrementally insert HTML into an existing tree. |
+| hyphenate-limit-lines | — | — | limited | The hyphenate-limit-lines CSS property sets the maximum number of consecutive hyphenated lines in a block of text. |
 | image() | — | — | limited | The image() CSS function creates an image similar to url() but with additional functionality. It can create a solid color as an image, provide a fallback from an image URL to a solid color, or clip a sprite image using media fragments. Not to be confused with the Image() constructor. |
 | import defer | — | — | limited | The import defer and import.defer() JavaScript statements import a module while deferring its evaluation until its first use. |
 | <install> | — | — | limited | The <install> HTML element represents a button that, upon activation, prompts the user to choose whether to install a progressive web app. |
@@ -1175,12 +1178,12 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | @mixin | — | — | limited | The @mixin and @apply CSS at-rules define reusable style declaration fragments and apply them inside rules, optionally passing arguments. |
 | navigator.install() | — | — | limited | The navigator.install() method triggers a request to install a progressive web app. |
 | Network Information | — | — | limited | The navigator.connection API provides information about the network connection a device is using and fires events when the connection type changes. |
-| OfflineAudioContext incremental rendering | — | — | limited | The startRendering() method of the OfflineAudioContext API accepts an optional chunk size argument, which sets the number of sample frames to render in an AudioBuffer. You can use this to process audio incrementally, reducing the memory required to process high amounts of data. |
 | OpaqueRange | — | — | limited | The createValueRange() for form elements, such as <textarea> or <input type="text">, gets an OpaqueRange object that represents a live span of text. You can use this for range-based operations on the input text, such as setting custom highlights or placing autocomplete popovers. |
 | overflow-clip-margin | — | — | limited | The overflow-clip-margin CSS property sets how far overflow content may appear outside the bounds of an element before it's clipped by effects such as overflow: clip. |
 | OVR_multiview2 WebGL extension | — | — | limited | The OVR_multiview2 extension for WebGL 2.0 contexts renders into multiple views simultaneously. This especially useful for virtual reality (VR) and WebXR. |
 | prefers-reduced-data media query | — | — | limited | The prefers-reduced-data CSS media query detects whether the user has a preference for using less network traffic. For example, you can use this media query to avoid loading large font files and use a system font instead. |
 | random() | — | — | limited | The random() CSS function chooses a random numeric value within a specified range. This allows for dynamic, randomized styling using CSS. |
+| random-item() | — | — | limited | The random-item() CSS function chooses a random value from a list of values. |
 | Related apps | — | — | limited | The related_applications web app manifest member lists operating system-specific applications that are related to the current web app, such as an Android app that provides similar functionality. The getInstalledRelatedApps() method lists which of those are installed on the current device. |
 | Integrity violation reports | — | — | limited | Subresource integrity violation reporting sends a report to a URL nominated by the Reporting-Endpoints header or the ReportingObserver API when a resource request violates an integrity check. |
 | resizable media query | — | — | limited | A resizable media query sets styles based on whether the user may resize the window. |
@@ -1191,12 +1194,15 @@ Chrome and Safari versions and support groups come from the WebDX feature datase
 | TransformStream transformer cancel() method | — | — | limited | The cancel() method of a TransformStream transformer cleans up resources when the readable side cancels or the writable side aborts. |
 | <usermedia> | — | — | limited | The <usermedia> HTML element represents a button that, upon activation, toggles camera or microphone streams. If needed, it may prompt the user to choose whether to grant the page access to the camera and microphone. |
 | video-dynamic-range media query | — | — | limited | The video-dynamic-range CSS media query sets styles based on whether a device can display video with at least standard range colors or at least high range colors. Non-visual devices will match neither. |
+| Wide arithmetic (WebAssembly) | — | — | limited | Wide 128-bit integer arithmetic instructions operate on larger-than-64-bit numbers with results represented by two 64-bit integers. You can use these instructions to improve performance for some use cases, such as arbitrary precision math. |
 | Web NFC | — | — | limited | The NDEFReader API reads and writes messages to near-field communication (NFC) tags. |
 | WebDriver | — | — | limited | The WebDriver protocol allows out-of-process programs to inspect and control browsers to, for example, run tests of web applications. Also known as WebDriver classic. |
 | WebNN | — | — | limited | The WebNN API constructs and executes computational graphs of neural networks by making use of the various machine learning capabilities and hardware accelerators available on the device. Also known as Web Neural Network API. |
+| white-space-trim | — | — | limited | The white-space-trim CSS property removes white space around the element or its contents. |
 | Window resizing | — | — | limited | The window.minimize(), window.maximize(), window.restore(), and window.setResizable() methods control the size of a window and whether users may resize it. |
+| wrap-inside | — | — | limited | The wrap-inside CSS property controls how freely lines may be broken inside an inline box. |
 
-## Discouraged or superseded (58)
+## Discouraged or superseded (59)
 
 These features are excluded from the JSON dataset and headline counts because the source dataset marks them as discouraged, moved, or split.
 
@@ -1224,6 +1230,7 @@ These features are excluded from the JSON dataset and headline counts because th
 | Feature policy | discouraged | 74 | — | limited | The Feature-Policy response header sets whether a policy-controlled feature, such as an API, may be used in a document. Not to be confused with permissions policy. |
 | <fencedframe> | discouraged | — | — | limited | The <fencedframe> element embeds another HTML page into the current page in a more secure and privacy-preserving way than <iframe> elements. |
 | Function caller and arguments | discouraged | 1 | 3 | limited | The caller and arguments properties of a non-strict mode Function object are the function that called it and the arguments it was called with. Not to be confused with the arguments variable in a function body's local scope. |
+| Gamepad VR hands and poses | discouraged | — | — | limited | The hand and pose properties of a Gamepad object represent the position in space and the hand that WebVR controllers are held in. |
 | HTMLGeolocationElement initialPermissionStatus | discouraged | 144 | — | limited | The initialPermissionStatus property of the HTMLGeolocationElement API represents whether geolocation was previously granted, denied, or neither, when the page first loads. |
 | glyph-orientation-vertical | discouraged | — | 4 | limited | The glyph-orientation-vertical CSS property sets the orientation of glyphs in text rendered in a vertical writing mode. |
 | :host-context() | discouraged | 54 | — | limited | The :host-context() CSS pseudo-class selects the containing element of the shadow tree in which it is used if that element or an ancestor matches the provided selector. |

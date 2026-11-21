@@ -3,7 +3,7 @@
 The repository ships three native shells under [`native/`](../native/README.md) that run
 the unmodified `public_html/` BrowserFeatures app:
 
-- **Electron** (`native/electron`) — bundles Chromium 152, serves the site over a
+- **Electron** (`native/electron`) — bundles Chromium 156, serves the site over a
   loopback HTTP server so every `_headers` rule and `application/wasm` MIME type
   applies verbatim.
 - **Tauri v2** (`native/tauri`) — uses the system webview (WebKitGTK on Linux)
@@ -17,7 +17,7 @@ the unmodified `public_html/` BrowserFeatures app:
 BrowserFeatures measures the engine it is hosted in. Running it inside these
 shells compares engine capabilities directly:
 
-| Measurement           | Electron (Chromium 152) | Tauri/Wails (WebKitGTK 2.50)  |
+| Measurement           | Electron (Chromium 156) | Tauri/Wails (WebKitGTK 2.50)  |
 | --------------------- | ----------------------- | ----------------------------- |
 | Secure context        | Yes                     | Yes                           |
 | `crossOriginIsolated` | Yes (COOP+COEP applied) | No (`tauri:`/`wails:` scheme) |
@@ -61,10 +61,10 @@ Run `npx tauri dev`, build with `npx tauri build` (add `--no-bundle` to skip
 installers). Known limitation: Tauri's `HeaderConfig` allowlist does not include
 `Referrer-Policy`, so that header is intentionally omitted in `tauri.conf.json`.
 
-### Wails v3 (beta)
+### Wails v3
 
-- Go ≥ 1.25 (repo pins `go 1.25` in `native/wails/go.mod`).
-- Wails CLI `v3.0.0-beta.28` for `wails3 dev` (optional; `go build` works alone).
+- Go ≥ 1.26 (repo pins `go 1.26.0` in `native/wails/go.mod`, the minimum wails v3.1 requires).
+- Wails CLI `v3.1.x` for `wails3 dev` (optional; `go build` works alone).
 - Linux: `libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config`. The default Wails GTK4
   backend needs GTK ≥ 4.10; build with `-tags gtk3` on older GTK, which selects
   the GTK3 + WebKitGTK 4.1 backend this shell was verified with:
