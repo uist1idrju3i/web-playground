@@ -2,7 +2,8 @@
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities privately through GitHub's **Report a vulnerability** feature on this repository's Security tab. Do not open a public issue for an unpatched vulnerability.
+Please [report vulnerabilities privately on GitHub](https://github.com/uist1idrju3i/web-playground/security/advisories/new).
+Do not include vulnerability details in a public issue, pull request, or discussion.
 
 Include the affected file or component, the impact, and steps to reproduce when safe. The maintainers will acknowledge reports and coordinate a fix and disclosure timeline.
 
